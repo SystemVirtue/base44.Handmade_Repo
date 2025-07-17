@@ -13,6 +13,12 @@ import DigitalSignage from "../DigitalSignage.jsx";
 import VideoOutput from "../VideoOutput.jsx";
 import Controls from "../Controls.jsx";
 import UILookAndFeel from "../UILookAndFeel.jsx";
+import QueueSchedule from "../QueueSchedule.jsx";
+import SearchSongs from "../SearchSongs.jsx";
+import Scheduler from "../Scheduler.jsx";
+import Messages from "../Messages.jsx";
+import MusicZoneInfo from "../MusicZoneInfo.jsx";
+import ChangeMusicZone from "../ChangeMusicZone.jsx";
 
 // Protected Route component
 const ProtectedRoute = ({ children }) => {
