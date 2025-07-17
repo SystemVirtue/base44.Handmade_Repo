@@ -47,59 +47,81 @@ function AppRoutes() {
   }
 
   return (
-    <Router>
-      <Routes>
-        <Route
-          path="/"
-          element={
-            isAuthenticated ? <Navigate to="/dashboard" replace /> : <Login />
-          }
-        />
-        <Route path="/login" element={<Login />} />
+    <Routes>
+      <Route
+        path="/"
+        element={
+          isAuthenticated ? (
+            <Navigate to="/dashboard" replace />
+          ) : (
+            <Navigate to="/login" replace />
+          )
+        }
+      />
+      <Route path="/login" element={<Login />} />
 
-        {/* Protected Routes */}
-        <Route
-          path="/dashboard"
-          element={
+      {/* Protected Routes */}
+      <Route
+        path="/dashboard"
+        element={
+          <ProtectedRoute>
             <Layout currentPageName="Dashboard">
               <Dashboard />
             </Layout>
-          }
-        />
-        <Route
-          path="/digital-signage"
-          element={
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/digital-signage"
+        element={
+          <ProtectedRoute>
             <Layout currentPageName="DigitalSignage">
               <DigitalSignage />
             </Layout>
-          }
-        />
-        <Route
-          path="/video-output"
-          element={
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/video-output"
+        element={
+          <ProtectedRoute>
             <Layout currentPageName="VideoOutput">
               <VideoOutput />
             </Layout>
-          }
-        />
-        <Route
-          path="/controls"
-          element={
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/controls"
+        element={
+          <ProtectedRoute>
             <Layout currentPageName="Controls">
               <Controls />
             </Layout>
-          }
-        />
-        <Route
-          path="/ui-look-and-feel"
-          element={
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/ui-look-and-feel"
+        element={
+          <ProtectedRoute>
             <Layout currentPageName="UILookAndFeel">
               <UILookAndFeel />
             </Layout>
-          }
-        />
-      </Routes>
-    </Router>
+          </ProtectedRoute>
+        }
+      />
+    </Routes>
+  );
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <Router>
+        <AppRoutes />
+      </Router>
+    </AuthProvider>
   );
 }
 
