@@ -1,20 +1,44 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "./contexts/AuthContext.jsx";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
   const navigate = useNavigate();
+  const { login, loginWithGoogle } = useAuth();
 
-  const handleSignIn = (e) => {
+  const handleSignIn = async (e) => {
     e.preventDefault();
-    // For now, just navigate to dashboard - later we can add real auth
-    navigate("/dashboard");
+    setLoading(true);
+    setError("");
+
+    const result = await login(email, password);
+
+    if (result.success) {
+      navigate("/dashboard");
+    } else {
+      setError(result.error || "Login failed");
+    }
+
+    setLoading(false);
   };
 
-  const handleGoogleSignIn = () => {
-    // For now, just navigate to dashboard - later we can add real Google auth
-    navigate("/dashboard");
+  const handleGoogleSignIn = async () => {
+    setLoading(true);
+    setError("");
+
+    const result = await loginWithGoogle();
+
+    if (result.success) {
+      navigate("/dashboard");
+    } else {
+      setError(result.error || "Google login failed");
+    }
+
+    setLoading(false);
   };
 
   return (
