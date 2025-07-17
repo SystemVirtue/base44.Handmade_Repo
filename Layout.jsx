@@ -22,7 +22,7 @@ import {
   useUIStore,
   useZoneStore,
   formatTime,
-} from "./src/store/index.js";
+} from "./store.js";
 import { useAuth } from "./src/contexts/AuthContext.jsx";
 
 const navigationItems = [
