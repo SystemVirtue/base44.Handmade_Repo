@@ -1,64 +1,46 @@
-import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button';
-import { Switch } from '@/components/ui/switch';
-import { Play, Tv, Clapperboard, Sparkles } from 'lucide-react';
+import React from "react";
 
 export default function VideoOutput() {
   return (
-    <div className="p-4 md:p-8 text-[var(--text-primary)] bg-[var(--main-bg)] h-full grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <div className="lg:col-span-2">
-        <h1 className="text-3xl font-bold mb-6">Video Output</h1>
-        <Card className="bg-gray-800 border-gray-700">
-          <CardHeader>
-            <CardTitle>Video Sources</CardTitle>
-            <p className="text-sm text-gray-400">Manage which video source is displaying on screen.</p>
-          </CardHeader>
-          <CardContent>
-            <RadioGroup defaultValue="user-signage" className="space-y-4">
-              <div className="flex items-center space-x-2 p-4 rounded-lg border border-gray-700">
-                <RadioGroupItem value="current-song" id="current-song" />
-                <Label htmlFor="current-song" className="text-lg font-medium flex-1">Current Song (Playing)</Label>
-              </div>
-              <div className="flex items-center space-x-2 p-4 rounded-lg border border-green-500 bg-green-500/10">
-                <RadioGroupItem value="user-signage" id="user-signage" />
-                <Label htmlFor="user-signage" className="text-lg font-medium flex-1">User Digital Signage</Label>
-              </div>
-               <div className="flex items-center space-x-2 p-4 rounded-lg border border-gray-700">
-                <RadioGroupItem value="priority-signage" id="priority-signage" />
-                <Label htmlFor="priority-signage" className="text-lg font-medium flex-1">Priority Digital Signage</Label>
-              </div>
-              <div className="flex items-center space-x-2 p-4 rounded-lg border border-gray-700">
-                <RadioGroupItem value="ambient-visuals" id="ambient-visuals" />
-                <Label htmlFor="ambient-visuals" className="text-lg font-medium flex-1">Ambient Visuals</Label>
-              </div>
-            </RadioGroup>
-            <div className="mt-6 flex items-center justify-between p-4 bg-gray-700/50 rounded-lg">
-                <Label htmlFor="video-switcher" className="text-lg font-medium">Video Switcher</Label>
-                <div className="flex items-center gap-4">
-                    <span className="text-sm text-gray-400">Cycling through sources automatically</span>
-                    <Switch id="video-switcher" />
-                </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+    <div className="p-8 text-white bg-gray-900 h-full">
+      <h1 className="text-3xl font-bold mb-6">Video Output</h1>
 
-      <div className="space-y-6">
-         <h1 className="text-3xl font-bold mb-6 invisible">.</h1>
-        <Card className="bg-gray-800 border-gray-700">
-            <CardHeader>
-                <CardTitle>Games & Draws</CardTitle>
-                 <p className="text-sm text-gray-400">Manage and start games or draws on screen.</p>
-            </CardHeader>
-            <CardContent className="space-y-4">
-                <Button className="w-full justify-start text-lg py-6" variant="secondary"><Tv className="mr-4"/> Streaming TV</Button>
-                <Button className="w-full justify-start text-lg py-6" variant="secondary"><Clapperboard className="mr-4"/> Random Draw</Button>
-                <Button className="w-full justify-start text-lg py-6" variant="secondary"><Sparkles className="mr-4"/> 90 Ball Bingo</Button>
-            </CardContent>
-        </Card>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
+          <div className="bg-gray-800 rounded-lg p-6 mb-6">
+            <h2 className="text-xl font-semibold mb-4">Preview</h2>
+            <div className="aspect-video bg-gray-700 rounded-lg flex items-center justify-center">
+              <p className="text-gray-400">Video Preview Area</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-6">
+          <div className="bg-gray-800 rounded-lg p-6">
+            <h3 className="text-lg font-semibold mb-4">Output Settings</h3>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">
+                  Resolution
+                </label>
+                <select className="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2">
+                  <option>1920x1080</option>
+                  <option>1280x720</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">
+                  Quality
+                </label>
+                <select className="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2">
+                  <option>High</option>
+                  <option>Medium</option>
+                  <option>Low</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
