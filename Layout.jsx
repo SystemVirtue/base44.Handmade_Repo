@@ -1,158 +1,117 @@
-
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { createPageUrl } from "@/utils";
-import { 
-  Play, 
-  Music, 
-  Monitor, 
-  Settings, 
-  Calendar, 
-  Search, 
+import {
+  Play,
+  Music,
+  Monitor,
+  Settings,
+  Calendar,
+  Search,
   MessageSquare,
   Info,
   Volume2,
   Users,
-  Menu,
-  X,
-  Palette
+  Palette,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import ThemeStyle from "../components/ThemeStyle";
-import { UISettings } from "@/entities/UISettings";
-import { CustomMedia } from "@/entities/CustomMedia";
-
 
 const navigationItems = [
   {
     title: "Current Playlist",
-    url: createPageUrl("Dashboard"),
+    url: "/dashboard",
     icon: Play,
-    badge: null
+    badge: null,
   },
   {
     title: "Digital Signage",
-    url: createPageUrl("DigitalSignage"),
+    url: "/digital-signage",
     icon: Monitor,
-    badge: null
+    badge: null,
   },
   {
     title: "Video Output",
-    url: createPageUrl("VideoOutput"),
+    url: "/video-output",
     icon: Monitor,
-    badge: null
+    badge: null,
   },
   {
     title: "Controls",
-    url: createPageUrl("Controls"),
+    url: "/controls",
     icon: Settings,
-    badge: null
+    badge: null,
   },
   {
     title: "Queue / Schedule Lists",
-    url: createPageUrl("QueueSchedule"),
+    url: "/queue-schedule",
     icon: Calendar,
-    badge: null
+    badge: null,
   },
   {
     title: "Search Songs",
-    url: createPageUrl("SearchSongs"),
+    url: "/search-songs",
     icon: Search,
-    badge: null
+    badge: null,
   },
   {
     title: "Scheduler",
-    url: createPageUrl("Scheduler"),
+    url: "/scheduler",
     icon: Calendar,
-    badge: null
+    badge: null,
   },
   {
     title: "Settings",
-    url: createPageUrl("Settings"),
+    url: "/settings",
     icon: Settings,
-    badge: null
+    badge: null,
   },
   {
     title: "UI Look & Feel",
-    url: createPageUrl("UILookAndFeel"),
+    url: "/ui-look-and-feel",
     icon: Palette,
-    badge: null
+    badge: null,
   },
   {
     title: "Messages",
-    url: createPageUrl("Messages"),
+    url: "/messages",
     icon: MessageSquare,
-    badge: 4
+    badge: 4,
   },
   {
     title: "Music Zone Information",
-    url: createPageUrl("MusicZoneInfo"),
+    url: "/music-zone-info",
     icon: Info,
-    badge: null
+    badge: null,
   },
   {
     title: "Change Music Zone",
-    url: createPageUrl("ChangeMusicZone"),
+    url: "/change-music-zone",
     icon: Users,
-    badge: null
-  }
+    badge: null,
+  },
 ];
 
 export default function Layout({ children, currentPageName }) {
   const location = useLocation();
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [currentTrack, setCurrentTrack] = useState({
+  const [currentTrack] = useState({
     title: "Deep Cover (Explicit)",
     artist: "FAT JOE",
-    isPlaying: true
+    isPlaying: true,
   });
-  const [uiSettings, setUiSettings] = useState(null);
-  const [bannerUrl, setBannerUrl] = useState(null);
-
-  useEffect(() => {
-    const fetchSettings = async () => {
-      try {
-        const settingsList = await UISettings.list();
-        let settings = settingsList[0];
-        if (!settings) {
-          settings = await UISettings.create({
-            color_palette: "celtic",
-            background_theme: "dark"
-          });
-        }
-        setUiSettings(settings);
-
-        if (settings.banner_media_id && settings.banner_media_id !== 'default' && settings.banner_media_id !== 'none') {
-          const media = await CustomMedia.get(settings.banner_media_id);
-          setBannerUrl(media.file_url);
-        } else {
-          setBannerUrl(null);
-        }
-      } catch (error) {
-        console.error("Failed to load UI settings:", error);
-        // Set default settings on error to prevent crash
-        setUiSettings({ color_palette: "celtic", background_theme: "dark" });
-      }
-    };
-    fetchSettings();
-  }, [location.pathname]); // Refetch on navigation to see changes
 
   return (
     <div className="min-h-screen bg-gray-900 text-white">
-      {uiSettings && <ThemeStyle settings={uiSettings} />}
-
       <div className="flex h-screen">
         {/* Sidebar */}
-        <div className="w-64 bg-[var(--sidebar-bg)] flex flex-col relative text-[var(--text-primary)]">
+        <div className="w-64 bg-gray-800 flex flex-col relative text-white">
           {/* Header */}
-          <div className="p-4 border-b border-[var(--border-color)]">
+          <div className="p-4 border-b border-gray-700">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full djamms-gradient flex items-center justify-center">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 flex items-center justify-center">
                 <Music className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h1 className="text-lg font-bold text-[var(--text-primary)]">Manage My DJAMMS</h1>
+                <h1 className="text-lg font-bold text-white">
+                  Manage My DJAMMS
+                </h1>
               </div>
             </div>
           </div>
@@ -164,18 +123,18 @@ export default function Layout({ children, currentPageName }) {
                 <Link
                   key={item.title}
                   to={item.url}
-                  className={`sidebar-item flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium ${
+                  className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                     location.pathname === item.url
-                      ? 'active text-white'
-                      : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                      ? "bg-blue-600 text-white"
+                      : "text-gray-300 hover:text-white hover:bg-gray-700"
                   }`}
                 >
                   <item.icon className="w-4 h-4" />
                   <span className="flex-1">{item.title}</span>
                   {item.badge && (
-                    <Badge variant="destructive" className="bg-red-600 text-white">
+                    <span className="bg-red-600 text-white text-xs px-2 py-1 rounded-full">
                       {item.badge}
-                    </Badge>
+                    </span>
                   )}
                 </Link>
               ))}
@@ -184,14 +143,14 @@ export default function Layout({ children, currentPageName }) {
 
           {/* Spotify Integration */}
           <div className="p-4 border-t border-gray-700">
-            <Button className="w-full bg-green-600 hover:bg-green-700 text-white font-medium rounded-full">
+            <button className="w-full bg-green-600 hover:bg-green-700 text-white font-medium rounded-full py-2 px-4 transition-colors">
               <span className="mr-2">●</span>
               SPOTIFY LOG IN
-            </Button>
+            </button>
           </div>
 
           {/* Footer */}
-          <div className="p-4 border-t border-[var(--border-color)]">
+          <div className="p-4 border-t border-gray-700">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 bg-gray-600 rounded-lg flex items-center justify-center">
                 <Music className="w-6 h-6 text-white" />
@@ -210,15 +169,12 @@ export default function Layout({ children, currentPageName }) {
         {/* Main Content */}
         <div className="flex-1 flex flex-col">
           {/* Top Bar */}
-          <div className="h-16 djamms-gradient flex items-center justify-between px-6 shadow-lg relative">
-            {bannerUrl && uiSettings.banner_media_id !== 'none' && (
-              <img src={bannerUrl} alt="Custom Banner" className="absolute inset-0 w-full h-full object-cover opacity-30"/>
-            )}
-            <div className="relative flex items-center gap-4">
+          <div className="h-16 bg-gradient-to-r from-purple-500 to-blue-500 flex items-center justify-between px-6 shadow-lg">
+            <div className="flex items-center gap-4">
               <div className="w-12 h-12 bg-gray-800 rounded-lg overflow-hidden">
-                <img 
-                  src="https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=100&h=100&fit=crop" 
-                  alt="Album cover" 
+                <img
+                  src="https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=100&h=100&fit=crop"
+                  alt="Album cover"
                   className="w-full h-full object-cover"
                 />
               </div>
@@ -227,10 +183,12 @@ export default function Layout({ children, currentPageName }) {
                 <p className="text-sm text-gray-200">{currentTrack.artist}</p>
               </div>
             </div>
-            
-            <div className="relative flex items-center gap-4">
+
+            <div className="flex items-center gap-4">
               <div className="flex items-center gap-2 text-sm">
-                <div className={`w-2 h-2 rounded-full bg-green-400 ${currentTrack.isPlaying ? 'playing-indicator' : ''}`}></div>
+                <div
+                  className={`w-2 h-2 rounded-full bg-green-400 ${currentTrack.isPlaying ? "animate-pulse" : ""}`}
+                ></div>
                 <span className="text-white font-medium">PLAYING</span>
               </div>
               <div className="text-sm text-gray-200">
@@ -240,9 +198,7 @@ export default function Layout({ children, currentPageName }) {
           </div>
 
           {/* Page Content */}
-          <div className="flex-1 overflow-auto bg-[var(--main-bg)]">
-            {children}
-          </div>
+          <div className="flex-1 overflow-auto bg-gray-900">{children}</div>
         </div>
       </div>
     </div>
