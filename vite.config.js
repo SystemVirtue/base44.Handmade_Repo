@@ -7,9 +7,21 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "."),
-      "@/components": path.resolve(__dirname, "./Components"),
-      "@/entities": path.resolve(__dirname, "./Entities"),
+      "@/components": path.resolve(__dirname, "./components"),
+      "@/entities": path.resolve(__dirname, "./entities"),
       "@/utils": path.resolve(__dirname, "./utils"),
+    },
+  },
+  esbuild: {
+    loader: "jsx",
+    include: /src\/.*\.[jt]sx?$/,
+    exclude: [],
+  },
+  optimizeDeps: {
+    esbuildOptions: {
+      loader: {
+        ".js": "jsx",
+      },
     },
   },
   server: {
