@@ -13,7 +13,7 @@ import {
   Shuffle,
   Repeat,
 } from "lucide-react";
-import { useAudioStore, useUIStore, formatTime } from "./src/store/index.js";
+import { useAudioStore, useUIStore, formatTime } from "./store.js";
 
 export default function Dashboard() {
   const audioRef = useRef(null);
