@@ -13,7 +13,7 @@ import {
   Upload,
   Download,
 } from "lucide-react";
-import { useAudioStore, useUIStore, formatTime } from "./src/store/index.js";
+import { useAudioStore, useUIStore, formatTime } from "./store.js";
 
 export default function VideoOutput() {
   const canvasRef = useRef(null);
