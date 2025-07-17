@@ -117,6 +117,66 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/queue-schedule"
+        element={
+          <ProtectedRoute>
+            <Layout currentPageName="QueueSchedule">
+              <QueueSchedule />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/search-songs"
+        element={
+          <ProtectedRoute>
+            <Layout currentPageName="SearchSongs">
+              <SearchSongs />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/scheduler"
+        element={
+          <ProtectedRoute>
+            <Layout currentPageName="Scheduler">
+              <Scheduler />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/messages"
+        element={
+          <ProtectedRoute>
+            <Layout currentPageName="Messages">
+              <Messages />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/music-zone-info"
+        element={
+          <ProtectedRoute>
+            <Layout currentPageName="MusicZoneInfo">
+              <MusicZoneInfo />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/change-music-zone"
+        element={
+          <ProtectedRoute>
+            <Layout currentPageName="ChangeMusicZone">
+              <ChangeMusicZone />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
     </Routes>
   );
 }
