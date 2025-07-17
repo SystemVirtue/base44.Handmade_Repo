@@ -1,5 +1,11 @@
-import React from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import React, { useState } from "react";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
+import Login from "./Login.jsx";
 import Layout from "../Layout.js";
 import Dashboard from "../Dashboard.jsx";
 import DigitalSignage from "../DigitalSignage.jsx";
@@ -8,17 +14,20 @@ import Controls from "../Controls.jsx";
 import UILookAndFeel from "../UILookAndFeel.jsx";
 
 function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
   return (
     <Router>
       <Routes>
         <Route
           path="/"
           element={
-            <Layout currentPageName="Dashboard">
-              <Dashboard />
-            </Layout>
+            isAuthenticated ? <Navigate to="/dashboard" replace /> : <Login />
           }
         />
+        <Route path="/login" element={<Login />} />
+
+        {/* Protected Routes */}
         <Route
           path="/dashboard"
           element={
