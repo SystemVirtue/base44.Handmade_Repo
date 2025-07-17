@@ -1,0 +1,45 @@
+{
+  "name": "DigitalSignage",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Content name"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "image",
+        "video",
+        "html",
+        "text"
+      ],
+      "description": "Content type"
+    },
+    "file_url": {
+      "type": "string",
+      "description": "Content file URL"
+    },
+    "duration": {
+      "type": "number",
+      "description": "Display duration in seconds"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Content is active"
+    },
+    "order_index": {
+      "type": "number",
+      "description": "Display order"
+    },
+    "content_text": {
+      "type": "string",
+      "description": "Text content for scrolling"
+    }
+  },
+  "required": [
+    "name",
+    "type"
+  ]
+}

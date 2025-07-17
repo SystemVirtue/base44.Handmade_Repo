@@ -1,0 +1,49 @@
+{
+  "name": "Message",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Message title"
+    },
+    "content": {
+      "type": "string",
+      "description": "Message content"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "info",
+        "warning",
+        "error",
+        "success"
+      ],
+      "default": "info",
+      "description": "Message type"
+    },
+    "is_read": {
+      "type": "boolean",
+      "default": false,
+      "description": "Message read status"
+    },
+    "sent_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date sent"
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ],
+      "default": "medium",
+      "description": "Message priority"
+    }
+  },
+  "required": [
+    "title",
+    "content"
+  ]
+}

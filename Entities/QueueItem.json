@@ -1,0 +1,32 @@
+{
+  "name": "QueueItem",
+  "type": "object",
+  "properties": {
+    "song_id": {
+      "type": "string",
+      "description": "Reference to song"
+    },
+    "order_index": {
+      "type": "number",
+      "description": "Position in queue"
+    },
+    "requested_by": {
+      "type": "string",
+      "description": "User who requested"
+    },
+    "is_currently_playing": {
+      "type": "boolean",
+      "default": false,
+      "description": "Currently playing"
+    },
+    "played_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When song was played"
+    }
+  },
+  "required": [
+    "song_id",
+    "order_index"
+  ]
+}

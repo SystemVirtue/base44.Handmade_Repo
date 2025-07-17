@@ -1,0 +1,61 @@
+{
+  "name": "SystemSettings",
+  "type": "object",
+  "properties": {
+    "venue_name": {
+      "type": "string",
+      "description": "Venue name"
+    },
+    "system_mode": {
+      "type": "string",
+      "enum": [
+        "scheduler",
+        "manual",
+        "karaoke"
+      ],
+      "default": "scheduler",
+      "description": "Current system mode"
+    },
+    "volume": {
+      "type": "number",
+      "default": 100,
+      "description": "System volume"
+    },
+    "auto_play": {
+      "type": "boolean",
+      "default": true,
+      "description": "Auto-play next song"
+    },
+    "explicit_filter": {
+      "type": "boolean",
+      "default": false,
+      "description": "Filter explicit content"
+    },
+    "manual_cue_requests": {
+      "type": "boolean",
+      "default": false,
+      "description": "Allow manual cue requests"
+    },
+    "spotify_connected": {
+      "type": "boolean",
+      "default": false,
+      "description": "Spotify integration status"
+    },
+    "zone_id": {
+      "type": "string",
+      "description": "Music zone identifier"
+    },
+    "ip_address": {
+      "type": "string",
+      "description": "System IP address"
+    },
+    "is_verified": {
+      "type": "boolean",
+      "default": false,
+      "description": "Location verified"
+    }
+  },
+  "required": [
+    "venue_name"
+  ]
+}

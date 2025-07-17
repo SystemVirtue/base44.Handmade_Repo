@@ -1,0 +1,46 @@
+{
+  "name": "ScheduleSlot",
+  "type": "object",
+  "properties": {
+    "day_of_week": {
+      "type": "string",
+      "enum": [
+        "monday",
+        "tuesday",
+        "wednesday",
+        "thursday",
+        "friday",
+        "saturday",
+        "sunday"
+      ],
+      "description": "Day of the week"
+    },
+    "start_time": {
+      "type": "string",
+      "description": "Start time in HH:MM format"
+    },
+    "end_time": {
+      "type": "string",
+      "description": "End time in HH:MM format"
+    },
+    "playlist_id": {
+      "type": "string",
+      "description": "Reference to playlist"
+    },
+    "percentage": {
+      "type": "number",
+      "description": "Percentage of time slot"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Schedule slot is active"
+    }
+  },
+  "required": [
+    "day_of_week",
+    "start_time",
+    "end_time",
+    "playlist_id"
+  ]
+}
