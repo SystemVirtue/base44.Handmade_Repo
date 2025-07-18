@@ -309,7 +309,7 @@ export default function Scheduler() {
       selectedDays: [],
       day: "monday",
     });
-  }, [pendingOverwrite, schedules, removeSchedule, addSchedule]);
+  }, [pendingOverwrite, schedules, deleteSchedule, addSchedule]);
 
   // Copy entry
   const copyEntry = useCallback(() => {
