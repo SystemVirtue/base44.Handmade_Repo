@@ -186,9 +186,10 @@ export default function Scheduler() {
     if (
       !currentEntry.title ||
       !currentEntry.playlist ||
-      !currentEntry.endTime
+      !currentEntry.endTime ||
+      currentEntry.selectedDays.length === 0
     ) {
-      alert("Please fill in all required fields");
+      alert("Please fill in all required fields and select at least one day");
       return;
     }
 
