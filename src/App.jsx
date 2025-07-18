@@ -19,6 +19,7 @@ import Scheduler from "../Scheduler.jsx";
 import Messages from "../Messages.jsx";
 import MusicZoneInfo from "../MusicZoneInfo.jsx";
 import ChangeMusicZone from "../ChangeMusicZone.jsx";
+import Settings from "../Settings.jsx";
 
 // Protected Route component
 const ProtectedRoute = ({ children }) => {
