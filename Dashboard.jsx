@@ -285,9 +285,15 @@ export default function Dashboard() {
                   <ThumbsUp className="w-4 h-4" />
                   <span className="text-sm">Vote</span>
                 </button>
-                <button className="text-gray-400 hover:text-white transition-colors">
-                  <MoreHorizontal className="w-4 h-4" />
-                </button>
+                <TrackOptionsMenu
+                  track={currentTrack}
+                  onAddToQueue={handleAddToQueue}
+                  onAddToPlaylist={handleAddToPlaylist}
+                  onShare={handleShareTrack}
+                  onShowInfo={handleShowTrackInfo}
+                  onReport={handleReportTrack}
+                  size="medium"
+                />
               </div>
             </div>
           </div>
