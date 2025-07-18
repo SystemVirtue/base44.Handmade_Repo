@@ -344,7 +344,17 @@ export default function Scheduler() {
         JSON.parse(JSON.stringify(schedules)),
         ...prev.slice(0, 9),
       ]);
-      removeSchedule(currentEntry.id);
+
+      // Remove all related schedules (same title/time across different days)
+      const relatedSchedules = schedules.filter(
+        (s) =>
+          s.title === currentEntry.title &&
+          s.startTime === currentEntry.startTime &&
+          s.endTime === currentEntry.endTime &&
+          s.playlist === currentEntry.playlist,
+      );
+
+      relatedSchedules.forEach((s) => removeSchedule(s.id));
       setSelectedSlot(null);
       setCurrentEntry({
         id: "",
