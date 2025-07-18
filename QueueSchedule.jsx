@@ -603,158 +603,85 @@ export default function QueueSchedule() {
 
       {activeTab === "schedule" && (
         <div className="space-y-6">
-          {/* Schedule Controls */}
+          {/* Active Playlists */}
           <div className="bg-gray-800 rounded-lg p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-semibold">Active Playlists</h2>
-              <button
-                onClick={() => {
-                  setEditingSchedule(null);
-                  setShowScheduleModal(true);
-                }}
-                className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg flex items-center gap-2"
-              >
-                <Plus className="w-4 h-4" />
-                Add Schedule
-              </button>
+              <div className="text-sm text-gray-400">
+                Available for Scheduler
+              </div>
             </div>
 
-            {/* Schedule Items */}
-            <div className="space-y-3">
-              {schedules && schedules.length > 0 ? (
-                schedules.map((schedule) => (
+            {/* Active Playlists Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {activePlaylists.length > 0 ? (
+                activePlaylists.map((playlist) => (
                   <div
-                    key={schedule.id}
-                    className="flex items-center gap-4 p-4 bg-gray-700 rounded-lg"
+                    key={playlist.id}
+                    className="bg-gray-700 rounded-lg overflow-hidden"
                   >
-                    <Calendar className="w-5 h-5 text-blue-400" />
-
-                    <div className="flex-1">
-                      <p className="font-medium">{schedule.name}</p>
-                      <p className="text-gray-400 text-sm flex items-center gap-1">
-                        <Clock className="w-3 h-3" />
-                        {schedule.startTime} - {schedule.endTime}
-                      </p>
-                      <p className="text-gray-500 text-xs">
-                        {schedule.tracks?.length || 0} tracks • {schedule.type}
-                      </p>
+                    {/* Playlist Image */}
+                    <div className="relative aspect-video">
+                      <img
+                        src={playlist.image}
+                        alt={playlist.name}
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute top-2 right-2">
+                        <div className="bg-yellow-500 text-white p-1 rounded-full">
+                          <Star className="w-3 h-3 fill-current" />
+                        </div>
+                      </div>
                     </div>
 
-                    <div className="text-sm text-gray-400 capitalize">
-                      {schedule.type}
-                    </div>
+                    {/* Playlist Info */}
+                    <div className="p-4">
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-medium truncate">
+                            {playlist.name}
+                          </h3>
+                          <p className="text-gray-400 text-sm line-clamp-2">
+                            {playlist.description}
+                          </p>
+                        </div>
+                      </div>
 
-                    <div
-                      className={`w-3 h-3 rounded-full ${schedule.active ? "bg-green-400" : "bg-gray-500"}`}
-                    ></div>
+                      <div className="flex items-center justify-between text-sm text-gray-400 mb-3">
+                        <span>{playlist.trackCount} tracks</span>
+                        <span>{playlist.duration}</span>
+                      </div>
 
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => {
-                          setEditingSchedule(schedule);
-                          setShowScheduleModal(true);
-                        }}
-                        className="text-gray-400 hover:text-white"
-                        title="Edit schedule"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() =>
-                          updateSchedule(schedule.id, {
-                            active: !schedule.active,
-                          })
-                        }
-                        className="text-gray-400 hover:text-white"
-                        title={
-                          schedule.active
-                            ? "Disable schedule"
-                            : "Enable schedule"
-                        }
-                      >
-                        {schedule.active ? (
-                          <Pause className="w-4 h-4" />
-                        ) : (
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => {
+                            console.log(`Loading playlist: ${playlist.name}`);
+                          }}
+                          className="flex-1 bg-blue-600 hover:bg-blue-700 px-3 py-2 rounded-lg text-sm flex items-center justify-center gap-2"
+                        >
                           <Play className="w-4 h-4" />
-                        )}
-                      </button>
-                      <button
-                        onClick={() => removeSchedule(schedule.id)}
-                        className="text-gray-400 hover:text-red-400"
-                        title="Delete schedule"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                          Use in Scheduler
+                        </button>
+                        <button
+                          onClick={() => handleTogglePlaylistStar(playlist.id)}
+                          className="p-2 bg-gray-600 hover:bg-gray-500 rounded-lg"
+                          title="Remove from Active Playlists"
+                        >
+                          <Star className="w-4 h-4 fill-current text-yellow-500" />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))
               ) : (
-                <div className="text-center py-12 text-gray-400">
-                  <Calendar className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p className="text-lg mb-2">No schedules configured</p>
+                <div className="col-span-full text-center py-12 text-gray-400">
+                  <Star className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                  <p className="text-lg mb-2">No active playlists</p>
                   <p className="text-sm">
-                    Create your first schedule to automate playback
+                    Star playlists from "All Playlists" to add them here
                   </p>
                 </div>
               )}
-            </div>
-          </div>
-
-          {/* Today's Schedule Overview */}
-          <div className="bg-gray-800 rounded-lg p-6">
-            <h3 className="text-lg font-semibold mb-4">Today's Schedule</h3>
-            <div className="grid grid-cols-24 gap-1 h-8 mb-2">
-              {Array.from({ length: 24 }, (_, i) => {
-                const activeSchedule = schedules?.find(
-                  (s) =>
-                    s.active &&
-                    parseInt(s.startTime.split(":")[0]) <= i &&
-                    parseInt(s.endTime.split(":")[0]) > i,
-                );
-
-                return (
-                  <div
-                    key={i}
-                    className={`rounded transition-colors ${
-                      activeSchedule
-                        ? activeSchedule.type === "playlist"
-                          ? "bg-blue-600"
-                          : activeSchedule.type === "random"
-                            ? "bg-green-600"
-                            : activeSchedule.type === "template"
-                              ? "bg-purple-600"
-                              : "bg-gray-600"
-                        : "bg-gray-600"
-                    }`}
-                    title={`${i}:00 ${activeSchedule ? `- ${activeSchedule.name}` : ""}`}
-                  />
-                );
-              })}
-            </div>
-            <div className="flex justify-between text-xs text-gray-400">
-              <span>00:00</span>
-              <span>12:00</span>
-              <span>24:00</span>
-            </div>
-
-            {/* Legend */}
-            <div className="flex items-center gap-4 mt-4 text-sm">
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 bg-blue-600 rounded"></div>
-                <span className="text-gray-400">Playlist</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 bg-green-600 rounded"></div>
-                <span className="text-gray-400">Random</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 bg-purple-600 rounded"></div>
-                <span className="text-gray-400">Template</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 bg-gray-600 rounded"></div>
-                <span className="text-gray-400">Free Time</span>
-              </div>
             </div>
           </div>
         </div>
