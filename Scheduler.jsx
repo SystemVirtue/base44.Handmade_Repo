@@ -527,9 +527,11 @@ export default function Scheduler() {
                     className={`p-1 min-h-12 border border-gray-700 rounded cursor-pointer transition-colors ${
                       isSelected
                         ? "bg-yellow-600/70 border-yellow-400"
-                        : schedule || inSchedule
-                          ? "bg-blue-600/50 hover:bg-blue-600/70"
-                          : "hover:bg-gray-700"
+                        : schedule
+                          ? "bg-blue-600/50 hover:bg-blue-600/70 border-blue-400"
+                          : inSchedule
+                            ? "bg-blue-600/30 hover:bg-blue-600/50 border-blue-500 border-dashed"
+                            : "hover:bg-gray-700"
                     }`}
                     style={{
                       gridRowEnd: span > 1 ? `span ${span}` : undefined,
