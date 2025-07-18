@@ -194,6 +194,43 @@ export default function Dashboard() {
     setRepeatMode(modes[nextIndex]);
   };
 
+  // Track action handlers for options menu
+  const handleAddToPlaylist = (track) => {
+    console.log("Add to playlist:", track);
+    // TODO: Implement playlist functionality
+  };
+
+  const handleShareTrack = (track) => {
+    if (navigator.share) {
+      navigator
+        .share({
+          title: track.title,
+          text: `Check out "${track.title}" by ${track.artist}`,
+          url: window.location.href,
+        })
+        .catch(console.error);
+    } else {
+      // Fallback: copy to clipboard
+      const shareText = `${track.title} by ${track.artist}`;
+      navigator.clipboard
+        .writeText(shareText)
+        .then(() => {
+          console.log("Track info copied to clipboard");
+        })
+        .catch(console.error);
+    }
+  };
+
+  const handleShowTrackInfo = (track) => {
+    console.log("Show track info:", track);
+    // TODO: Implement track info modal/panel
+  };
+
+  const handleReportTrack = (track) => {
+    console.log("Report track:", track);
+    // TODO: Implement reporting system
+  };
+
   const getRepeatIcon = () => {
     switch (repeatMode) {
       case "one":
