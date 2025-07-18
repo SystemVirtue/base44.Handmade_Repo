@@ -522,7 +522,10 @@ export default function Dashboard() {
                 >
                   Add Sample Song
                 </button>
-                <button className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded text-sm transition-colors">
+                <button
+                  onClick={handleOpenLibraryBrowser}
+                  className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded text-sm transition-colors"
+                >
                   Browse Library
                 </button>
               </div>
