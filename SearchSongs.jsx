@@ -538,9 +538,9 @@ export default function SearchSongs() {
                   className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded text-white"
                 >
                   <option value="">Any Duration</option>
-                  <option value="short">Short (< 3 min)</option>
+                                    <option value="short">Short (&lt; 3 min)</option>
                   <option value="medium">Medium (3-5 min)</option>
-                  <option value="long">Long (> 5 min)</option>
+                  <option value="long">Long (&gt; 5 min)</option>
                 </select>
               </div>
 
