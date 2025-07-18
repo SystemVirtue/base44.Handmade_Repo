@@ -24,6 +24,11 @@ export const useAudioStore = create(
       isMuted: false,
       previousVolume: 75,
 
+      // Voting and favorites state
+      favorites: new Set(), // Track IDs that are favorited
+      votes: {}, // Track ID -> vote count mapping
+      userVotes: {}, // Track ID -> boolean (has user voted)
+
       // Queue state
       queue: [
         {
