@@ -253,7 +253,7 @@ export default function Scheduler() {
       playlist: "",
       startTime: "",
       endTime: "",
-      repeat: "None",
+      selectedDays: [],
       day: "monday",
     });
   }, [currentEntry, schedules, addSchedule, updateSchedule]);
