@@ -230,7 +230,7 @@ export default function Scheduler() {
         s.playlist === currentEntry.playlist,
     );
 
-    existingRelatedSchedules.forEach((s) => removeSchedule(s.id));
+    existingRelatedSchedules.forEach((s) => deleteSchedule(s.id));
 
     // Create new schedules for all selected days
     currentEntry.selectedDays.forEach((day, index) => {
