@@ -533,6 +533,15 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+
+      {/* Music Library Browser Modal */}
+      <MusicLibraryBrowser
+        isOpen={showLibraryBrowser}
+        onClose={handleCloseLibraryBrowser}
+        onAddToQueue={handleAddToQueue}
+        onPlayNow={handlePlayTrackNow}
+        mode="select"
+      />
     </div>
   );
 }
