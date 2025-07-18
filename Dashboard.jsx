@@ -43,6 +43,11 @@ export default function Dashboard() {
     addToQueue,
     removeFromQueue,
     setAudioInstance,
+    toggleFavorite,
+    voteForTrack,
+    isFavorite,
+    hasVoted,
+    getVoteCount,
   } = useAudioStore();
 
   const { setLoading } = useUIStore();
