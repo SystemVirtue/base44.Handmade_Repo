@@ -151,16 +151,99 @@ export default function Settings() {
     });
   };
 
+  const getDefaultSettings = () => ({
+    general: {
+      appName: "DJAMMS",
+      language: "en",
+      timezone: "America/New_York",
+      autoStart: true,
+      minimizeToTray: false,
+      checkUpdates: true,
+      telemetryEnabled: true,
+    },
+    audio: {
+      defaultVolume: 75,
+      maxVolume: 100,
+      audioEngine: "directsound",
+      sampleRate: 44100,
+      bufferSize: 512,
+      bitDepth: 16,
+      crossfadeDuration: 3,
+      normalizeAudio: true,
+      replayGain: true,
+    },
+    network: {
+      serverPort: 3000,
+      enableRemoteAccess: false,
+      remotePort: 8080,
+      enableSSL: false,
+      streamingQuality: "high",
+      bandwidthLimit: 0,
+      proxyEnabled: false,
+      proxyHost: "",
+      proxyPort: 8080,
+    },
+    security: {
+      enableAuth: true,
+      sessionTimeout: 24,
+      passwordPolicy: "medium",
+      twoFactorAuth: false,
+      apiKeys: [],
+      auditLog: true,
+      encryptData: true,
+      autoLogout: 30,
+    },
+    notifications: {
+      showDesktop: true,
+      playSound: true,
+      systemAlerts: true,
+      playbackNotifications: false,
+      errorNotifications: true,
+      updateNotifications: true,
+      scheduleReminders: true,
+    },
+    backup: {
+      autoBackup: true,
+      backupInterval: "daily",
+      backupLocation: "./backups",
+      retentionDays: 30,
+      includeMedia: false,
+      compression: true,
+      cloudSync: false,
+      cloudProvider: "none",
+    },
+    advanced: {
+      logLevel: "info",
+      maxLogSize: 100,
+      debugMode: false,
+      performanceMode: "balanced",
+      cacheSize: 256,
+      preloadTracks: 3,
+      analyticsEnabled: true,
+      experimentalFeatures: false,
+    },
+  });
+
   const handleResetSettings = () => {
     setShowResetModal(false);
-    // Reset to default settings
-    setSettings({
-      ...settings,
-      [activeTab]: {
-        // Reset current tab to defaults (would need default values)
-      },
-    });
+    const defaultSettings = getDefaultSettings();
+
+    // Reset current tab to defaults
+    setSettings((prev) => ({
+      ...prev,
+      [activeTab]: defaultSettings[activeTab],
+    }));
+
     setUnsavedChanges(true);
+
+    // Show notification
+    const { addNotification } = useUIStore.getState();
+    addNotification({
+      type: "info",
+      title: "Settings Reset",
+      message: `${tabs.find((t) => t.id === activeTab)?.label} settings have been reset to defaults`,
+      priority: "normal",
+    });
   };
 
   const handleExportSettings = () => {
