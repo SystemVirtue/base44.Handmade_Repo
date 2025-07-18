@@ -58,7 +58,7 @@ const navigationItems = [
     key: "controls",
   },
   {
-    title: "Queue / Schedule Lists",
+    title: "Queue & Playlist Manager",
     url: "/queue-schedule",
     icon: Calendar,
     badge: null,
@@ -79,13 +79,6 @@ const navigationItems = [
     key: "scheduler",
   },
   {
-    title: "Settings",
-    url: "/settings",
-    icon: Settings,
-    badge: null,
-    key: "settings",
-  },
-  {
     title: "UI Look & Feel",
     url: "/ui-look-and-feel",
     icon: Palette,
@@ -93,25 +86,25 @@ const navigationItems = [
     key: "ui-look-and-feel",
   },
   {
-    title: "Messages",
+    title: "Messages and Logs",
     url: "/messages",
     icon: MessageSquare,
     badge: null, // Will be dynamically set
     key: "messages",
   },
   {
-    title: "Music Zone Information",
+    title: "Network and Devices",
     url: "/music-zone-info",
     icon: Info,
     badge: null,
     key: "music-zone-info",
   },
   {
-    title: "Change Music Zone",
-    url: "/change-music-zone",
-    icon: Users,
+    title: "System Settings",
+    url: "/settings",
+    icon: Settings,
     badge: null,
-    key: "change-music-zone",
+    key: "settings",
   },
 ];
 
