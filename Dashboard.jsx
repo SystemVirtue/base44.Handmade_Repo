@@ -12,8 +12,10 @@ import {
   MoreHorizontal,
   Shuffle,
   Repeat,
+  Music,
 } from "lucide-react";
 import { useAudioStore, useUIStore, formatTime } from "./store.js";
+import ArtworkImage from "./components/ui/artwork-image.jsx";
 
 export default function Dashboard() {
   const audioRef = useRef(null);
