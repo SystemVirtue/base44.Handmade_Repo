@@ -130,6 +130,32 @@ export default function Controls() {
     });
   };
 
+  // Emergency handlers
+  const handleEmergencyStop = async () => {
+    const success = await emergencyActions.immediateStop();
+    if (success) {
+      setIsEmergencyActive(true);
+    }
+  };
+
+  const handleFadeOutStop = async () => {
+    const success = await emergencyActions.fadeOutStop(fadeOutDuration * 1000);
+    if (success) {
+      setIsEmergencyActive(true);
+    }
+  };
+
+  const handleSystemRecovery = async () => {
+    const success = await emergencyActions.systemRecovery();
+    if (success) {
+      setIsEmergencyActive(false);
+    }
+  };
+
+  const handleTestEmergency = async () => {
+    await emergencyActions.testEmergencySystems();
+  };
+
   return (
     <div className="p-8 text-white bg-gray-900 h-full overflow-y-auto">
       <div className="max-w-4xl mx-auto space-y-6">
