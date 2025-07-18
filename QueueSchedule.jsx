@@ -778,6 +778,44 @@ export default function QueueSchedule() {
           </div>
         </div>
       )}
+
+      {/* Modals */}
+      <ScheduleModal
+        isOpen={showScheduleModal}
+        onClose={() => {
+          setShowScheduleModal(false);
+          setEditingSchedule(null);
+        }}
+        onSave={(scheduleData) => {
+          if (editingSchedule) {
+            updateSchedule(editingSchedule.id, scheduleData);
+          } else {
+            addSchedule(scheduleData);
+          }
+        }}
+        schedule={editingSchedule}
+        templates={templates}
+        zones={zones}
+      />
+
+      <TemplateModal
+        isOpen={showTemplateModal}
+        onClose={() => {
+          setShowTemplateModal(false);
+          setEditingTemplate(null);
+        }}
+        onSave={(templateData) => {
+          if (editingTemplate) {
+            // Update existing template
+            removeTemplate(editingTemplate.id);
+            addTemplate(templateData);
+          } else {
+            addTemplate(templateData);
+          }
+        }}
+        template={editingTemplate}
+        availableTracks={queue} // Could be expanded to include library tracks
+      />
     </div>
   );
 }
