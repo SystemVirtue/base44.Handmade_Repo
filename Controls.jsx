@@ -621,12 +621,67 @@ export default function Controls() {
         <div className="bg-gray-800 rounded-lg p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-semibold">Equalizer</h2>
-            <button
-              onClick={resetEQ}
-              className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded transition-colors text-sm"
-            >
-              Reset
-            </button>
+            <div className="flex items-center gap-2">
+              {/* Audio Processing Status */}
+              <div
+                className={`w-2 h-2 rounded-full ${
+                  isAudioProcessingInitialized ? "bg-green-400" : "bg-red-400"
+                }`}
+                title={
+                  isAudioProcessingInitialized
+                    ? "Audio processing active"
+                    : "Audio processing inactive"
+                }
+              />
+
+              <button
+                onClick={resetEQ}
+                className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded transition-colors text-sm"
+              >
+                Reset
+              </button>
+            </div>
+          </div>
+
+          {/* EQ Presets */}
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              EQ Presets
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {audioProcessing.getEQPresets().map((preset) => (
+                <button
+                  key={preset.name}
+                  onClick={() => handleEQPresetChange(preset.name)}
+                  className={`px-3 py-1 rounded text-sm transition-colors ${
+                    selectedEQPreset === preset.name
+                      ? "bg-blue-600 text-white"
+                      : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                  }`}
+                >
+                  {preset.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Audio Effects */}
+          <div className="mb-6 flex items-center gap-4">
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={compressorEnabled}
+                onChange={handleCompressorToggle}
+                className="rounded"
+              />
+              <span className="text-sm">Dynamic Compressor</span>
+            </label>
+
+            <div className="text-xs text-gray-400">
+              {isAudioProcessingInitialized
+                ? `Sample Rate: ${audioProcessing.getProcessingStats()?.sampleRate || "N/A"} Hz`
+                : "Audio processing not initialized"}
+            </div>
           </div>
 
           <div className="grid grid-cols-4 gap-6">
