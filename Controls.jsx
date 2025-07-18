@@ -25,7 +25,6 @@ import {
   formatTime,
 } from "./store.js";
 import { EmergencyActions } from "./utils/emergency-system.js";
-import EmergencyControls from "./components/ui/emergency-controls.jsx";
 
 export default function Controls() {
   const [systemVolume, setSystemVolume] = useState(75);
