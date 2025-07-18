@@ -404,21 +404,33 @@ export const useZoneStore = create(
   ),
 );
 
-// Search Store
+// Search Store - Enhanced with multi-source search
 export const useSearchStore = create((set, get) => ({
   // Search state
   query: "",
   results: [],
+  searchResults: null, // Full search response with metadata
   isSearching: false,
   filters: {
-    source: "all",
+    sources: ["all"], // Array of enabled sources
     genre: "all",
     year: "any",
     duration: "any",
+    explicit: "any",
   },
 
-  // Recent searches
+  // Search history and suggestions
   recentSearches: [],
+  searchSuggestions: [],
+  searchHistory: [],
+
+  // Search analytics
+  searchStats: {
+    totalSearches: 0,
+    avgSearchTime: 0,
+    mostSearchedTerms: [],
+    preferredSources: {},
+  },
 
   // Actions
   setQuery: (query) => set({ query }),
@@ -429,52 +441,161 @@ export const useSearchStore = create((set, get) => ({
     })),
 
   performSearch: async (searchQuery) => {
+    if (!searchQuery.trim()) {
+      set({ results: [], searchResults: null });
+      return;
+    }
+
     set({ isSearching: true });
 
     try {
-      // Simulate API call delay
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // Import search service dynamically
+      const { performMultiSourceSearch } = await import(
+        "./services/search-service.js"
+      );
 
-      // Mock search results
-      const mockResults = [
+      // Get current filters
+      const { filters } = get();
+
+      // Perform multi-source search
+      const searchResponse = await performMultiSourceSearch(
+        searchQuery,
+        filters,
+        filters.sources,
+      );
+
+      // Update search history and stats
+      const newSearchHistory = [
         {
-          id: `search-${Date.now()}-1`,
-          title: `${searchQuery} Result 1`,
-          artist: "Artist Name",
-          album: "Album Name",
-          duration: 180,
-          source: "spotify",
-          thumbnail:
-            "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=100&h=100&fit=crop",
-          preview_url: "#",
+          query: searchQuery,
+          timestamp: new Date().toISOString(),
+          resultCount: searchResponse.total_results,
+          searchTime: searchResponse.search_time_ms,
+          sources: Object.keys(searchResponse.sources),
         },
-        {
-          id: `search-${Date.now()}-2`,
-          title: `${searchQuery} Result 2`,
-          artist: "Another Artist",
-          album: "Another Album",
-          duration: 210,
-          source: "youtube",
-          thumbnail:
-            "https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=100&h=100&fit=crop",
-          preview_url: "#",
-        },
-      ];
+        ...get().searchHistory.slice(0, 49),
+      ]; // Keep last 50 searches
+
+      // Update stats
+      const currentStats = get().searchStats;
+      const newStats = {
+        totalSearches: currentStats.totalSearches + 1,
+        avgSearchTime: Math.round(
+          (currentStats.avgSearchTime * currentStats.totalSearches +
+            searchResponse.search_time_ms) /
+            (currentStats.totalSearches + 1),
+        ),
+        mostSearchedTerms: updateSearchTermFrequency(
+          currentStats.mostSearchedTerms,
+          searchQuery,
+        ),
+        preferredSources: updateSourcePreferences(
+          currentStats.preferredSources,
+          filters.sources,
+        ),
+      };
 
       set({
-        results: mockResults,
-        recentSearches: [searchQuery, ...get().recentSearches.slice(0, 4)],
+        results: searchResponse.combined_results,
+        searchResults: searchResponse,
+        recentSearches: [
+          searchQuery,
+          ...get()
+            .recentSearches.filter((q) => q !== searchQuery)
+            .slice(0, 9),
+        ],
+        searchHistory: newSearchHistory,
+        searchStats: newStats,
       });
     } catch (error) {
       console.error("Search failed:", error);
-      set({ results: [] });
+      set({
+        results: [],
+        searchResults: {
+          query: searchQuery,
+          error: error.message,
+          total_results: 0,
+          combined_results: [],
+          sources: {},
+        },
+      });
     } finally {
       set({ isSearching: false });
     }
   },
 
-  clearResults: () => set({ results: [], query: "" }),
+  // Get search suggestions
+  getSuggestions: async (query) => {
+    if (!query.trim()) {
+      set({ searchSuggestions: [] });
+      return;
+    }
+
+    try {
+      const { getSearchSuggestions } = await import(
+        "./services/search-service.js"
+      );
+      const suggestions = await getSearchSuggestions(query);
+      set({ searchSuggestions: suggestions });
+    } catch (error) {
+      console.error("Failed to get suggestions:", error);
+      set({ searchSuggestions: [] });
+    }
+  },
+
+  // Clear search results
+  clearResults: () =>
+    set({
+      results: [],
+      searchResults: null,
+      query: "",
+      searchSuggestions: [],
+    }),
+
+  // Add track to favorites from search
+  addToFavorites: (trackId) => {
+    // This would integrate with the main audio store
+    console.log("Adding to favorites:", trackId);
+  },
+
+  // Get search analytics
+  getSearchAnalytics: () => {
+    const { searchHistory, searchStats } = get();
+    return {
+      ...searchStats,
+      recentSearches: searchHistory.slice(0, 10),
+      topSources: Object.entries(searchStats.preferredSources)
+        .sort(([, a], [, b]) => b - a)
+        .slice(0, 5),
+    };
+  },
 }));
+
+// Helper functions for search statistics
+function updateSearchTermFrequency(currentTerms, newTerm) {
+  const updatedTerms = [...currentTerms];
+  const existingTerm = updatedTerms.find((term) => term.query === newTerm);
+
+  if (existingTerm) {
+    existingTerm.count += 1;
+  } else {
+    updatedTerms.push({ query: newTerm, count: 1 });
+  }
+
+  return updatedTerms.sort((a, b) => b.count - a.count).slice(0, 20); // Keep top 20 most searched terms
+}
+
+function updateSourcePreferences(currentPrefs, usedSources) {
+  const updatedPrefs = { ...currentPrefs };
+
+  usedSources.forEach((source) => {
+    if (source !== "all") {
+      updatedPrefs[source] = (updatedPrefs[source] || 0) + 1;
+    }
+  });
+
+  return updatedPrefs;
+}
 
 // Format time utility
 export const formatTime = (seconds) => {
