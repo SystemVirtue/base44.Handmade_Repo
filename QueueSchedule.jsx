@@ -717,12 +717,25 @@ export default function QueueSchedule() {
                           {new Date(template.createdAt).toLocaleDateString()}
                         </p>
                       </div>
-                      <button
-                        onClick={() => removeTemplate(template.id)}
-                        className="text-gray-400 hover:text-red-400"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => {
+                            setEditingTemplate(template);
+                            setShowTemplateModal(true);
+                          }}
+                          className="text-gray-400 hover:text-white"
+                          title="Edit template"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => removeTemplate(template.id)}
+                          className="text-gray-400 hover:text-red-400"
+                          title="Delete template"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
 
                     <div className="flex items-center gap-2">
