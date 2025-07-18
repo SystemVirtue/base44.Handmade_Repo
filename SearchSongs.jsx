@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, {
+  useState,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+} from "react";
 import {
   Search,
   Filter,
@@ -24,6 +30,13 @@ import {
   ChevronUp,
   Shuffle,
   RotateCcw,
+  Grid,
+  List,
+  Sliders,
+  History,
+  BookmarkPlus,
+  SortAsc,
+  SortDesc,
 } from "lucide-react";
 import {
   useSearchStore,
@@ -33,673 +46,10 @@ import {
 } from "./store.js";
 import ArtworkImage from "./components/ui/artwork-image.jsx";
 import TrackOptionsMenu from "./components/ui/track-options-menu.jsx";
+import apiService from "./services/api-service.js";
+import persistenceService from "./services/persistence-service.js";
 
-export default function SearchSongs() {
-  const [localQuery, setLocalQuery] = useState("");
-  const [previewAudio, setPreviewAudio] = useState(null);
-  const [playingPreview, setPlayingPreview] = useState(null);
-  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
-  const [selectedResults, setSelectedResults] = useState(new Set());
-  const [sortBy, setSortBy] = useState("relevance");
-  const [viewMode, setViewMode] = useState("list"); // list, grid, compact
-  const [showAnalytics, setShowAnalytics] = useState(false);
-  const [selectedSources, setSelectedSources] = useState(["all"]);
-  const searchInputRef = useRef(null);
-
-  // Store state
-  const {
-    query,
-    results,
-    searchResults,
-    isSearching,
-    filters,
-    recentSearches,
-    searchSuggestions,
-    setQuery,
-    setFilters,
-    performSearch,
-    getSuggestions,
-    clearResults,
-    getSearchAnalytics,
-  } = useSearchStore();
-
-  const { addToQueue, toggleFavorite, isFavorite, hasVoted, voteForTrack } =
-    useAudioStore();
-  const { addNotification } = useUIStore();
-
-  // Debounced search
-  const debouncedSearch = useCallback(
-    debounce((searchQuery) => {
-      if (searchQuery.trim()) {
-        performSearch(searchQuery);
-      } else {
-        clearResults();
-      }
-    }, 300),
-    [performSearch, clearResults],
-  );
-
-  // Debounced suggestions
-  const debouncedSuggestions = useCallback(
-    debounce((searchQuery) => {
-      if (searchQuery.trim().length > 1) {
-        getSuggestions(searchQuery);
-      }
-    }, 200),
-    [getSuggestions],
-  );
-
-  // Handle search input changes
-  useEffect(() => {
-    if (localQuery !== query) {
-      setQuery(localQuery);
-      debouncedSearch(localQuery);
-      debouncedSuggestions(localQuery);
-    }
-  }, [localQuery, query, setQuery, debouncedSearch, debouncedSuggestions]);
-
-  // Filter and sort results
-  const filteredAndSortedResults = results
-    .filter((result) => {
-      // Apply filters
-      if (
-        filters.genre !== "all" &&
-        result.genre &&
-        result.genre.toLowerCase() !== filters.genre.toLowerCase()
-      ) {
-        return false;
-      }
-
-      if (filters.explicit !== "any") {
-        if (filters.explicit === "clean" && result.explicit) return false;
-        if (filters.explicit === "explicit" && !result.explicit) return false;
-      }
-
-      if (filters.year !== "any") {
-        const year = result.year;
-        switch (filters.year) {
-          case "2024":
-            return year === 2024;
-          case "2023":
-            return year === 2023;
-          case "2020s":
-            return year >= 2020 && year <= 2029;
-          case "2010s":
-            return year >= 2010 && year <= 2019;
-          case "2000s":
-            return year >= 2000 && year <= 2009;
-          case "1990s":
-            return year >= 1990 && year <= 1999;
-          case "pre-1990":
-            return year < 1990;
-          default:
-            return true;
-        }
-      }
-
-      if (filters.duration !== "any") {
-        const duration = result.duration;
-        switch (filters.duration) {
-          case "under3":
-            return duration < 180;
-          case "3to5":
-            return duration >= 180 && duration <= 300;
-          case "over5":
-            return duration > 300;
-          default:
-            return true;
-        }
-      }
-
-      return true;
-    })
-    .sort((a, b) => {
-      switch (sortBy) {
-        case "title":
-          return a.title.localeCompare(b.title);
-        case "artist":
-          return a.artist.localeCompare(b.artist);
-        case "duration":
-          return a.duration - b.duration;
-        case "year":
-          return (b.year || 0) - (a.year || 0);
-        case "popularity":
-          return (
-            (b.popularity || b.views || 0) - (a.popularity || a.views || 0)
-          );
-        case "relevance":
-        default:
-          return (b.relevance_score || 0) - (a.relevance_score || 0);
-      }
-    });
-
-  // Handle actions
-  const handlePlayPreview = (track) => {
-    if (playingPreview === track.id) {
-      previewAudio?.pause();
-      setPlayingPreview(null);
-      return;
-    }
-
-    if (previewAudio) {
-      previewAudio.pause();
-    }
-
-    if (track.preview_url && track.preview_url !== "#") {
-      const audio = new Audio(track.preview_url);
-      audio.play().catch(console.error);
-      audio.onended = () => setPlayingPreview(null);
-      setPreviewAudio(audio);
-      setPlayingPreview(track.id);
-    } else {
-      addNotification({
-        type: "info",
-        title: "Preview Not Available",
-        message: "No preview available for this track",
-        priority: "low",
-      });
-    }
-  };
-
-  const handleAddToQueue = (track) => {
-    addToQueue(track);
-    addNotification({
-      type: "success",
-      title: "Added to Queue",
-      message: `"${track.title}" by ${track.artist} added to queue`,
-      priority: "normal",
-    });
-  };
-
-  const handleBulkAdd = () => {
-    const tracksToAdd = filteredAndSortedResults.filter((track) =>
-      selectedResults.has(track.id),
-    );
-
-    tracksToAdd.forEach((track) => addToQueue(track));
-    setSelectedResults(new Set());
-
-    addNotification({
-      type: "success",
-      title: "Bulk Add Complete",
-      message: `Added ${tracksToAdd.length} tracks to queue`,
-      priority: "normal",
-    });
-  };
-
-  const handleSelectTrack = (trackId) => {
-    const newSelection = new Set(selectedResults);
-    if (newSelection.has(trackId)) {
-      newSelection.delete(trackId);
-    } else {
-      newSelection.add(trackId);
-    }
-    setSelectedResults(newSelection);
-  };
-
-  const handleSourceFilter = (sources) => {
-    setSelectedSources(sources);
-    setFilters({ ...filters, sources });
-  };
-
-  const getSourceIcon = (source) => {
-    switch (source) {
-      case "spotify":
-        return <Music className="w-4 h-4" style={{ color: "#1DB954" }} />;
-      case "youtube":
-        return <Video className="w-4 h-4" style={{ color: "#FF0000" }} />;
-      case "local":
-        return <Disc className="w-4 h-4" style={{ color: "#6366F1" }} />;
-      case "soundcloud":
-        return <Music className="w-4 h-4" style={{ color: "#FF5500" }} />;
-      default:
-        return <Music className="w-4 h-4" />;
-    }
-  };
-
-  const getSourceBadge = (source) => {
-    const colors = {
-      spotify: "bg-green-600",
-      youtube: "bg-red-600",
-      local: "bg-indigo-600",
-      soundcloud: "bg-orange-600",
-    };
-
-    return (
-      <span
-        className={`px-2 py-1 rounded text-xs font-medium text-white ${colors[source] || "bg-gray-600"}`}
-      >
-        {source.toUpperCase()}
-      </span>
-    );
-  };
-
-  // Source statistics
-  const sourceStats = searchResults?.sources || {};
-
-  return (
-    <div className="h-full bg-gray-900 text-white flex flex-col">
-      {/* Header */}
-      <div className="p-6 border-b border-gray-700">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <Search className="w-8 h-8 text-blue-400" />
-            <h1 className="text-3xl font-bold">Search Music</h1>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setShowAnalytics(!showAnalytics)}
-              className="p-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors"
-              title="Search Analytics"
-            >
-              <BarChart3 className="w-5 h-5" />
-            </button>
-
-            <button
-              onClick={clearResults}
-              className="p-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors"
-              title="Clear Results"
-            >
-              <RotateCcw className="w-5 h-5" />
-            </button>
-          </div>
-        </div>
-
-        {/* Search Input */}
-        <div className="relative mb-4">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-          <input
-            ref={searchInputRef}
-            type="text"
-            placeholder="Search for songs, artists, albums..."
-            value={localQuery}
-            onChange={(e) => setLocalQuery(e.target.value)}
-            className="w-full pl-12 pr-12 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          />
-
-          {localQuery && (
-            <button
-              onClick={() => setLocalQuery("")}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 text-gray-400 hover:text-white"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          )}
-
-          {/* Search Suggestions */}
-          {searchSuggestions.length > 0 && localQuery && (
-            <div className="absolute top-full left-0 right-0 mt-1 bg-gray-800 border border-gray-700 rounded-lg shadow-lg z-10">
-              {searchSuggestions.map((suggestion, index) => (
-                <button
-                  key={index}
-                  onClick={() => setLocalQuery(suggestion)}
-                  className="w-full text-left px-4 py-2 hover:bg-gray-700 transition-colors first:rounded-t-lg last:rounded-b-lg"
-                >
-                  {suggestion}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Recent Searches */}
-        {recentSearches.length > 0 && !localQuery && (
-          <div className="mb-4">
-            <h3 className="text-sm font-medium text-gray-400 mb-2">
-              Recent Searches
-            </h3>
-            <div className="flex flex-wrap gap-2">
-              {recentSearches.map((search, index) => (
-                <button
-                  key={index}
-                  onClick={() => setLocalQuery(search)}
-                  className="px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded-full text-sm transition-colors"
-                >
-                  {search}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Filters */}
-        <div className="space-y-4">
-          {/* Basic Filters */}
-          <div className="flex flex-wrap gap-4">
-            <select
-              value={filters.genre}
-              onChange={(e) =>
-                setFilters({ ...filters, genre: e.target.value })
-              }
-              className="bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-sm"
-            >
-              <option value="all">All Genres</option>
-              <option value="pop">Pop</option>
-              <option value="rock">Rock</option>
-              <option value="hip-hop">Hip-Hop</option>
-              <option value="electronic">Electronic</option>
-              <option value="jazz">Jazz</option>
-              <option value="classical">Classical</option>
-            </select>
-
-            <select
-              value={filters.year}
-              onChange={(e) => setFilters({ ...filters, year: e.target.value })}
-              className="bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-sm"
-            >
-              <option value="any">Any Year</option>
-              <option value="2024">2024</option>
-              <option value="2023">2023</option>
-              <option value="2020s">2020s</option>
-              <option value="2010s">2010s</option>
-              <option value="2000s">2000s</option>
-              <option value="1990s">1990s</option>
-              <option value="pre-1990">Pre-1990</option>
-            </select>
-
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              className="bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-sm"
-            >
-              <option value="relevance">Relevance</option>
-              <option value="title">Title A-Z</option>
-              <option value="artist">Artist A-Z</option>
-              <option value="year">Year (Newest)</option>
-              <option value="duration">Duration</option>
-              <option value="popularity">Popularity</option>
-            </select>
-
-            <button
-              onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-              className="flex items-center gap-2 px-3 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm transition-colors"
-            >
-              <Filter className="w-4 h-4" />
-              Advanced
-              {showAdvancedFilters ? (
-                <ChevronUp className="w-4 h-4" />
-              ) : (
-                <ChevronDown className="w-4 h-4" />
-              )}
-            </button>
-          </div>
-
-          {/* Advanced Filters */}
-          {showAdvancedFilters && (
-            <div className="flex flex-wrap gap-4 p-4 bg-gray-800 rounded-lg">
-              <select
-                value={filters.duration}
-                onChange={(e) =>
-                  setFilters({ ...filters, duration: e.target.value })
-                }
-                className="bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-sm"
-              >
-                <option value="any">Any Duration</option>
-                <option value="under3">Under 3 min</option>
-                <option value="3to5">3-5 min</option>
-                <option value="over5">Over 5 min</option>
-              </select>
-
-              <select
-                value={filters.explicit}
-                onChange={(e) =>
-                  setFilters({ ...filters, explicit: e.target.value })
-                }
-                className="bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-sm"
-              >
-                <option value="any">Any Content</option>
-                <option value="clean">Clean Only</option>
-                <option value="explicit">Explicit Only</option>
-              </select>
-
-              {/* Source Selection */}
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-400">Sources:</span>
-                <div className="flex gap-1">
-                  {["all", "spotify", "youtube", "local"].map((source) => (
-                    <button
-                      key={source}
-                      onClick={() => {
-                        if (source === "all") {
-                          handleSourceFilter(["all"]);
-                        } else {
-                          const newSources = selectedSources.includes("all")
-                            ? [source]
-                            : selectedSources.includes(source)
-                              ? selectedSources.filter((s) => s !== source)
-                              : [
-                                  ...selectedSources.filter((s) => s !== "all"),
-                                  source,
-                                ];
-                          handleSourceFilter(
-                            newSources.length === 0 ? ["all"] : newSources,
-                          );
-                        }
-                      }}
-                      className={`px-2 py-1 rounded text-xs transition-colors ${
-                        selectedSources.includes(source) ||
-                        (selectedSources.includes("all") && source !== "all")
-                          ? "bg-blue-600 text-white"
-                          : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-                      }`}
-                    >
-                      {source === "all"
-                        ? "All"
-                        : source.charAt(0).toUpperCase() + source.slice(1)}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Search Results */}
-      <div className="flex-1 overflow-auto">
-        {/* Search Status */}
-        {searchResults && (
-          <div className="p-4 border-b border-gray-700">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <span className="text-sm text-gray-400">
-                  {isSearching
-                    ? "Searching..."
-                    : `${searchResults.total_results} results in ${searchResults.search_time_ms}ms`}
-                </span>
-
-                {/* Source Results Count */}
-                <div className="flex items-center gap-2">
-                  {Object.entries(sourceStats).map(([source, data]) => (
-                    <div
-                      key={source}
-                      className="flex items-center gap-1 text-xs text-gray-400"
-                    >
-                      {getSourceIcon(source)}
-                      <span>{data.count}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Bulk Actions */}
-              {selectedResults.size > 0 && (
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-400">
-                    {selectedResults.size} selected
-                  </span>
-                  <button
-                    onClick={handleBulkAdd}
-                    className="px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded text-sm transition-colors"
-                  >
-                    Add Selected
-                  </button>
-                  <button
-                    onClick={() => setSelectedResults(new Set())}
-                    className="px-3 py-1 bg-gray-600 hover:bg-gray-500 rounded text-sm transition-colors"
-                  >
-                    Clear
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Loading State */}
-        {isSearching && (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
-            <span className="ml-3 text-gray-400">
-              Searching across all sources...
-            </span>
-          </div>
-        )}
-
-        {/* No Results */}
-        {!isSearching && results.length === 0 && query && (
-          <div className="flex flex-col items-center justify-center py-12 text-gray-400">
-            <Music className="w-16 h-16 mb-4" />
-            <p className="text-lg mb-2">No results found for "{query}"</p>
-            <p className="text-sm">
-              Try adjusting your search terms or filters
-            </p>
-          </div>
-        )}
-
-        {/* Results List */}
-        {!isSearching && filteredAndSortedResults.length > 0 && (
-          <div className="p-4 space-y-2">
-            {filteredAndSortedResults.map((track) => (
-              <div
-                key={track.id}
-                className={`flex items-center gap-4 p-3 rounded-lg transition-all hover:bg-gray-800 group ${
-                  selectedResults.has(track.id)
-                    ? "bg-blue-900/20 ring-1 ring-blue-500"
-                    : ""
-                }`}
-              >
-                {/* Selection Checkbox */}
-                <input
-                  type="checkbox"
-                  checked={selectedResults.has(track.id)}
-                  onChange={() => handleSelectTrack(track.id)}
-                  className="rounded"
-                />
-
-                {/* Artwork */}
-                <ArtworkImage
-                  track={track}
-                  size="small"
-                  className="w-12 h-12 rounded"
-                  showLoadingState={false}
-                />
-
-                {/* Track Info */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <h3 className="font-medium text-white truncate">
-                      {track.title}
-                    </h3>
-                    {track.explicit && (
-                      <span className="px-1 py-0.5 bg-gray-600 text-gray-300 text-xs rounded">
-                        E
-                      </span>
-                    )}
-                    {getSourceBadge(track.source)}
-                  </div>
-                  <p className="text-gray-400 text-sm truncate">
-                    {track.artist}
-                  </p>
-                  <p className="text-gray-500 text-xs truncate">
-                    {track.album || "Unknown Album"}
-                  </p>
-                </div>
-
-                {/* Track Stats */}
-                <div className="text-right text-sm text-gray-400">
-                  <p>{formatTime(track.duration)}</p>
-                  {track.year && <p className="text-xs">{track.year}</p>}
-                  {track.popularity && (
-                    <div className="flex items-center gap-1 text-xs">
-                      <Star className="w-3 h-3" />
-                      <span>{track.popularity}</span>
-                    </div>
-                  )}
-                  {track.views && (
-                    <div className="flex items-center gap-1 text-xs">
-                      <Eye className="w-3 h-3" />
-                      <span>{(track.views / 1000000).toFixed(1)}M</span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Actions */}
-                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button
-                    onClick={() => handlePlayPreview(track)}
-                    className="p-2 text-gray-400 hover:text-blue-400 transition-colors"
-                    title="Preview"
-                  >
-                    <Play className="w-4 h-4" />
-                  </button>
-
-                  <button
-                    onClick={() => handleAddToQueue(track)}
-                    className="p-2 text-gray-400 hover:text-green-400 transition-colors"
-                    title="Add to Queue"
-                  >
-                    <Plus className="w-4 h-4" />
-                  </button>
-
-                  <button
-                    onClick={() => toggleFavorite(track.id)}
-                    className={`p-2 transition-colors ${
-                      isFavorite(track.id)
-                        ? "text-red-400 hover:text-red-300"
-                        : "text-gray-400 hover:text-red-400"
-                    }`}
-                    title="Favorite"
-                  >
-                    <Heart
-                      className={`w-4 h-4 ${isFavorite(track.id) ? "fill-current" : ""}`}
-                    />
-                  </button>
-
-                  <TrackOptionsMenu
-                    track={track}
-                    onAddToQueue={handleAddToQueue}
-                    onAddToPlaylist={() =>
-                      console.log("Add to playlist:", track)
-                    }
-                    onShare={() => console.log("Share track:", track)}
-                    onShowInfo={() => console.log("Show info:", track)}
-                    onReport={() => console.log("Report track:", track)}
-                    size="small"
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Empty State */}
-        {!query && !isSearching && (
-          <div className="flex flex-col items-center justify-center py-12 text-gray-400">
-            <Search className="w-16 h-16 mb-4" />
-            <p className="text-lg mb-2">Search for Music</p>
-            <p className="text-sm">
-              Find songs from Spotify, YouTube, and your local library
-            </p>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// Utility function for debouncing
+// Debounce utility
 function debounce(func, wait) {
   let timeout;
   return function executedFunction(...args) {
@@ -710,4 +60,834 @@ function debounce(func, wait) {
     clearTimeout(timeout);
     timeout = setTimeout(later, wait);
   };
+}
+
+export default function SearchSongs() {
+  const [localQuery, setLocalQuery] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [suggestions, setSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [previewAudio, setPreviewAudio] = useState(null);
+  const [playingPreview, setPlayingPreview] = useState(null);
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const [selectedResults, setSelectedResults] = useState(new Set());
+  const [sortBy, setSortBy] = useState("relevance");
+  const [viewMode, setViewMode] = useState("list");
+  const [showAnalytics, setShowAnalytics] = useState(false);
+  const [totalResults, setTotalResults] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [recentSearches, setRecentSearches] = useState([]);
+
+  // Advanced filters
+  const [filters, setFilters] = useState({
+    genre: "",
+    artist: "",
+    year: "",
+    duration: "",
+    bitrate: "",
+    popularity: "",
+  });
+
+  const searchInputRef = useRef(null);
+
+  // Store state
+  const { addToQueue, toggleFavorite, isFavorite, hasVoted, voteForTrack } =
+    useAudioStore();
+  const { addNotification } = useUIStore();
+
+  // Load recent searches on mount
+  useEffect(() => {
+    const recent = persistenceService.getRecentSearches();
+    setRecentSearches(recent);
+  }, []);
+
+  // Enhanced search function
+  const performSearch = useCallback(
+    async (searchQuery, searchFilters = {}, page = 1) => {
+      if (!searchQuery.trim()) {
+        setSearchResults([]);
+        setTotalResults(0);
+        return;
+      }
+
+      setIsSearching(true);
+      try {
+        const response = await apiService.searchTracks(searchQuery, {
+          ...filters,
+          ...searchFilters,
+          page,
+          limit: 50,
+        });
+
+        if (response.success) {
+          const results = response.data.tracks || [];
+
+          // Sort results based on selected criteria
+          const sortedResults = sortResults(results, sortBy);
+
+          if (page === 1) {
+            setSearchResults(sortedResults);
+            // Add to recent searches
+            persistenceService.addRecentSearch(searchQuery);
+            const updatedRecent = persistenceService.getRecentSearches();
+            setRecentSearches(updatedRecent);
+          } else {
+            // Append for pagination
+            setSearchResults((prev) => [...prev, ...sortedResults]);
+          }
+
+          setTotalResults(response.data.total || results.length);
+          setCurrentPage(page);
+        }
+      } catch (error) {
+        console.error("Search failed:", error);
+        addNotification({
+          type: "error",
+          message: "Search failed. Please try again.",
+          duration: 3000,
+        });
+      } finally {
+        setIsSearching(false);
+      }
+    },
+    [filters, sortBy, addNotification],
+  );
+
+  // Search suggestions
+  const getSuggestions = useCallback(async (query) => {
+    if (query.length < 2) {
+      setSuggestions([]);
+      return;
+    }
+
+    try {
+      // For now, generate suggestions from recent searches and common terms
+      const recent = persistenceService.getRecentSearches();
+      const matchingRecent = recent.filter((search) =>
+        search.toLowerCase().includes(query.toLowerCase()),
+      );
+
+      // Add some smart suggestions based on query
+      const smartSuggestions = generateSmartSuggestions(query);
+
+      const allSuggestions = [
+        ...matchingRecent.slice(0, 3),
+        ...smartSuggestions.slice(0, 5),
+      ].slice(0, 8);
+
+      setSuggestions(allSuggestions);
+    } catch (error) {
+      console.error("Failed to get suggestions:", error);
+    }
+  }, []);
+
+  // Generate smart suggestions
+  const generateSmartSuggestions = (query) => {
+    const commonGenres = [
+      "rock",
+      "pop",
+      "jazz",
+      "blues",
+      "electronic",
+      "hip hop",
+      "classical",
+    ];
+    const commonArtists = [
+      "Beatles",
+      "Queen",
+      "Led Zeppelin",
+      "Pink Floyd",
+      "Bob Dylan",
+    ];
+
+    const suggestions = [];
+
+    // Genre suggestions
+    commonGenres.forEach((genre) => {
+      if (
+        genre.toLowerCase().includes(query.toLowerCase()) &&
+        !suggestions.includes(genre)
+      ) {
+        suggestions.push(genre);
+      }
+    });
+
+    // Artist suggestions
+    commonArtists.forEach((artist) => {
+      if (
+        artist.toLowerCase().includes(query.toLowerCase()) &&
+        !suggestions.includes(artist)
+      ) {
+        suggestions.push(artist);
+      }
+    });
+
+    return suggestions;
+  };
+
+  // Sort results
+  const sortResults = (results, criteria) => {
+    const sorted = [...results];
+
+    switch (criteria) {
+      case "title":
+        return sorted.sort((a, b) => a.title.localeCompare(b.title));
+      case "artist":
+        return sorted.sort((a, b) => a.artist.localeCompare(b.artist));
+      case "duration":
+        return sorted.sort((a, b) => a.duration - b.duration);
+      case "year":
+        return sorted.sort((a, b) => (b.year || 0) - (a.year || 0));
+      case "popularity":
+        return sorted.sort((a, b) => (b.popularity || 0) - (a.popularity || 0));
+      case "relevance":
+      default:
+        return sorted.sort((a, b) => (b.popularity || 0) - (a.popularity || 0));
+    }
+  };
+
+  // Debounced search
+  const debouncedSearch = useCallback(
+    debounce((searchQuery) => {
+      performSearch(searchQuery);
+    }, 300),
+    [performSearch],
+  );
+
+  // Debounced suggestions
+  const debouncedSuggestions = useCallback(
+    debounce((searchQuery) => {
+      getSuggestions(searchQuery);
+    }, 200),
+    [getSuggestions],
+  );
+
+  // Handle search input changes
+  const handleSearchChange = (value) => {
+    setLocalQuery(value);
+    setShowSuggestions(true);
+    if (value.trim()) {
+      debouncedSearch(value);
+      debouncedSuggestions(value);
+    } else {
+      setSearchResults([]);
+      setSuggestions([]);
+      setTotalResults(0);
+    }
+  };
+
+  // Handle suggestion click
+  const handleSuggestionClick = (suggestion) => {
+    setLocalQuery(suggestion);
+    setShowSuggestions(false);
+    performSearch(suggestion);
+  };
+
+  // Handle filter changes
+  const handleFilterChange = (filterKey, value) => {
+    const newFilters = { ...filters, [filterKey]: value };
+    setFilters(newFilters);
+    if (localQuery.trim()) {
+      performSearch(localQuery, newFilters);
+    }
+  };
+
+  // Clear filters
+  const clearFilters = () => {
+    setFilters({
+      genre: "",
+      artist: "",
+      year: "",
+      duration: "",
+      bitrate: "",
+      popularity: "",
+    });
+    if (localQuery.trim()) {
+      performSearch(localQuery, {});
+    }
+  };
+
+  // Handle track preview
+  const handlePreview = (track) => {
+    if (playingPreview === track.id) {
+      // Stop preview
+      if (previewAudio) {
+        previewAudio.pause();
+        setPreviewAudio(null);
+        setPlayingPreview(null);
+      }
+      return;
+    }
+
+    // Stop previous preview
+    if (previewAudio) {
+      previewAudio.pause();
+    }
+
+    // Start new preview (simulate with timeout for demo)
+    setPlayingPreview(track.id);
+
+    // In real implementation, you would play actual audio
+    setTimeout(() => {
+      setPlayingPreview(null);
+    }, 30000); // 30 second preview
+  };
+
+  // Bulk operations
+  const handleSelectAll = () => {
+    if (selectedResults.size === searchResults.length) {
+      setSelectedResults(new Set());
+    } else {
+      setSelectedResults(new Set(searchResults.map((track) => track.id)));
+    }
+  };
+
+  const handleBulkAddToQueue = () => {
+    const selectedTracks = searchResults.filter((track) =>
+      selectedResults.has(track.id),
+    );
+    selectedTracks.forEach((track) => addToQueue(track));
+    setSelectedResults(new Set());
+    addNotification({
+      type: "success",
+      message: `Added ${selectedTracks.length} tracks to queue`,
+      duration: 3000,
+    });
+  };
+
+  // Load more results (pagination)
+  const loadMoreResults = () => {
+    if (localQuery.trim() && !isSearching) {
+      performSearch(localQuery, filters, currentPage + 1);
+    }
+  };
+
+  // Filter active state
+  const hasActiveFilters = useMemo(() => {
+    return Object.values(filters).some((value) => value !== "");
+  }, [filters]);
+
+  return (
+    <div className="p-8 text-white bg-gray-900 h-full">
+      <div className="max-w-6xl mx-auto">
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-3xl font-bold">Search Songs</h1>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowAnalytics(!showAnalytics)}
+              className="p-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors"
+              title="Search Analytics"
+            >
+              <BarChart3 className="w-5 h-5" />
+            </button>
+
+            <div className="flex items-center bg-gray-700 rounded-lg">
+              <button
+                onClick={() => setViewMode("list")}
+                className={`p-2 transition-colors ${viewMode === "list" ? "bg-blue-600" : "hover:bg-gray-600"}`}
+                title="List View"
+              >
+                <List className="w-5 h-5" />
+              </button>
+              <button
+                onClick={() => setViewMode("grid")}
+                className={`p-2 transition-colors ${viewMode === "grid" ? "bg-blue-600" : "hover:bg-gray-600"}`}
+                title="Grid View"
+              >
+                <Grid className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Search Interface */}
+        <div className="bg-gray-800 rounded-lg p-6 mb-6">
+          <div className="relative mb-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <input
+                ref={searchInputRef}
+                type="text"
+                value={localQuery}
+                onChange={(e) => handleSearchChange(e.target.value)}
+                onFocus={() => setShowSuggestions(true)}
+                onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                placeholder="Search for songs, artists, albums..."
+                className="w-full pl-10 pr-12 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
+              />
+              {localQuery && (
+                <button
+                  onClick={() => {
+                    setLocalQuery("");
+                    setSearchResults([]);
+                    setSuggestions([]);
+                    setTotalResults(0);
+                  }}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              )}
+            </div>
+
+            {/* Search Suggestions */}
+            {showSuggestions &&
+              (suggestions.length > 0 || recentSearches.length > 0) && (
+                <div className="absolute top-full left-0 right-0 mt-1 bg-gray-700 border border-gray-600 rounded-lg shadow-lg z-50 max-h-64 overflow-y-auto">
+                  {recentSearches.length > 0 && (
+                    <div className="p-3 border-b border-gray-600">
+                      <div className="flex items-center gap-2 text-sm text-gray-400 mb-2">
+                        <History className="w-4 h-4" />
+                        Recent Searches
+                      </div>
+                      {recentSearches.slice(0, 3).map((search, index) => (
+                        <button
+                          key={index}
+                          onClick={() => handleSuggestionClick(search)}
+                          className="block w-full text-left px-2 py-1 hover:bg-gray-600 rounded text-sm"
+                        >
+                          {search}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {suggestions.length > 0 && (
+                    <div className="p-3">
+                      <div className="text-sm text-gray-400 mb-2">
+                        Suggestions
+                      </div>
+                      {suggestions.map((suggestion, index) => (
+                        <button
+                          key={index}
+                          onClick={() => handleSuggestionClick(suggestion)}
+                          className="block w-full text-left px-2 py-1 hover:bg-gray-600 rounded text-sm"
+                        >
+                          {suggestion}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+          </div>
+
+          {/* Advanced Filters */}
+          <div className="flex items-center gap-4 mb-4">
+            <button
+              onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+                showAdvancedFilters || hasActiveFilters
+                  ? "bg-blue-600 text-white"
+                  : "bg-gray-700 hover:bg-gray-600"
+              }`}
+            >
+              <Sliders className="w-4 h-4" />
+              Filters
+              {hasActiveFilters && (
+                <span className="text-xs bg-white text-blue-600 rounded-full px-2">
+                  ON
+                </span>
+              )}
+              {showAdvancedFilters ? (
+                <ChevronUp className="w-4 h-4" />
+              ) : (
+                <ChevronDown className="w-4 h-4" />
+              )}
+            </button>
+
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              className="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"
+            >
+              <option value="relevance">Sort by Relevance</option>
+              <option value="title">Sort by Title</option>
+              <option value="artist">Sort by Artist</option>
+              <option value="year">Sort by Year</option>
+              <option value="duration">Sort by Duration</option>
+              <option value="popularity">Sort by Popularity</option>
+            </select>
+
+            {hasActiveFilters && (
+              <button
+                onClick={clearFilters}
+                className="flex items-center gap-2 px-3 py-2 bg-red-600 hover:bg-red-700 rounded-lg transition-colors text-sm"
+              >
+                <RotateCcw className="w-4 h-4" />
+                Clear Filters
+              </button>
+            )}
+          </div>
+
+          {/* Advanced Filters Panel */}
+          {showAdvancedFilters && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-gray-750 rounded-lg">
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">
+                  Genre
+                </label>
+                <select
+                  value={filters.genre}
+                  onChange={(e) => handleFilterChange("genre", e.target.value)}
+                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded text-white"
+                >
+                  <option value="">All Genres</option>
+                  <option value="rock">Rock</option>
+                  <option value="pop">Pop</option>
+                  <option value="jazz">Jazz</option>
+                  <option value="blues">Blues</option>
+                  <option value="electronic">Electronic</option>
+                  <option value="hip hop">Hip Hop</option>
+                  <option value="classical">Classical</option>
+                  <option value="country">Country</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">
+                  Artist
+                </label>
+                <input
+                  type="text"
+                  value={filters.artist}
+                  onChange={(e) => handleFilterChange("artist", e.target.value)}
+                  placeholder="Artist name..."
+                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded text-white placeholder-gray-400"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">
+                  Year Range
+                </label>
+                <select
+                  value={filters.year}
+                  onChange={(e) => handleFilterChange("year", e.target.value)}
+                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded text-white"
+                >
+                  <option value="">All Years</option>
+                  <option value="2020s">2020s</option>
+                  <option value="2010s">2010s</option>
+                  <option value="2000s">2000s</option>
+                  <option value="1990s">1990s</option>
+                  <option value="1980s">1980s</option>
+                  <option value="1970s">1970s</option>
+                  <option value="1960s">1960s</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">
+                  Duration
+                </label>
+                <select
+                  value={filters.duration}
+                  onChange={(e) =>
+                    handleFilterChange("duration", e.target.value)
+                  }
+                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded text-white"
+                >
+                  <option value="">Any Duration</option>
+                  <option value="short">Short (&lt; 3 min)</option>
+                  <option value="medium">Medium (3-5 min)</option>
+                  <option value="long">Long (&gt; 5 min)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">
+                  Quality
+                </label>
+                <select
+                  value={filters.bitrate}
+                  onChange={(e) =>
+                    handleFilterChange("bitrate", e.target.value)
+                  }
+                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded text-white"
+                >
+                  <option value="">Any Quality</option>
+                  <option value="320">320 kbps</option>
+                  <option value="256">256 kbps</option>
+                  <option value="192">192 kbps</option>
+                  <option value="128">128 kbps</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">
+                  Popularity
+                </label>
+                <select
+                  value={filters.popularity}
+                  onChange={(e) =>
+                    handleFilterChange("popularity", e.target.value)
+                  }
+                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded text-white"
+                >
+                  <option value="">Any Popularity</option>
+                  <option value="high">High (&gt; 80)</option>
+                  <option value="medium">Medium (40-80)</option>
+                  <option value="low">Low (&lt; 40)</option>
+                </select>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Search Results */}
+        {isSearching && (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+            <span className="ml-2 text-gray-400">Searching...</span>
+          </div>
+        )}
+
+        {searchResults.length > 0 && (
+          <div className="bg-gray-800 rounded-lg p-6">
+            {/* Results Header */}
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-4">
+                <h2 className="text-xl font-semibold">
+                  {totalResults.toLocaleString()} Results
+                  {localQuery && (
+                    <span className="text-gray-400 ml-2">
+                      for "{localQuery}"
+                    </span>
+                  )}
+                </h2>
+
+                {selectedResults.size > 0 && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-gray-400">
+                      {selectedResults.size} selected
+                    </span>
+                    <button
+                      onClick={handleBulkAddToQueue}
+                      className="px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded text-sm transition-colors"
+                    >
+                      Add to Queue
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleSelectAll}
+                  className="text-sm text-blue-400 hover:text-blue-300"
+                >
+                  {selectedResults.size === searchResults.length
+                    ? "Deselect All"
+                    : "Select All"}
+                </button>
+              </div>
+            </div>
+
+            {/* Results List */}
+            <div
+              className={
+                viewMode === "grid"
+                  ? "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
+                  : "space-y-2"
+              }
+            >
+              {searchResults.map((track) => (
+                <div
+                  key={track.id}
+                  className={`${
+                    viewMode === "grid"
+                      ? "bg-gray-700 rounded-lg p-4 hover:bg-gray-650 transition-colors"
+                      : "flex items-center gap-4 p-3 bg-gray-700 rounded-lg hover:bg-gray-650 transition-colors"
+                  } ${selectedResults.has(track.id) ? "ring-2 ring-blue-500" : ""}`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedResults.has(track.id)}
+                    onChange={(e) => {
+                      const newSelection = new Set(selectedResults);
+                      if (e.target.checked) {
+                        newSelection.add(track.id);
+                      } else {
+                        newSelection.delete(track.id);
+                      }
+                      setSelectedResults(newSelection);
+                    }}
+                    className="rounded"
+                  />
+
+                  {viewMode === "grid" ? (
+                    <div className="text-center">
+                      <ArtworkImage
+                        src={track.thumbnail}
+                        alt={track.title}
+                        size="lg"
+                        className="mx-auto mb-3"
+                      />
+                      <h3 className="font-medium truncate mb-1">
+                        {track.title}
+                      </h3>
+                      <p className="text-gray-400 text-sm truncate mb-2">
+                        {track.artist}
+                      </p>
+                      <div className="flex items-center justify-center gap-2">
+                        <button
+                          onClick={() => handlePreview(track)}
+                          className={`p-2 rounded-full transition-colors ${
+                            playingPreview === track.id
+                              ? "bg-green-600 text-white"
+                              : "bg-gray-600 hover:bg-gray-500"
+                          }`}
+                        >
+                          <Play className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => addToQueue(track)}
+                          className="p-2 bg-blue-600 hover:bg-blue-700 rounded-full transition-colors"
+                        >
+                          <Plus className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <ArtworkImage
+                        src={track.thumbnail}
+                        alt={track.title}
+                        size="md"
+                      />
+
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-medium truncate">{track.title}</h3>
+                        <p className="text-gray-400 text-sm truncate">
+                          {track.artist}
+                        </p>
+                        <p className="text-gray-500 text-xs">
+                          {track.album} • {track.year}
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-2 text-sm text-gray-400">
+                        <span>{formatTime(track.duration)}</span>
+                        {track.popularity && (
+                          <div className="flex items-center gap-1">
+                            <TrendingUp className="w-3 h-3" />
+                            <span>{track.popularity}</span>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => handlePreview(track)}
+                          className={`p-2 rounded-full transition-colors ${
+                            playingPreview === track.id
+                              ? "bg-green-600 text-white"
+                              : "bg-gray-600 hover:bg-gray-500"
+                          }`}
+                          title="Preview"
+                        >
+                          <Play className="w-4 h-4" />
+                        </button>
+
+                        <button
+                          onClick={() => addToQueue(track)}
+                          className="p-2 bg-blue-600 hover:bg-blue-700 rounded-full transition-colors"
+                          title="Add to Queue"
+                        >
+                          <Plus className="w-4 h-4" />
+                        </button>
+
+                        <button
+                          onClick={() => toggleFavorite(track)}
+                          className={`p-2 rounded-full transition-colors ${
+                            isFavorite(track.id)
+                              ? "bg-red-600 text-white"
+                              : "bg-gray-600 hover:bg-gray-500"
+                          }`}
+                          title="Favorite"
+                        >
+                          <Heart className="w-4 h-4" />
+                        </button>
+
+                        <TrackOptionsMenu track={track} />
+                      </div>
+                    </>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {/* Load More Button */}
+            {searchResults.length < totalResults && (
+              <div className="text-center mt-6">
+                <button
+                  onClick={loadMoreResults}
+                  disabled={isSearching}
+                  className="px-6 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 rounded-lg transition-colors"
+                >
+                  {isSearching ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin inline mr-2" />
+                      Loading...
+                    </>
+                  ) : (
+                    `Load More (${totalResults - searchResults.length} remaining)`
+                  )}
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* No Results */}
+        {!isSearching && localQuery && searchResults.length === 0 && (
+          <div className="bg-gray-800 rounded-lg p-12 text-center">
+            <Music className="w-16 h-16 text-gray-500 mx-auto mb-4" />
+            <h3 className="text-xl font-semibold mb-2">No results found</h3>
+            <p className="text-gray-400 mb-4">
+              Try adjusting your search terms or filters
+            </p>
+            {hasActiveFilters && (
+              <button
+                onClick={clearFilters}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+              >
+                Clear Filters
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Search Analytics */}
+        {showAnalytics && (
+          <div className="bg-gray-800 rounded-lg p-6 mt-6">
+            <h3 className="text-lg font-semibold mb-4">Search Analytics</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="bg-gray-700 rounded-lg p-4">
+                <div className="text-2xl font-bold text-blue-400">
+                  {totalResults}
+                </div>
+                <div className="text-sm text-gray-400">Total Results</div>
+              </div>
+              <div className="bg-gray-700 rounded-lg p-4">
+                <div className="text-2xl font-bold text-green-400">
+                  {recentSearches.length}
+                </div>
+                <div className="text-sm text-gray-400">Recent Searches</div>
+              </div>
+              <div className="bg-gray-700 rounded-lg p-4">
+                <div className="text-2xl font-bold text-purple-400">
+                  {selectedResults.size}
+                </div>
+                <div className="text-sm text-gray-400">Selected Tracks</div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }

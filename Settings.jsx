@@ -37,7 +37,7 @@ export default function Settings() {
     general: {
       appName: "DJAMMS",
       language: "en",
-      timezone: "America/New_York",
+      timezone: "Australia/Sydney",
       autoStart: true,
       minimizeToTray: false,
       checkUpdates: true,
@@ -224,10 +224,15 @@ export default function Settings() {
               }
               className="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2"
             >
-              <option value="America/New_York">Eastern Time</option>
-              <option value="America/Chicago">Central Time</option>
-              <option value="America/Denver">Mountain Time</option>
-              <option value="America/Los_Angeles">Pacific Time</option>
+              <option value="Australia/Sydney">Sydney (AEDT/AEST)</option>
+              <option value="Australia/Melbourne">Melbourne (AEDT/AEST)</option>
+              <option value="Australia/Brisbane">Brisbane (AEST)</option>
+              <option value="Australia/Perth">Perth (AWST)</option>
+              <option value="Australia/Adelaide">Adelaide (ACDT/ACST)</option>
+              <option value="Australia/Darwin">Darwin (ACST)</option>
+              <option value="Australia/Hobart">Hobart (AEDT/AEST)</option>
+              <option value="Pacific/Auckland">Auckland (NZDT/NZST)</option>
+              <option value="Pacific/Fiji">Fiji (FJT)</option>
               <option value="UTC">UTC</option>
             </select>
           </div>
@@ -1145,7 +1150,7 @@ export default function Settings() {
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <SettingsIcon className="w-8 h-8 text-blue-400" />
-          <h1 className="text-3xl font-bold">Settings</h1>
+          <h1 className="text-3xl font-bold">System Settings</h1>
           {unsavedChanges && (
             <span className="bg-orange-600 text-white text-sm px-2 py-1 rounded">
               Unsaved Changes

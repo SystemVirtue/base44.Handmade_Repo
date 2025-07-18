@@ -19,7 +19,7 @@ import SearchSongs from "../SearchSongs.jsx";
 import Scheduler from "../Scheduler.jsx";
 import Messages from "../Messages.jsx";
 import MusicZoneInfo from "../MusicZoneInfo.jsx";
-import ChangeMusicZone from "../ChangeMusicZone.jsx";
+
 import Settings from "../Settings.jsx";
 
 // Protected Route component
@@ -169,16 +169,7 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
-      <Route
-        path="/change-music-zone"
-        element={
-          <ProtectedRoute>
-            <Layout currentPageName="ChangeMusicZone">
-              <ChangeMusicZone />
-            </Layout>
-          </ProtectedRoute>
-        }
-      />
+
       <Route
         path="/settings"
         element={

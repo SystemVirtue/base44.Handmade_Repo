@@ -1,5 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import apiService from "./services/api-service.js";
+import persistenceService from "./services/persistence-service.js";
 
 // Audio Player Store
 export const useAudioStore = create(
@@ -60,7 +62,11 @@ export const useAudioStore = create(
       audioInstance: null,
 
       // Actions
-      setCurrentTrack: (track) => set({ currentTrack: track }),
+      setCurrentTrack: (track) => {
+        set({ currentTrack: track });
+        // Add to playback history
+        persistenceService.addToPlaybackHistory(track);
+      },
 
       play: () => {
         const { audioInstance, currentTrack } = get();
@@ -93,6 +99,8 @@ export const useAudioStore = create(
           audioInstance.volume = volume / 100;
         }
         set({ volume, previousVolume: volume });
+        // Persist volume setting
+        persistenceService.setAudioSettings({ volume });
       },
 
       toggleMute: () => {
@@ -103,25 +111,21 @@ export const useAudioStore = create(
             set({ isMuted: false, volume: previousVolume });
           } else {
             audioInstance.volume = 0;
-            set({ isMuted: true, volume: 0 });
+            set({ isMuted: true, previousVolume: volume });
           }
         }
+        // Persist mute setting
+        persistenceService.setAudioSettings({ isMuted: !isMuted });
       },
 
       setCurrentTime: (time) => set({ currentTime: time }),
 
-      seekTo: (time) => {
-        const { audioInstance } = get();
-        if (audioInstance) {
-          audioInstance.currentTime = time;
-        }
-        set({ currentTime: time });
-      },
+      setAudioInstance: (instance) => set({ audioInstance: instance }),
 
       nextTrack: () => {
         const { queue, currentQueueIndex } = get();
-        const nextIndex = currentQueueIndex + 1;
-        if (nextIndex < queue.length) {
+        if (currentQueueIndex < queue.length - 1) {
+          const nextIndex = currentQueueIndex + 1;
           const nextTrack = queue[nextIndex];
           set({
             currentTrack: nextTrack,
@@ -133,8 +137,8 @@ export const useAudioStore = create(
 
       previousTrack: () => {
         const { queue, currentQueueIndex } = get();
-        const prevIndex = currentQueueIndex - 1;
-        if (prevIndex >= 0) {
+        if (currentQueueIndex > 0) {
+          const prevIndex = currentQueueIndex - 1;
           const prevTrack = queue[prevIndex];
           set({
             currentTrack: prevTrack,
@@ -146,95 +150,58 @@ export const useAudioStore = create(
 
       addToQueue: (track) => {
         const { queue } = get();
-        const newTrack = { ...track, position: queue.length + 1 };
-        set({ queue: [...queue, newTrack] });
+        const newQueue = [...queue, { ...track, position: queue.length + 1 }];
+        set({ queue: newQueue });
       },
 
-      removeFromQueue: (index) => {
-        const { queue, currentQueueIndex } = get();
-        const updatedQueue = queue
-          .filter((_, i) => i !== index)
-          .map((track, i) => ({ ...track, position: i + 1 }));
-
-        // Adjust current index if needed
-        let newCurrentIndex = currentQueueIndex;
-        if (index < currentQueueIndex) {
-          newCurrentIndex = currentQueueIndex - 1;
-        } else if (
-          index === currentQueueIndex &&
-          index >= updatedQueue.length
-        ) {
-          newCurrentIndex = Math.max(0, updatedQueue.length - 1);
-        }
-
-        set({ queue: updatedQueue, currentQueueIndex: newCurrentIndex });
-      },
-
-      clearQueue: () => {
-        set({ queue: [], currentQueueIndex: 0 });
-      },
-
-      reorderQueue: (startIndex, endIndex) => {
+      removeFromQueue: (trackId) => {
         const { queue } = get();
-        const result = Array.from(queue);
-        const [removed] = result.splice(startIndex, 1);
-        result.splice(endIndex, 0, removed);
-
-        const reorderedQueue = result.map((track, index) => ({
-          ...track,
-          position: index + 1,
-        }));
-
-        set({ queue: reorderedQueue });
+        const newQueue = queue
+          .filter((track) => track.id !== trackId)
+          .map((track, index) => ({ ...track, position: index + 1 }));
+        set({ queue: newQueue });
       },
 
-      setAudioInstance: (instance) => set({ audioInstance: instance }),
+      clearQueue: () => set({ queue: [], currentQueueIndex: 0 }),
 
-      // Voting and favorites actions
-      toggleFavorite: (trackId) => {
+      // Enhanced favorites with persistence
+      toggleFavorite: (track) => {
         const { favorites } = get();
         const newFavorites = new Set(favorites);
 
-        if (newFavorites.has(trackId)) {
-          newFavorites.delete(trackId);
+        if (newFavorites.has(track.id)) {
+          newFavorites.delete(track.id);
+          persistenceService.setTrackFavorited(track.id, false);
         } else {
-          newFavorites.add(trackId);
+          newFavorites.add(track.id);
+          persistenceService.setTrackFavorited(track.id, true);
         }
 
         set({ favorites: newFavorites });
-
-        // In a real implementation, this would sync with backend
-        console.log(
-          `Track ${trackId} ${newFavorites.has(trackId) ? "added to" : "removed from"} favorites`,
-        );
-      },
-
-      voteForTrack: (trackId) => {
-        const { votes, userVotes } = get();
-
-        // Check if user already voted for this track
-        if (userVotes[trackId]) {
-          console.log("You have already voted for this track");
-          return;
-        }
-
-        const newVotes = { ...votes };
-        const newUserVotes = { ...userVotes };
-
-        newVotes[trackId] = (newVotes[trackId] || 0) + 1;
-        newUserVotes[trackId] = true;
-
-        set({ votes: newVotes, userVotes: newUserVotes });
-
-        // In a real implementation, this would sync with backend
-        console.log(
-          `Voted for track ${trackId}. Total votes: ${newVotes[trackId]}`,
-        );
       },
 
       isFavorite: (trackId) => {
         const { favorites } = get();
         return favorites.has(trackId);
+      },
+
+      // Enhanced voting system
+      voteForTrack: (trackId) => {
+        const { votes, userVotes } = get();
+
+        // Check if user has already voted
+        if (userVotes[trackId]) {
+          return false;
+        }
+
+        const newVotes = { ...votes };
+        const newUserVotes = { ...userVotes };
+
+        newVotes[trackId] = (votes[trackId] || 0) + 1;
+        newUserVotes[trackId] = true;
+
+        set({ votes: newVotes, userVotes: newUserVotes });
+        return true;
       },
 
       hasVoted: (trackId) => {
@@ -247,559 +214,450 @@ export const useAudioStore = create(
         return votes[trackId] || 0;
       },
 
-      // Queue templates
-      templates: [],
+      // Initialize store with persisted data
+      initializeStore: () => {
+        const audioSettings = persistenceService.getAudioSettings();
+        const favorites = persistenceService.getFavorites();
 
-      addTemplate: (template) => {
-        const newTemplate = {
-          ...template,
-          id: template.id || Date.now(),
-          createdAt: template.createdAt || new Date().toISOString(),
-        };
-        set((state) => ({ templates: [...state.templates, newTemplate] }));
-      },
-
-      removeTemplate: (templateId) => {
-        set((state) => ({
-          templates: state.templates.filter((t) => t.id !== templateId),
-        }));
-      },
-
-      // Scheduling system
-      schedules: [],
-
-      addSchedule: (schedule) => {
-        const newSchedule = {
-          ...schedule,
-          id: schedule.id || Date.now(),
-          createdAt: schedule.createdAt || new Date().toISOString(),
-          active: schedule.active !== undefined ? schedule.active : true,
-        };
-        set((state) => ({ schedules: [...state.schedules, newSchedule] }));
-      },
-
-      removeSchedule: (scheduleId) => {
-        set((state) => ({
-          schedules: state.schedules.filter((s) => s.id !== scheduleId),
-        }));
-      },
-
-      updateSchedule: (scheduleId, updates) => {
-        set((state) => ({
-          schedules: state.schedules.map((s) =>
-            s.id === scheduleId ? { ...s, ...updates } : s,
-          ),
-        }));
-      },
-
-      // Advanced queue actions
-      shuffleQueue: () => {
-        const { queue, currentQueueIndex } = get();
-        if (queue.length <= 1) return;
-
-        const currentTrack = queue[currentQueueIndex];
-        const otherTracks = queue.filter((_, i) => i !== currentQueueIndex);
-
-        // Fisher-Yates shuffle
-        for (let i = otherTracks.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [otherTracks[i], otherTracks[j]] = [otherTracks[j], otherTracks[i]];
-        }
-
-        const shuffledQueue = [currentTrack, ...otherTracks].map(
-          (track, index) => ({
-            ...track,
-            position: index + 1,
-          }),
-        );
-
-        set({ queue: shuffledQueue, currentQueueIndex: 0 });
-      },
-
-      moveTrackInQueue: (fromIndex, toIndex) => {
-        const { queue } = get();
-        if (
-          fromIndex === toIndex ||
-          fromIndex < 0 ||
-          toIndex < 0 ||
-          fromIndex >= queue.length ||
-          toIndex >= queue.length
-        ) {
-          return;
-        }
-
-        const newQueue = [...queue];
-        const [movedTrack] = newQueue.splice(fromIndex, 1);
-        newQueue.splice(toIndex, 0, movedTrack);
-
-        const reorderedQueue = newQueue.map((track, index) => ({
-          ...track,
-          position: index + 1,
-        }));
-
-        set({ queue: reorderedQueue });
-      },
-
-      // Queue management utilities
-      getQueueStats: () => {
-        const { queue, favorites, votes } = get();
-        return {
-          totalTracks: queue.length,
-          totalDuration: queue.reduce(
-            (sum, track) => sum + (track.duration || 180),
-            0,
-          ),
-          favoritedTracks: queue.filter((track) => favorites.has(track.id))
-            .length,
-          votedTracks: queue.filter((track) => votes[track.id] > 0).length,
-          averageDuration:
-            queue.length > 0
-              ? queue.reduce((sum, track) => sum + (track.duration || 180), 0) /
-                queue.length
-              : 0,
-        };
+        set({
+          volume: audioSettings.volume,
+          isMuted: audioSettings.isMuted,
+          favorites: new Set(favorites),
+        });
       },
     }),
     {
-      name: "audio-store",
+      name: "djamms-audio-store",
       partialize: (state) => ({
         currentTrack: state.currentTrack,
         volume: state.volume,
+        isMuted: state.isMuted,
         queue: state.queue,
         currentQueueIndex: state.currentQueueIndex,
-        favorites: Array.from(state.favorites), // Convert Set to Array for persistence
+        favorites: Array.from(state.favorites),
         votes: state.votes,
         userVotes: state.userVotes,
-        templates: state.templates,
-        schedules: state.schedules,
       }),
-      // Custom merge function to handle Set conversion
-      merge: (persistedState, currentState) => ({
-        ...currentState,
-        ...persistedState,
-        favorites: new Set(persistedState.favorites || []), // Convert Array back to Set
-      }),
+      onRehydrateStorage: () => (state, error) => {
+        if (error) {
+          console.error("Failed to rehydrate audio store:", error);
+        } else if (state) {
+          // Convert favorites array back to Set
+          state.favorites = new Set(state.favorites || []);
+        }
+      },
     },
   ),
 );
 
-// UI State Store
-export const useUIStore = create(
-  persist(
-    (set, get) => ({
-      // Theme settings
-      theme: {
-        colorPalette: "celtic",
-        backgroundTheme: "dark",
-        compactMode: false,
-        showSidebar: true,
-        bannerMediaId: "default",
-      },
-
-      // Layout state
-      sidebarCollapsed: false,
-      currentPage: "dashboard",
-
-      // Notifications
-      notifications: [],
-
-      // Loading states
-      loading: {
-        dashboard: false,
-        search: false,
-        schedule: false,
-      },
-
-      // Actions
-      setTheme: (themeUpdates) =>
-        set((state) => ({
-          theme: { ...state.theme, ...themeUpdates },
-        })),
-
-      toggleSidebar: () =>
-        set((state) => ({
-          sidebarCollapsed: !state.sidebarCollapsed,
-        })),
-
-      setCurrentPage: (page) => set({ currentPage: page }),
-
-      addNotification: (notification) => {
-        const newNotification = {
-          id: Date.now(),
-          timestamp: new Date().toISOString(),
-          read: false,
-          ...notification,
-        };
-        set((state) => ({
-          notifications: [newNotification, ...state.notifications],
-        }));
-      },
-
-      markNotificationRead: (id) =>
-        set((state) => ({
-          notifications: state.notifications.map((notif) =>
-            notif.id === id ? { ...notif, read: true } : notif,
-          ),
-        })),
-
-      removeNotification: (id) =>
-        set((state) => ({
-          notifications: state.notifications.filter((notif) => notif.id !== id),
-        })),
-
-      setLoading: (key, value) =>
-        set((state) => ({
-          loading: { ...state.loading, [key]: value },
-        })),
-    }),
-    {
-      name: "ui-store",
-      partialize: (state) => ({
-        theme: state.theme,
-        sidebarCollapsed: state.sidebarCollapsed,
-      }),
-    },
-  ),
-);
-
-// Music Zone Store
-export const useZoneStore = create(
-  persist(
-    (set, get) => ({
-      // Current zone
-      currentZone: {
-        id: 1,
-        name: "Main Floor - Restaurant",
-        location: "Building A, Floor 1",
-        status: "online",
-        volume: 75,
-        devices: 4,
-        users: 12,
-        description: "Primary dining area with ambient background music",
-      },
-
-      // Available zones
-      zones: [
-        {
-          id: 1,
-          name: "Main Floor - Restaurant",
-          location: "Building A, Floor 1",
-          status: "online",
-          volume: 75,
-          devices: 4,
-          users: 12,
-          description: "Primary dining area with ambient background music",
-        },
-        {
-          id: 2,
-          name: "Bar & Lounge",
-          location: "Building A, Floor 2",
-          status: "online",
-          volume: 85,
-          devices: 3,
-          users: 8,
-          description: "Upbeat music zone for evening entertainment",
-        },
-      ],
-
-      // Actions
-      setCurrentZone: (zone) => set({ currentZone: zone }),
-
-      addZone: (zone) => {
-        const newZone = { ...zone, id: Date.now() };
-        set((state) => ({
-          zones: [...state.zones, newZone],
-        }));
-        return newZone;
-      },
-
-      updateZone: (id, updates) =>
-        set((state) => ({
-          zones: state.zones.map((zone) =>
-            zone.id === id ? { ...zone, ...updates } : zone,
-          ),
-          currentZone:
-            state.currentZone.id === id
-              ? { ...state.currentZone, ...updates }
-              : state.currentZone,
-        })),
-
-      removeZone: (id) =>
-        set((state) => ({
-          zones: state.zones.filter((zone) => zone.id !== id),
-        })),
-    }),
-    {
-      name: "zone-store",
-    },
-  ),
-);
-
-// Search Store - Enhanced with multi-source search
+// Enhanced Search Store with API integration
 export const useSearchStore = create((set, get) => ({
-  // Search state
   query: "",
   results: [],
-  searchResults: null, // Full search response with metadata
   isSearching: false,
+  totalResults: 0,
+  currentPage: 1,
   filters: {
-    sources: ["all"], // Array of enabled sources
-    genre: "all",
-    year: "any",
-    duration: "any",
-    explicit: "any",
+    genre: "",
+    artist: "",
+    year: "",
+    duration: "",
+    bitrate: "",
+    popularity: "",
   },
-
-  // Search history and suggestions
   recentSearches: [],
   searchSuggestions: [],
   searchHistory: [],
 
-  // Search analytics
-  searchStats: {
-    totalSearches: 0,
-    avgSearchTime: 0,
-    mostSearchedTerms: [],
-    preferredSources: {},
-  },
-
   // Actions
   setQuery: (query) => set({ query }),
 
-  setFilters: (filters) =>
-    set((state) => ({
-      filters: { ...state.filters, ...filters },
-    })),
+  setFilters: (filters) => set({ filters }),
 
-  performSearch: async (searchQuery) => {
-    if (!searchQuery.trim()) {
-      set({ results: [], searchResults: null });
-      return;
-    }
-
+  performSearch: async (query, searchFilters = {}, page = 1) => {
     set({ isSearching: true });
 
     try {
-      // Import search service dynamically
-      const { performMultiSourceSearch } = await import(
-        "./services/search-service.js"
-      );
-
-      // Get current filters
-      const { filters } = get();
-
-      // Perform multi-source search
-      const searchResponse = await performMultiSourceSearch(
-        searchQuery,
-        filters,
-        filters.sources,
-      );
-
-      // Update search history and stats
-      const newSearchHistory = [
-        {
-          query: searchQuery,
-          timestamp: new Date().toISOString(),
-          resultCount: searchResponse.total_results,
-          searchTime: searchResponse.search_time_ms,
-          sources: Object.keys(searchResponse.sources),
-        },
-        ...get().searchHistory.slice(0, 49),
-      ]; // Keep last 50 searches
-
-      // Update stats
-      const currentStats = get().searchStats;
-      const newStats = {
-        totalSearches: currentStats.totalSearches + 1,
-        avgSearchTime: Math.round(
-          (currentStats.avgSearchTime * currentStats.totalSearches +
-            searchResponse.search_time_ms) /
-            (currentStats.totalSearches + 1),
-        ),
-        mostSearchedTerms: updateSearchTermFrequency(
-          currentStats.mostSearchedTerms,
-          searchQuery,
-        ),
-        preferredSources: updateSourcePreferences(
-          currentStats.preferredSources,
-          filters.sources,
-        ),
-      };
-
-      set({
-        results: searchResponse.combined_results,
-        searchResults: searchResponse,
-        recentSearches: [
-          searchQuery,
-          ...get()
-            .recentSearches.filter((q) => q !== searchQuery)
-            .slice(0, 9),
-        ],
-        searchHistory: newSearchHistory,
-        searchStats: newStats,
+      const response = await apiService.searchTracks(query, {
+        ...get().filters,
+        ...searchFilters,
+        page,
+        limit: 50,
       });
+
+      if (response.success) {
+        const results = response.data.tracks || [];
+        const totalResults = response.data.total || results.length;
+
+        if (page === 1) {
+          set({
+            results,
+            totalResults,
+            currentPage: page,
+            query,
+          });
+
+          // Add to recent searches
+          persistenceService.addRecentSearch(query);
+        } else {
+          // Append for pagination
+          const currentResults = get().results;
+          set({
+            results: [...currentResults, ...results],
+            currentPage: page,
+          });
+        }
+
+        // Update search history
+        const historyEntry = {
+          query,
+          filters: searchFilters,
+          resultCount: totalResults,
+          timestamp: new Date().toISOString(),
+        };
+
+        const history = get().searchHistory;
+        set({
+          searchHistory: [historyEntry, ...history.slice(0, 49)], // Keep last 50 searches
+        });
+      }
     } catch (error) {
       console.error("Search failed:", error);
-      set({
-        results: [],
-        searchResults: {
-          query: searchQuery,
-          error: error.message,
-          total_results: 0,
-          combined_results: [],
-          sources: {},
-        },
-      });
     } finally {
       set({ isSearching: false });
     }
   },
 
-  // Get search suggestions
   getSuggestions: async (query) => {
-    if (!query.trim()) {
-      set({ searchSuggestions: [] });
-      return;
-    }
+    // Simple suggestion generation for now
+    const recent = persistenceService.getRecentSearches();
+    const matchingRecent = recent.filter((search) =>
+      search.toLowerCase().includes(query.toLowerCase()),
+    );
 
-    try {
-      const { getSearchSuggestions } = await import(
-        "./services/search-service.js"
-      );
-      const suggestions = await getSearchSuggestions(query);
-      set({ searchSuggestions: suggestions });
-    } catch (error) {
-      console.error("Failed to get suggestions:", error);
-      set({ searchSuggestions: [] });
-    }
+    set({ searchSuggestions: matchingRecent.slice(0, 5) });
   },
 
-  // Clear search results
   clearResults: () =>
     set({
       results: [],
-      searchResults: null,
-      query: "",
-      searchSuggestions: [],
+      totalResults: 0,
+      currentPage: 1,
     }),
 
-  // Add track to favorites from search
-  addToFavorites: (trackId) => {
-    // This would integrate with the main audio store
-    console.log("Adding to favorites:", trackId);
+  getSearchAnalytics: () => {
+    const { searchHistory } = get();
+
+    return {
+      totalSearches: searchHistory.length,
+      uniqueQueries: new Set(searchHistory.map((h) => h.query)).size,
+      averageResults:
+        searchHistory.reduce((sum, h) => sum + h.resultCount, 0) /
+        searchHistory.length,
+      topGenres: get().getTopSearchedGenres(),
+      recentActivity: searchHistory.slice(0, 10),
+    };
   },
 
-  // Get search analytics
-  getSearchAnalytics: () => {
-    const { searchHistory, searchStats } = get();
-    return {
-      ...searchStats,
-      recentSearches: searchHistory.slice(0, 10),
-      topSources: Object.entries(searchStats.preferredSources)
-        .sort(([, a], [, b]) => b - a)
-        .slice(0, 5),
-    };
+  getTopSearchedGenres: () => {
+    const { searchHistory } = get();
+    const genreCounts = {};
+
+    searchHistory.forEach((history) => {
+      if (history.filters && history.filters.genre) {
+        genreCounts[history.filters.genre] =
+          (genreCounts[history.filters.genre] || 0) + 1;
+      }
+    });
+
+    return Object.entries(genreCounts)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 5)
+      .map(([genre, count]) => ({ genre, count }));
   },
 }));
 
-// Helper functions for search statistics
-function updateSearchTermFrequency(currentTerms, newTerm) {
-  const updatedTerms = [...currentTerms];
-  const existingTerm = updatedTerms.find((term) => term.query === newTerm);
+// Enhanced UI Store
+export const useUIStore = create(
+  persist(
+    (set, get) => ({
+      // Theme and appearance
+      theme: "dark",
+      selectedFont: "Inter",
+      fontSize: 14,
+      sidebarCollapsed: false,
+      activeTab: "dashboard",
 
-  if (existingTerm) {
-    existingTerm.count += 1;
-  } else {
-    updatedTerms.push({ query: newTerm, count: 1 });
-  }
+      // Notifications
+      notifications: [],
 
-  return updatedTerms.sort((a, b) => b.count - a.count).slice(0, 20); // Keep top 20 most searched terms
-}
+      // Modal states
+      showMusicLibrary: false,
+      showSettings: false,
+      showHelp: false,
 
-function updateSourcePreferences(currentPrefs, usedSources) {
-  const updatedPrefs = { ...currentPrefs };
+      // Loading states
+      isLoading: false,
+      loadingMessage: "",
 
-  usedSources.forEach((source) => {
-    if (source !== "all") {
-      updatedPrefs[source] = (updatedPrefs[source] || 0) + 1;
-    }
-  });
+      // Actions
+      setTheme: (theme) => {
+        set({ theme });
+        persistenceService.updateUserPreferences({ theme });
+      },
 
-  return updatedPrefs;
-}
+      setFont: (fontFamily, fontSize) => {
+        set({ selectedFont: fontFamily, fontSize });
+        persistenceService.setTypographySettings({ fontFamily, fontSize });
+      },
 
-// Format time utility
+      setSidebarCollapsed: (collapsed) => {
+        set({ sidebarCollapsed: collapsed });
+        persistenceService.setUIState({ sidebarCollapsed: collapsed });
+      },
+
+      setActiveTab: (tab) => {
+        set({ activeTab: tab });
+        persistenceService.setUIState({ activeTab: tab });
+      },
+
+      addNotification: (notification) => {
+        const id = Date.now().toString();
+        const newNotification = {
+          id,
+          timestamp: new Date().toISOString(),
+          type: "info",
+          duration: 5000,
+          ...notification,
+        };
+
+        set((state) => ({
+          notifications: [...state.notifications, newNotification],
+        }));
+
+        // Auto-remove notification after duration
+        if (newNotification.duration > 0) {
+          setTimeout(() => {
+            get().removeNotification(id);
+          }, newNotification.duration);
+        }
+      },
+
+      removeNotification: (id) => {
+        set((state) => ({
+          notifications: state.notifications.filter((n) => n.id !== id),
+        }));
+      },
+
+      clearNotifications: () => set({ notifications: [] }),
+
+      setLoading: (isLoading, message = "") => {
+        set({ isLoading, loadingMessage: message });
+      },
+
+      toggleModal: (modalName) => {
+        set((state) => ({
+          [modalName]: !state[modalName],
+        }));
+      },
+
+      // Initialize UI with persisted settings
+      initializeUI: () => {
+        const userPrefs = persistenceService.getUserPreferences();
+        const typography = persistenceService.getTypographySettings();
+        const uiState = persistenceService.getUIState();
+
+        set({
+          theme: userPrefs.theme,
+          selectedFont: typography.fontFamily,
+          fontSize: typography.fontSize,
+          sidebarCollapsed: uiState.sidebarCollapsed,
+          activeTab: uiState.activeTab,
+        });
+      },
+    }),
+    {
+      name: "djamms-ui-store",
+      partialize: (state) => ({
+        theme: state.theme,
+        selectedFont: state.selectedFont,
+        fontSize: state.fontSize,
+        sidebarCollapsed: state.sidebarCollapsed,
+        activeTab: state.activeTab,
+      }),
+    },
+  ),
+);
+
+// Zone Management Store (simplified for single-zone focus)
+export const useZoneStore = create((set, get) => ({
+  currentZone: {
+    id: "main",
+    name: "Main Zone",
+    status: "active",
+    deviceCount: 3,
+    lastActive: new Date().toISOString(),
+  },
+
+  zones: [
+    {
+      id: "main",
+      name: "Main Zone",
+      status: "active",
+      deviceCount: 3,
+      lastActive: new Date().toISOString(),
+    },
+  ],
+
+  updateZone: (zoneId, updates) => {
+    set((state) => ({
+      zones: state.zones.map((zone) =>
+        zone.id === zoneId ? { ...zone, ...updates } : zone,
+      ),
+      currentZone:
+        state.currentZone.id === zoneId
+          ? { ...state.currentZone, ...updates }
+          : state.currentZone,
+    }));
+  },
+}));
+
+// Scheduler Store with persistence
+export const useSchedulerStore = create(
+  persist(
+    (set, get) => ({
+      schedules: [],
+      selectedSchedule: null,
+      scheduleHistory: [],
+      isLoading: false,
+
+      addSchedule: (schedule) => {
+        const newSchedule = {
+          ...schedule,
+          id: Date.now().toString(),
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+
+        set((state) => ({
+          schedules: [...state.schedules, newSchedule],
+        }));
+
+        // Add to history for undo functionality
+        get().saveToHistory();
+      },
+
+      updateSchedule: (scheduleId, updates) => {
+        set((state) => ({
+          schedules: state.schedules.map((schedule) =>
+            schedule.id === scheduleId
+              ? { ...schedule, ...updates, updatedAt: new Date().toISOString() }
+              : schedule,
+          ),
+        }));
+
+        get().saveToHistory();
+      },
+
+      deleteSchedule: (scheduleId) => {
+        set((state) => ({
+          schedules: state.schedules.filter(
+            (schedule) => schedule.id !== scheduleId,
+          ),
+        }));
+
+        get().saveToHistory();
+      },
+
+      setSelectedSchedule: (schedule) => set({ selectedSchedule: schedule }),
+
+      saveToHistory: () => {
+        const { schedules } = get();
+        persistenceService.addScheduleHistoryEntry(schedules);
+      },
+
+      loadFromHistory: (historyIndex = 0) => {
+        const history = persistenceService.getScheduleHistory();
+        if (history[historyIndex]) {
+          set({ schedules: history[historyIndex].schedules });
+        }
+      },
+
+      initializeScheduler: async () => {
+        set({ isLoading: true });
+
+        try {
+          const response = await apiService.getSchedules();
+          if (response.success) {
+            set({ schedules: response.data || [] });
+          }
+        } catch (error) {
+          console.error("Failed to load schedules:", error);
+        } finally {
+          set({ isLoading: false });
+        }
+      },
+    }),
+    {
+      name: "djamms-scheduler-store",
+      partialize: (state) => ({
+        schedules: state.schedules,
+      }),
+    },
+  ),
+);
+
+// Utility functions
 export const formatTime = (seconds) => {
   const mins = Math.floor(seconds / 60);
-  const secs = Math.floor(seconds % 60);
+  const secs = seconds % 60;
   return `${mins}:${secs.toString().padStart(2, "0")}`;
 };
 
-// Unified store that combines all functionality
-export const useStore = () => {
-  const audioStore = useAudioStore();
-  const uiStore = useUIStore();
-  const zoneStore = useZoneStore();
-  const searchStore = useSearchStore();
+export const formatDuration = (seconds) => {
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const remainingSeconds = seconds % 60;
 
-  return {
-    // Audio/Queue functionality
-    currentTrack: audioStore.currentTrack,
-    isPlaying: audioStore.isPlaying,
-    volume: audioStore.volume,
-    queue: audioStore.queue,
-    favorites: audioStore.favorites,
-    votes: audioStore.votes,
-    templates: audioStore.templates,
-    schedules: audioStore.schedules,
+  if (hours > 0) {
+    return `${hours}:${minutes.toString().padStart(2, "0")}:${remainingSeconds.toString().padStart(2, "0")}`;
+  }
+  return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
+};
 
-    // Audio actions
-    play: audioStore.play,
-    pause: audioStore.pause,
-    playTrack: audioStore.setCurrentTrack,
-    pauseTrack: audioStore.pause,
-    skipTrack: audioStore.nextTrack,
-    setVolume: audioStore.setVolume,
-    addToQueue: audioStore.addToQueue,
-    removeFromQueue: audioStore.removeFromQueue,
-    reorderQueue: audioStore.reorderQueue,
-    clearQueue: audioStore.clearQueue,
-    shuffleQueue: audioStore.shuffleQueue,
-    voteForTrack: audioStore.voteForTrack,
-    favoriteTrack: audioStore.toggleFavorite,
-
-    // Template actions
-    addTemplate: audioStore.addTemplate,
-    removeTemplate: audioStore.removeTemplate,
-
-    // Schedule actions
-    addSchedule: audioStore.addSchedule,
-    removeSchedule: audioStore.removeSchedule,
-    updateSchedule: audioStore.updateSchedule,
-
-    // Zone functionality
-    zones: zoneStore.zones,
-    currentZone: zoneStore.currentZone,
-    setCurrentZone: zoneStore.setCurrentZone,
-    addZone: zoneStore.addZone,
-    updateZone: zoneStore.updateZone,
-    removeZone: zoneStore.removeZone,
-
-    // Search functionality
-    searchQuery: searchStore.query,
-    searchResults: searchStore.results,
-    isSearching: searchStore.isSearching,
-    searchFilters: searchStore.filters,
-    performSearch: searchStore.performSearch,
-    setSearchQuery: searchStore.setQuery,
-    setSearchFilters: searchStore.setFilters,
-    clearSearchResults: searchStore.clearResults,
-    searchTracks: searchStore.performSearch,
-
-    // UI functionality
-    theme: uiStore.theme,
-    notifications: uiStore.notifications,
-    setTheme: uiStore.setTheme,
-    addNotification: uiStore.addNotification,
+export const debounce = (func, wait) => {
+  let timeout;
+  return function executedFunction(...args) {
+    const later = () => {
+      clearTimeout(timeout);
+      func(...args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
   };
+};
+
+// Initialize all stores
+export const initializeStores = () => {
+  useAudioStore.getState().initializeStore();
+  useUIStore.getState().initializeUI();
+  useSchedulerStore.getState().initializeScheduler();
+
+  // Start session tracking
+  persistenceService.startSession();
+
+  // Setup activity tracking
+  const updateActivity = () => {
+    persistenceService.updateSessionActivity();
+  };
+
+  // Track user activity
+  document.addEventListener("click", updateActivity);
+  document.addEventListener("keypress", updateActivity);
+
+  // Cleanup on page unload
+  window.addEventListener("beforeunload", () => {
+    persistenceService.endSession();
+    persistenceService.cleanupStorage();
+  });
 };

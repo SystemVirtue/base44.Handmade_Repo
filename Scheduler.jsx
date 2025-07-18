@@ -14,17 +14,20 @@ import {
   Trash2,
   AlertCircle,
 } from "lucide-react";
-import { useStore } from "./store";
+import { useSchedulerStore, useZoneStore } from "./store.js";
 
 export default function Scheduler() {
   const {
     schedules,
     addSchedule,
-    removeSchedule,
     updateSchedule,
-    templates,
-    zones,
-  } = useStore();
+    deleteSchedule,
+    setSelectedSchedule,
+    saveToHistory,
+    loadFromHistory,
+  } = useSchedulerStore();
+
+  const { zones } = useZoneStore();
 
   // System settings state
   const [systemSettings, setSystemSettings] = useState({
@@ -227,7 +230,7 @@ export default function Scheduler() {
         s.playlist === currentEntry.playlist,
     );
 
-    existingRelatedSchedules.forEach((s) => removeSchedule(s.id));
+    existingRelatedSchedules.forEach((s) => deleteSchedule(s.id));
 
     // Create new schedules for all selected days
     currentEntry.selectedDays.forEach((day, index) => {
@@ -279,7 +282,7 @@ export default function Scheduler() {
               s.endTime <= pendingOverwrite.endTime)),
       );
 
-      conflictingSchedules.forEach((s) => removeSchedule(s.id));
+      conflictingSchedules.forEach((s) => deleteSchedule(s.id));
 
       // Add new schedule
       const scheduleData = {
@@ -306,7 +309,7 @@ export default function Scheduler() {
       selectedDays: [],
       day: "monday",
     });
-  }, [pendingOverwrite, schedules, removeSchedule, addSchedule]);
+  }, [pendingOverwrite, schedules, deleteSchedule, addSchedule]);
 
   // Copy entry
   const copyEntry = useCallback(() => {
@@ -354,7 +357,7 @@ export default function Scheduler() {
           s.playlist === currentEntry.playlist,
       );
 
-      relatedSchedules.forEach((s) => removeSchedule(s.id));
+      relatedSchedules.forEach((s) => deleteSchedule(s.id));
       setSelectedSlot(null);
       setCurrentEntry({
         id: "",
@@ -366,10 +369,18 @@ export default function Scheduler() {
         day: "monday",
       });
     }
-  }, [currentEntry, schedules, removeSchedule]);
+  }, [currentEntry, schedules, deleteSchedule]);
 
-  // Get schedule for a specific day and hour
+  // Get schedule for a specific day and hour (only return if it's the starting slot)
   const getScheduleForSlot = useCallback(
+    (day, hour) => {
+      return schedules.find((s) => s.day === day && s.startTime === hour);
+    },
+    [schedules],
+  );
+
+  // Check if a slot is part of a schedule (for styling purposes)
+  const isSlotInSchedule = useCallback(
     (day, hour) => {
       return schedules.find(
         (s) => s.day === day && s.startTime <= hour && s.endTime > hour,
@@ -377,6 +388,14 @@ export default function Scheduler() {
     },
     [schedules],
   );
+
+  // Calculate the span duration for a schedule entry
+  const getScheduleSpan = useCallback((schedule) => {
+    if (!schedule) return 1;
+    const startHour = parseInt(schedule.startTime.split(":")[0]);
+    const endHour = parseInt(schedule.endTime.split(":")[0]);
+    return Math.max(1, endHour - startHour);
+  }, []);
 
   const formatTime = (time24) => {
     const [hours, minutes] = time24.split(":");
@@ -494,8 +513,15 @@ export default function Scheduler() {
               </div>
               {days.map((day) => {
                 const schedule = getScheduleForSlot(day.key, hour);
+                const inSchedule = isSlotInSchedule(day.key, hour);
                 const isSelected =
                   selectedSlot?.day === day.key && selectedSlot?.hour === hour;
+                const span = schedule ? getScheduleSpan(schedule) : 1;
+
+                // Skip rendering this slot if it's part of a multi-hour entry but not the starting slot
+                if (inSchedule && !schedule) {
+                  return null;
+                }
 
                 return (
                   <div
@@ -505,9 +531,15 @@ export default function Scheduler() {
                       isSelected
                         ? "bg-yellow-600/70 border-yellow-400"
                         : schedule
-                          ? "bg-blue-600/50 hover:bg-blue-600/70"
-                          : "hover:bg-gray-700"
+                          ? "bg-blue-600/50 hover:bg-blue-600/70 border-blue-400"
+                          : inSchedule
+                            ? "bg-blue-600/30 hover:bg-blue-600/50 border-blue-500 border-dashed"
+                            : "hover:bg-gray-700"
                     }`}
+                    style={{
+                      gridRowEnd: span > 1 ? `span ${span}` : undefined,
+                      minHeight: span > 1 ? `${span * 3.5}rem` : "3rem",
+                    }}
                   >
                     {schedule && (
                       <div
@@ -515,7 +547,16 @@ export default function Scheduler() {
                         title={schedule.name || schedule.title}
                       >
                         {schedule.name || schedule.title}
+                        {span > 1 && (
+                          <div className="text-xs text-gray-300 mt-1">
+                            {formatTime(schedule.startTime)} -{" "}
+                            {formatTime(schedule.endTime)}
+                          </div>
+                        )}
                       </div>
+                    )}
+                    {inSchedule && !schedule && (
+                      <div className="text-xs text-gray-400 text-center">⋮</div>
                     )}
                   </div>
                 );
