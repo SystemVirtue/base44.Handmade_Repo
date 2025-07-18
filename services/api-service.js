@@ -7,7 +7,7 @@
 class APIService {
   constructor() {
     this.baseURL =
-      process.env.REACT_APP_API_BASE_URL || "http://localhost:3001/api";
+      import.meta.env?.VITE_API_BASE_URL || "http://localhost:3001/api";
     this.mockMode = process.env.REACT_APP_MOCK_MODE !== "false";
     this.token = localStorage.getItem("djamms_auth_token");
 
