@@ -167,6 +167,20 @@ export default function Scheduler() {
     [schedules],
   );
 
+  // Handle day toggle for checkboxes
+  const handleDayToggle = useCallback((day, isChecked) => {
+    setCurrentEntry((prev) => {
+      const newSelectedDays = isChecked
+        ? [...prev.selectedDays, day]
+        : prev.selectedDays.filter((d) => d !== day);
+
+      return {
+        ...prev,
+        selectedDays: newSelectedDays,
+      };
+    });
+  }, []);
+
   // Save current entry
   const saveEntry = useCallback(() => {
     if (
