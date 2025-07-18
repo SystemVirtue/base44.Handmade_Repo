@@ -222,6 +222,27 @@ export default function QueueSchedule() {
     favoritesTracks: queue.filter((track) => track.isFavorite).length,
   };
 
+  const handleTogglePlaylistStar = (playlistId) => {
+    setSpotifyPlaylists((prev) =>
+      prev.map((playlist) =>
+        playlist.id === playlistId
+          ? { ...playlist, isStarred: !playlist.isStarred }
+          : playlist,
+      ),
+    );
+
+    // Update active playlists
+    setActivePlaylists(
+      spotifyPlaylists
+        .map((playlist) =>
+          playlist.id === playlistId
+            ? { ...playlist, isStarred: !playlist.isStarred }
+            : playlist,
+        )
+        .filter((p) => p.isStarred),
+    );
+  };
+
   const formatDuration = (seconds) => {
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
