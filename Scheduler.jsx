@@ -218,22 +218,32 @@ export default function Scheduler() {
       ...prev.slice(0, 9),
     ]);
 
-    const scheduleData = {
-      ...currentEntry,
-      name: currentEntry.title,
-      type: "playlist",
-      active: true,
-      tracks: [],
-      createdAt: new Date().toISOString(),
-    };
+    // Remove existing related schedules first (schedules with same title/time)
+    const existingRelatedSchedules = schedules.filter(
+      (s) =>
+        s.title === currentEntry.title &&
+        s.startTime === currentEntry.startTime &&
+        s.endTime === currentEntry.endTime &&
+        s.playlist === currentEntry.playlist,
+    );
 
-    // Check if updating existing or creating new
-    const existingIndex = schedules.findIndex((s) => s.id === currentEntry.id);
-    if (existingIndex !== -1) {
-      updateSchedule(currentEntry.id, scheduleData);
-    } else {
+    existingRelatedSchedules.forEach((s) => removeSchedule(s.id));
+
+    // Create new schedules for all selected days
+    currentEntry.selectedDays.forEach((day, index) => {
+      const scheduleData = {
+        ...currentEntry,
+        id: index === 0 ? currentEntry.id : `${currentEntry.id}_${day}`,
+        day: day,
+        name: currentEntry.title,
+        type: "playlist",
+        active: true,
+        tracks: [],
+        createdAt: new Date().toISOString(),
+      };
+
       addSchedule(scheduleData);
-    }
+    });
 
     // Clear selection
     setSelectedSlot(null);
