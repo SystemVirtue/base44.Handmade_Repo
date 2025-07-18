@@ -1,4 +1,10 @@
-import React, { useState, useCallback, useEffect, useMemo, useRef } from "react";
+import React, {
+  useState,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+} from "react";
 import {
   Search,
   Filter,
@@ -72,7 +78,7 @@ export default function SearchSongs() {
   const [totalResults, setTotalResults] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [recentSearches, setRecentSearches] = useState([]);
-  
+
   // Advanced filters
   const [filters, setFilters] = useState({
     genre: "",
@@ -80,13 +86,14 @@ export default function SearchSongs() {
     year: "",
     duration: "",
     bitrate: "",
-    popularity: ""
+    popularity: "",
   });
 
   const searchInputRef = useRef(null);
 
   // Store state
-  const { addToQueue, toggleFavorite, isFavorite, hasVoted, voteForTrack } = useAudioStore();
+  const { addToQueue, toggleFavorite, isFavorite, hasVoted, voteForTrack } =
+    useAudioStore();
   const { addNotification } = useUIStore();
 
   // Load recent searches on mount
@@ -96,53 +103,56 @@ export default function SearchSongs() {
   }, []);
 
   // Enhanced search function
-  const performSearch = useCallback(async (searchQuery, searchFilters = {}, page = 1) => {
-    if (!searchQuery.trim()) {
-      setSearchResults([]);
-      setTotalResults(0);
-      return;
-    }
-
-    setIsSearching(true);
-    try {
-      const response = await apiService.searchTracks(searchQuery, {
-        ...filters,
-        ...searchFilters,
-        page,
-        limit: 50
-      });
-
-      if (response.success) {
-        const results = response.data.tracks || [];
-        
-        // Sort results based on selected criteria
-        const sortedResults = sortResults(results, sortBy);
-        
-        if (page === 1) {
-          setSearchResults(sortedResults);
-          // Add to recent searches
-          persistenceService.addRecentSearch(searchQuery);
-          const updatedRecent = persistenceService.getRecentSearches();
-          setRecentSearches(updatedRecent);
-        } else {
-          // Append for pagination
-          setSearchResults(prev => [...prev, ...sortedResults]);
-        }
-        
-        setTotalResults(response.data.total || results.length);
-        setCurrentPage(page);
+  const performSearch = useCallback(
+    async (searchQuery, searchFilters = {}, page = 1) => {
+      if (!searchQuery.trim()) {
+        setSearchResults([]);
+        setTotalResults(0);
+        return;
       }
-    } catch (error) {
-      console.error('Search failed:', error);
-      addNotification({
-        type: 'error',
-        message: 'Search failed. Please try again.',
-        duration: 3000
-      });
-    } finally {
-      setIsSearching(false);
-    }
-  }, [filters, sortBy, addNotification]);
+
+      setIsSearching(true);
+      try {
+        const response = await apiService.searchTracks(searchQuery, {
+          ...filters,
+          ...searchFilters,
+          page,
+          limit: 50,
+        });
+
+        if (response.success) {
+          const results = response.data.tracks || [];
+
+          // Sort results based on selected criteria
+          const sortedResults = sortResults(results, sortBy);
+
+          if (page === 1) {
+            setSearchResults(sortedResults);
+            // Add to recent searches
+            persistenceService.addRecentSearch(searchQuery);
+            const updatedRecent = persistenceService.getRecentSearches();
+            setRecentSearches(updatedRecent);
+          } else {
+            // Append for pagination
+            setSearchResults((prev) => [...prev, ...sortedResults]);
+          }
+
+          setTotalResults(response.data.total || results.length);
+          setCurrentPage(page);
+        }
+      } catch (error) {
+        console.error("Search failed:", error);
+        addNotification({
+          type: "error",
+          message: "Search failed. Please try again.",
+          duration: 3000,
+        });
+      } finally {
+        setIsSearching(false);
+      }
+    },
+    [filters, sortBy, addNotification],
+  );
 
   // Search suggestions
   const getSuggestions = useCallback(async (query) => {
@@ -154,64 +164,84 @@ export default function SearchSongs() {
     try {
       // For now, generate suggestions from recent searches and common terms
       const recent = persistenceService.getRecentSearches();
-      const matchingRecent = recent.filter(search => 
-        search.toLowerCase().includes(query.toLowerCase())
+      const matchingRecent = recent.filter((search) =>
+        search.toLowerCase().includes(query.toLowerCase()),
       );
 
       // Add some smart suggestions based on query
       const smartSuggestions = generateSmartSuggestions(query);
-      
+
       const allSuggestions = [
         ...matchingRecent.slice(0, 3),
-        ...smartSuggestions.slice(0, 5)
+        ...smartSuggestions.slice(0, 5),
       ].slice(0, 8);
 
       setSuggestions(allSuggestions);
     } catch (error) {
-      console.error('Failed to get suggestions:', error);
+      console.error("Failed to get suggestions:", error);
     }
   }, []);
 
   // Generate smart suggestions
   const generateSmartSuggestions = (query) => {
-    const commonGenres = ['rock', 'pop', 'jazz', 'blues', 'electronic', 'hip hop', 'classical'];
-    const commonArtists = ['Beatles', 'Queen', 'Led Zeppelin', 'Pink Floyd', 'Bob Dylan'];
-    
+    const commonGenres = [
+      "rock",
+      "pop",
+      "jazz",
+      "blues",
+      "electronic",
+      "hip hop",
+      "classical",
+    ];
+    const commonArtists = [
+      "Beatles",
+      "Queen",
+      "Led Zeppelin",
+      "Pink Floyd",
+      "Bob Dylan",
+    ];
+
     const suggestions = [];
-    
+
     // Genre suggestions
-    commonGenres.forEach(genre => {
-      if (genre.toLowerCase().includes(query.toLowerCase()) && !suggestions.includes(genre)) {
+    commonGenres.forEach((genre) => {
+      if (
+        genre.toLowerCase().includes(query.toLowerCase()) &&
+        !suggestions.includes(genre)
+      ) {
         suggestions.push(genre);
       }
     });
-    
+
     // Artist suggestions
-    commonArtists.forEach(artist => {
-      if (artist.toLowerCase().includes(query.toLowerCase()) && !suggestions.includes(artist)) {
+    commonArtists.forEach((artist) => {
+      if (
+        artist.toLowerCase().includes(query.toLowerCase()) &&
+        !suggestions.includes(artist)
+      ) {
         suggestions.push(artist);
       }
     });
-    
+
     return suggestions;
   };
 
   // Sort results
   const sortResults = (results, criteria) => {
     const sorted = [...results];
-    
+
     switch (criteria) {
-      case 'title':
+      case "title":
         return sorted.sort((a, b) => a.title.localeCompare(b.title));
-      case 'artist':
+      case "artist":
         return sorted.sort((a, b) => a.artist.localeCompare(b.artist));
-      case 'duration':
+      case "duration":
         return sorted.sort((a, b) => a.duration - b.duration);
-      case 'year':
+      case "year":
         return sorted.sort((a, b) => (b.year || 0) - (a.year || 0));
-      case 'popularity':
+      case "popularity":
         return sorted.sort((a, b) => (b.popularity || 0) - (a.popularity || 0));
-      case 'relevance':
+      case "relevance":
       default:
         return sorted.sort((a, b) => (b.popularity || 0) - (a.popularity || 0));
     }
@@ -222,7 +252,7 @@ export default function SearchSongs() {
     debounce((searchQuery) => {
       performSearch(searchQuery);
     }, 300),
-    [performSearch]
+    [performSearch],
   );
 
   // Debounced suggestions
@@ -230,7 +260,7 @@ export default function SearchSongs() {
     debounce((searchQuery) => {
       getSuggestions(searchQuery);
     }, 200),
-    [getSuggestions]
+    [getSuggestions],
   );
 
   // Handle search input changes
@@ -271,7 +301,7 @@ export default function SearchSongs() {
       year: "",
       duration: "",
       bitrate: "",
-      popularity: ""
+      popularity: "",
     });
     if (localQuery.trim()) {
       performSearch(localQuery, {});
@@ -297,7 +327,7 @@ export default function SearchSongs() {
 
     // Start new preview (simulate with timeout for demo)
     setPlayingPreview(track.id);
-    
+
     // In real implementation, you would play actual audio
     setTimeout(() => {
       setPlayingPreview(null);
@@ -309,18 +339,20 @@ export default function SearchSongs() {
     if (selectedResults.size === searchResults.length) {
       setSelectedResults(new Set());
     } else {
-      setSelectedResults(new Set(searchResults.map(track => track.id)));
+      setSelectedResults(new Set(searchResults.map((track) => track.id)));
     }
   };
 
   const handleBulkAddToQueue = () => {
-    const selectedTracks = searchResults.filter(track => selectedResults.has(track.id));
-    selectedTracks.forEach(track => addToQueue(track));
+    const selectedTracks = searchResults.filter((track) =>
+      selectedResults.has(track.id),
+    );
+    selectedTracks.forEach((track) => addToQueue(track));
     setSelectedResults(new Set());
     addNotification({
-      type: 'success',
+      type: "success",
       message: `Added ${selectedTracks.length} tracks to queue`,
-      duration: 3000
+      duration: 3000,
     });
   };
 
@@ -333,7 +365,7 @@ export default function SearchSongs() {
 
   // Filter active state
   const hasActiveFilters = useMemo(() => {
-    return Object.values(filters).some(value => value !== "");
+    return Object.values(filters).some((value) => value !== "");
   }, [filters]);
 
   return (
@@ -341,7 +373,7 @@ export default function SearchSongs() {
       <div className="max-w-6xl mx-auto">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-3xl font-bold">Search Songs</h1>
-          
+
           <div className="flex items-center gap-2">
             <button
               onClick={() => setShowAnalytics(!showAnalytics)}
@@ -350,18 +382,18 @@ export default function SearchSongs() {
             >
               <BarChart3 className="w-5 h-5" />
             </button>
-            
+
             <div className="flex items-center bg-gray-700 rounded-lg">
               <button
-                onClick={() => setViewMode('list')}
-                className={`p-2 transition-colors ${viewMode === 'list' ? 'bg-blue-600' : 'hover:bg-gray-600'}`}
+                onClick={() => setViewMode("list")}
+                className={`p-2 transition-colors ${viewMode === "list" ? "bg-blue-600" : "hover:bg-gray-600"}`}
                 title="List View"
               >
                 <List className="w-5 h-5" />
               </button>
               <button
-                onClick={() => setViewMode('grid')}
-                className={`p-2 transition-colors ${viewMode === 'grid' ? 'bg-blue-600' : 'hover:bg-gray-600'}`}
+                onClick={() => setViewMode("grid")}
+                className={`p-2 transition-colors ${viewMode === "grid" ? "bg-blue-600" : "hover:bg-gray-600"}`}
                 title="Grid View"
               >
                 <Grid className="w-5 h-5" />
@@ -401,42 +433,45 @@ export default function SearchSongs() {
             </div>
 
             {/* Search Suggestions */}
-            {showSuggestions && (suggestions.length > 0 || recentSearches.length > 0) && (
-              <div className="absolute top-full left-0 right-0 mt-1 bg-gray-700 border border-gray-600 rounded-lg shadow-lg z-50 max-h-64 overflow-y-auto">
-                {recentSearches.length > 0 && (
-                  <div className="p-3 border-b border-gray-600">
-                    <div className="flex items-center gap-2 text-sm text-gray-400 mb-2">
-                      <History className="w-4 h-4" />
-                      Recent Searches
+            {showSuggestions &&
+              (suggestions.length > 0 || recentSearches.length > 0) && (
+                <div className="absolute top-full left-0 right-0 mt-1 bg-gray-700 border border-gray-600 rounded-lg shadow-lg z-50 max-h-64 overflow-y-auto">
+                  {recentSearches.length > 0 && (
+                    <div className="p-3 border-b border-gray-600">
+                      <div className="flex items-center gap-2 text-sm text-gray-400 mb-2">
+                        <History className="w-4 h-4" />
+                        Recent Searches
+                      </div>
+                      {recentSearches.slice(0, 3).map((search, index) => (
+                        <button
+                          key={index}
+                          onClick={() => handleSuggestionClick(search)}
+                          className="block w-full text-left px-2 py-1 hover:bg-gray-600 rounded text-sm"
+                        >
+                          {search}
+                        </button>
+                      ))}
                     </div>
-                    {recentSearches.slice(0, 3).map((search, index) => (
-                      <button
-                        key={index}
-                        onClick={() => handleSuggestionClick(search)}
-                        className="block w-full text-left px-2 py-1 hover:bg-gray-600 rounded text-sm"
-                      >
-                        {search}
-                      </button>
-                    ))}
-                  </div>
-                )}
-                
-                {suggestions.length > 0 && (
-                  <div className="p-3">
-                    <div className="text-sm text-gray-400 mb-2">Suggestions</div>
-                    {suggestions.map((suggestion, index) => (
-                      <button
-                        key={index}
-                        onClick={() => handleSuggestionClick(suggestion)}
-                        className="block w-full text-left px-2 py-1 hover:bg-gray-600 rounded text-sm"
-                      >
-                        {suggestion}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
+                  )}
+
+                  {suggestions.length > 0 && (
+                    <div className="p-3">
+                      <div className="text-sm text-gray-400 mb-2">
+                        Suggestions
+                      </div>
+                      {suggestions.map((suggestion, index) => (
+                        <button
+                          key={index}
+                          onClick={() => handleSuggestionClick(suggestion)}
+                          className="block w-full text-left px-2 py-1 hover:bg-gray-600 rounded text-sm"
+                        >
+                          {suggestion}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
           </div>
 
           {/* Advanced Filters */}
@@ -445,14 +480,22 @@ export default function SearchSongs() {
               onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
                 showAdvancedFilters || hasActiveFilters
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-700 hover:bg-gray-600'
+                  ? "bg-blue-600 text-white"
+                  : "bg-gray-700 hover:bg-gray-600"
               }`}
             >
               <Sliders className="w-4 h-4" />
               Filters
-              {hasActiveFilters && <span className="text-xs bg-white text-blue-600 rounded-full px-2">ON</span>}
-              {showAdvancedFilters ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+              {hasActiveFilters && (
+                <span className="text-xs bg-white text-blue-600 rounded-full px-2">
+                  ON
+                </span>
+              )}
+              {showAdvancedFilters ? (
+                <ChevronUp className="w-4 h-4" />
+              ) : (
+                <ChevronDown className="w-4 h-4" />
+              )}
             </button>
 
             <select
@@ -483,10 +526,12 @@ export default function SearchSongs() {
           {showAdvancedFilters && (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-gray-750 rounded-lg">
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">Genre</label>
+                <label className="block text-sm font-medium text-gray-300 mb-1">
+                  Genre
+                </label>
                 <select
                   value={filters.genre}
-                  onChange={(e) => handleFilterChange('genre', e.target.value)}
+                  onChange={(e) => handleFilterChange("genre", e.target.value)}
                   className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded text-white"
                 >
                   <option value="">All Genres</option>
@@ -502,21 +547,25 @@ export default function SearchSongs() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">Artist</label>
+                <label className="block text-sm font-medium text-gray-300 mb-1">
+                  Artist
+                </label>
                 <input
                   type="text"
                   value={filters.artist}
-                  onChange={(e) => handleFilterChange('artist', e.target.value)}
+                  onChange={(e) => handleFilterChange("artist", e.target.value)}
                   placeholder="Artist name..."
                   className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded text-white placeholder-gray-400"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">Year Range</label>
+                <label className="block text-sm font-medium text-gray-300 mb-1">
+                  Year Range
+                </label>
                 <select
                   value={filters.year}
-                  onChange={(e) => handleFilterChange('year', e.target.value)}
+                  onChange={(e) => handleFilterChange("year", e.target.value)}
                   className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded text-white"
                 >
                   <option value="">All Years</option>
@@ -531,24 +580,32 @@ export default function SearchSongs() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">Duration</label>
+                <label className="block text-sm font-medium text-gray-300 mb-1">
+                  Duration
+                </label>
                 <select
                   value={filters.duration}
-                  onChange={(e) => handleFilterChange('duration', e.target.value)}
+                  onChange={(e) =>
+                    handleFilterChange("duration", e.target.value)
+                  }
                   className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded text-white"
                 >
                   <option value="">Any Duration</option>
-                                    <option value="short">Short (&lt; 3 min)</option>
+                  <option value="short">Short (&lt; 3 min)</option>
                   <option value="medium">Medium (3-5 min)</option>
                   <option value="long">Long (&gt; 5 min)</option>
                 </select>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">Quality</label>
+                <label className="block text-sm font-medium text-gray-300 mb-1">
+                  Quality
+                </label>
                 <select
                   value={filters.bitrate}
-                  onChange={(e) => handleFilterChange('bitrate', e.target.value)}
+                  onChange={(e) =>
+                    handleFilterChange("bitrate", e.target.value)
+                  }
                   className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded text-white"
                 >
                   <option value="">Any Quality</option>
@@ -560,16 +617,20 @@ export default function SearchSongs() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">Popularity</label>
+                <label className="block text-sm font-medium text-gray-300 mb-1">
+                  Popularity
+                </label>
                 <select
                   value={filters.popularity}
-                  onChange={(e) => handleFilterChange('popularity', e.target.value)}
+                  onChange={(e) =>
+                    handleFilterChange("popularity", e.target.value)
+                  }
                   className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded text-white"
                 >
                   <option value="">Any Popularity</option>
-                  <option value="high">High (> 80)</option>
+                  <option value="high">High (&gt; 80)</option>
                   <option value="medium">Medium (40-80)</option>
-                  <option value="low">Low (< 40)</option>
+                  <option value="low">Low (&lt; 40)</option>
                 </select>
               </div>
             </div>
@@ -592,10 +653,12 @@ export default function SearchSongs() {
                 <h2 className="text-xl font-semibold">
                   {totalResults.toLocaleString()} Results
                   {localQuery && (
-                    <span className="text-gray-400 ml-2">for "{localQuery}"</span>
+                    <span className="text-gray-400 ml-2">
+                      for "{localQuery}"
+                    </span>
                   )}
                 </h2>
-                
+
                 {selectedResults.size > 0 && (
                   <div className="flex items-center gap-2">
                     <span className="text-sm text-gray-400">
@@ -616,21 +679,29 @@ export default function SearchSongs() {
                   onClick={handleSelectAll}
                   className="text-sm text-blue-400 hover:text-blue-300"
                 >
-                  {selectedResults.size === searchResults.length ? 'Deselect All' : 'Select All'}
+                  {selectedResults.size === searchResults.length
+                    ? "Deselect All"
+                    : "Select All"}
                 </button>
               </div>
             </div>
 
             {/* Results List */}
-            <div className={viewMode === 'grid' ? 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4' : 'space-y-2'}>
+            <div
+              className={
+                viewMode === "grid"
+                  ? "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
+                  : "space-y-2"
+              }
+            >
               {searchResults.map((track) => (
                 <div
                   key={track.id}
                   className={`${
-                    viewMode === 'grid'
-                      ? 'bg-gray-700 rounded-lg p-4 hover:bg-gray-650 transition-colors'
-                      : 'flex items-center gap-4 p-3 bg-gray-700 rounded-lg hover:bg-gray-650 transition-colors'
-                  } ${selectedResults.has(track.id) ? 'ring-2 ring-blue-500' : ''}`}
+                    viewMode === "grid"
+                      ? "bg-gray-700 rounded-lg p-4 hover:bg-gray-650 transition-colors"
+                      : "flex items-center gap-4 p-3 bg-gray-700 rounded-lg hover:bg-gray-650 transition-colors"
+                  } ${selectedResults.has(track.id) ? "ring-2 ring-blue-500" : ""}`}
                 >
                   <input
                     type="checkbox"
@@ -647,7 +718,7 @@ export default function SearchSongs() {
                     className="rounded"
                   />
 
-                  {viewMode === 'grid' ? (
+                  {viewMode === "grid" ? (
                     <div className="text-center">
                       <ArtworkImage
                         src={track.thumbnail}
@@ -655,15 +726,19 @@ export default function SearchSongs() {
                         size="lg"
                         className="mx-auto mb-3"
                       />
-                      <h3 className="font-medium truncate mb-1">{track.title}</h3>
-                      <p className="text-gray-400 text-sm truncate mb-2">{track.artist}</p>
+                      <h3 className="font-medium truncate mb-1">
+                        {track.title}
+                      </h3>
+                      <p className="text-gray-400 text-sm truncate mb-2">
+                        {track.artist}
+                      </p>
                       <div className="flex items-center justify-center gap-2">
                         <button
                           onClick={() => handlePreview(track)}
                           className={`p-2 rounded-full transition-colors ${
                             playingPreview === track.id
-                              ? 'bg-green-600 text-white'
-                              : 'bg-gray-600 hover:bg-gray-500'
+                              ? "bg-green-600 text-white"
+                              : "bg-gray-600 hover:bg-gray-500"
                           }`}
                         >
                           <Play className="w-4 h-4" />
@@ -683,11 +758,15 @@ export default function SearchSongs() {
                         alt={track.title}
                         size="md"
                       />
-                      
+
                       <div className="flex-1 min-w-0">
                         <h3 className="font-medium truncate">{track.title}</h3>
-                        <p className="text-gray-400 text-sm truncate">{track.artist}</p>
-                        <p className="text-gray-500 text-xs">{track.album} • {track.year}</p>
+                        <p className="text-gray-400 text-sm truncate">
+                          {track.artist}
+                        </p>
+                        <p className="text-gray-500 text-xs">
+                          {track.album} • {track.year}
+                        </p>
                       </div>
 
                       <div className="flex items-center gap-2 text-sm text-gray-400">
@@ -705,14 +784,14 @@ export default function SearchSongs() {
                           onClick={() => handlePreview(track)}
                           className={`p-2 rounded-full transition-colors ${
                             playingPreview === track.id
-                              ? 'bg-green-600 text-white'
-                              : 'bg-gray-600 hover:bg-gray-500'
+                              ? "bg-green-600 text-white"
+                              : "bg-gray-600 hover:bg-gray-500"
                           }`}
                           title="Preview"
                         >
                           <Play className="w-4 h-4" />
                         </button>
-                        
+
                         <button
                           onClick={() => addToQueue(track)}
                           className="p-2 bg-blue-600 hover:bg-blue-700 rounded-full transition-colors"
@@ -725,8 +804,8 @@ export default function SearchSongs() {
                           onClick={() => toggleFavorite(track)}
                           className={`p-2 rounded-full transition-colors ${
                             isFavorite(track.id)
-                              ? 'bg-red-600 text-white'
-                              : 'bg-gray-600 hover:bg-gray-500'
+                              ? "bg-red-600 text-white"
+                              : "bg-gray-600 hover:bg-gray-500"
                           }`}
                           title="Favorite"
                         >
@@ -788,15 +867,21 @@ export default function SearchSongs() {
             <h3 className="text-lg font-semibold mb-4">Search Analytics</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="bg-gray-700 rounded-lg p-4">
-                <div className="text-2xl font-bold text-blue-400">{totalResults}</div>
+                <div className="text-2xl font-bold text-blue-400">
+                  {totalResults}
+                </div>
                 <div className="text-sm text-gray-400">Total Results</div>
               </div>
               <div className="bg-gray-700 rounded-lg p-4">
-                <div className="text-2xl font-bold text-green-400">{recentSearches.length}</div>
+                <div className="text-2xl font-bold text-green-400">
+                  {recentSearches.length}
+                </div>
                 <div className="text-sm text-gray-400">Recent Searches</div>
               </div>
               <div className="bg-gray-700 rounded-lg p-4">
-                <div className="text-2xl font-bold text-purple-400">{selectedResults.size}</div>
+                <div className="text-2xl font-bold text-purple-400">
+                  {selectedResults.size}
+                </div>
                 <div className="text-sm text-gray-400">Selected Tracks</div>
               </div>
             </div>
