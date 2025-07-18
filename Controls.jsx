@@ -162,7 +162,139 @@ export default function Controls() {
         <h1 className="text-3xl font-bold text-center mb-8">System Controls</h1>
 
         {/* Enhanced Emergency Controls */}
-        <EmergencyControls />
+        <div
+          className={`rounded-lg p-6 border-2 transition-all duration-300 ${
+            isEmergencyActive
+              ? "bg-red-900/30 border-red-600"
+              : "bg-red-900/20 border-red-600/30"
+          }`}
+        >
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <AlertTriangle className="w-6 h-6 text-red-400" />
+              <h2 className="text-xl font-semibold text-red-400">
+                Emergency Controls
+              </h2>
+            </div>
+
+            {isEmergencyActive && (
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+                <span className="text-sm font-medium text-red-400">
+                  EMERGENCY ACTIVE
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* Primary Emergency Controls */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            {/* Immediate Stop */}
+            <button
+              onClick={handleEmergencyStop}
+              disabled={isEmergencyActive}
+              className={`
+                py-4 px-6 rounded-lg font-bold text-white text-lg
+                transition-all duration-200 min-h-[80px] flex flex-col items-center justify-center
+                ${
+                  isEmergencyActive
+                    ? "bg-gray-600 cursor-not-allowed opacity-50"
+                    : "bg-red-600 hover:bg-red-700"
+                }
+              `}
+            >
+              <Square className="w-6 h-6 mb-2" />
+              IMMEDIATE STOP
+            </button>
+
+            {/* Fade Out Stop */}
+            <div className="space-y-2">
+              <button
+                onClick={handleFadeOutStop}
+                disabled={isEmergencyActive}
+                className={`
+                  w-full py-4 px-6 rounded-lg font-bold text-white
+                  transition-colors min-h-[60px] flex items-center justify-center gap-2
+                  ${
+                    isEmergencyActive
+                      ? "bg-gray-600 cursor-not-allowed opacity-50"
+                      : "bg-orange-600 hover:bg-orange-700"
+                  }
+                `}
+              >
+                <VolumeX className="w-5 h-5" />
+                FADE OUT STOP
+              </button>
+
+              <div className="flex items-center gap-2">
+                <label className="text-sm text-gray-400">Duration:</label>
+                <select
+                  value={fadeOutDuration}
+                  onChange={(e) => setFadeOutDuration(Number(e.target.value))}
+                  disabled={isEmergencyActive}
+                  className="bg-gray-700 border border-gray-600 rounded px-2 py-1 text-sm text-white"
+                >
+                  <option value={1}>1s</option>
+                  <option value={3}>3s</option>
+                  <option value={5}>5s</option>
+                  <option value={10}>10s</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {/* Recovery and Test Controls */}
+          <div className="flex flex-wrap gap-3">
+            <button
+              onClick={handleSystemRecovery}
+              disabled={!isEmergencyActive}
+              className={`
+                flex items-center gap-2 px-4 py-2 rounded-lg font-medium
+                transition-colors
+                ${
+                  isEmergencyActive
+                    ? "bg-green-600 hover:bg-green-700 text-white"
+                    : "bg-gray-600 cursor-not-allowed opacity-50 text-gray-400"
+                }
+              `}
+            >
+              <RotateCcw className="w-4 h-4" />
+              System Recovery
+            </button>
+
+            <button
+              onClick={handleTestEmergency}
+              disabled={isEmergencyActive}
+              className={`
+                flex items-center gap-2 px-4 py-2 rounded-lg font-medium
+                transition-colors
+                ${
+                  !isEmergencyActive
+                    ? "bg-blue-600 hover:bg-blue-700 text-white"
+                    : "bg-gray-600 cursor-not-allowed opacity-50 text-gray-400"
+                }
+              `}
+            >
+              <Shield className="w-4 h-4" />
+              Test Systems
+            </button>
+          </div>
+
+          {/* Safety Notice */}
+          <div className="mt-4 p-3 bg-yellow-900/20 border border-yellow-600/30 rounded-lg">
+            <div className="flex items-start gap-2">
+              <AlertTriangle className="w-4 h-4 text-yellow-400 mt-0.5 flex-shrink-0" />
+              <div className="text-xs text-yellow-200">
+                <p className="font-medium mb-1">SAFETY NOTICE:</p>
+                <p>
+                  Emergency controls will immediately affect all zones and
+                  connected devices. Use responsibly and ensure proper safety
+                  protocols are followed.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Playback Controls */}
