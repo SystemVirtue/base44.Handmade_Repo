@@ -354,7 +354,7 @@ const MusicLibraryBrowser = ({
                   onClick={() => setViewMode("grid")}
                   className={`p-2 ${viewMode === "grid" ? "text-blue-500" : "text-gray-400 hover:text-white"}`}
                 >
-                  <Grid3X3 className="w-4 h-4" />
+                  <Grid className="w-4 h-4" />
                 </button>
                 <button
                   onClick={() => setViewMode("list")}
