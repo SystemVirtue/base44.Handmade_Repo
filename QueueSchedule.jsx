@@ -761,96 +761,92 @@ export default function QueueSchedule() {
 
       {activeTab === "templates" && (
         <div className="space-y-6">
-          {/* Template Controls */}
+          {/* Spotify Playlists */}
           <div className="bg-gray-800 rounded-lg p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-semibold">All Playlists</h2>
-              <button
-                onClick={() => {
-                  setEditingTemplate(null);
-                  setShowTemplateModal(true);
-                }}
-                className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg flex items-center gap-2"
-              >
-                <Plus className="w-4 h-4" />
-                Create Template
-              </button>
+              <div className="text-sm text-gray-400">
+                From DJAMMS Spotify Profile
+              </div>
             </div>
 
-            {/* Template Grid */}
+            {/* Playlist Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {templates && templates.length > 0 ? (
-                templates.map((template) => (
-                  <div key={template.id} className="bg-gray-700 rounded-lg p-4">
-                    <div className="flex items-start justify-between mb-3">
-                      <div>
-                        <h3 className="font-medium">{template.name}</h3>
-                        <p className="text-gray-400 text-sm">
-                          {template.tracks?.length || 0} tracks •{" "}
-                          {formatDuration(template.duration || 0)}
-                        </p>
-                        <p className="text-gray-500 text-xs">
-                          Created{" "}
-                          {new Date(template.createdAt).toLocaleDateString()}
+              {spotifyPlaylists.map((playlist) => (
+                <div
+                  key={playlist.id}
+                  className="bg-gray-700 rounded-lg overflow-hidden"
+                >
+                  {/* Playlist Image */}
+                  <div className="relative aspect-video">
+                    <img
+                      src={playlist.image}
+                      alt={playlist.name}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute top-2 right-2">
+                      <button
+                        onClick={() => handleTogglePlaylistStar(playlist.id)}
+                        className={`p-2 rounded-full transition-colors ${
+                          playlist.isStarred
+                            ? "bg-yellow-500 text-white"
+                            : "bg-black/50 text-white hover:bg-yellow-500"
+                        }`}
+                        title={
+                          playlist.isStarred
+                            ? "Remove from Active Playlists"
+                            : "Add to Active Playlists"
+                        }
+                      >
+                        <Star
+                          className={`w-4 h-4 ${playlist.isStarred ? "fill-current" : ""}`}
+                        />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Playlist Info */}
+                  <div className="p-4">
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-medium truncate">
+                          {playlist.name}
+                        </h3>
+                        <p className="text-gray-400 text-sm line-clamp-2">
+                          {playlist.description}
                         </p>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => {
-                            setEditingTemplate(template);
-                            setShowTemplateModal(true);
-                          }}
-                          className="text-gray-400 hover:text-white"
-                          title="Edit template"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => removeTemplate(template.id)}
-                          className="text-gray-400 hover:text-red-400"
-                          title="Delete template"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between text-sm text-gray-400 mb-3">
+                      <span>{playlist.trackCount} tracks</span>
+                      <span>{playlist.duration}</span>
                     </div>
 
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => {
-                          clearQueue();
-                          template.tracks?.forEach((track) =>
-                            addToQueue(track),
-                          );
+                          // In a real implementation, this would load tracks from the Spotify playlist
+                          console.log(`Loading playlist: ${playlist.name}`);
                         }}
-                        className="flex-1 bg-blue-600 hover:bg-blue-700 px-3 py-2 rounded-lg text-sm flex items-center justify-center gap-2"
+                        className="flex-1 bg-green-600 hover:bg-green-700 px-3 py-2 rounded-lg text-sm flex items-center justify-center gap-2"
                       >
                         <Play className="w-4 h-4" />
-                        Load Queue
+                        Load Playlist
                       </button>
                       <button
-                        onClick={() => {
-                          template.tracks?.forEach((track) =>
-                            addToQueue(track),
-                          );
-                        }}
-                        className="bg-gray-600 hover:bg-gray-500 px-3 py-2 rounded-lg text-sm flex items-center gap-2"
+                        onClick={() =>
+                          window.open(playlist.spotifyUrl, "_blank")
+                        }
+                        className="p-2 bg-gray-600 hover:bg-gray-500 rounded-lg"
+                        title="Open in Spotify"
                       >
-                        <Plus className="w-4 h-4" />
-                        Add
+                        <ExternalLink className="w-4 h-4" />
                       </button>
                     </div>
                   </div>
-                ))
-              ) : (
-                <div className="col-span-full text-center py-12 text-gray-400">
-                  <Save className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p className="text-lg mb-2">No templates saved</p>
-                  <p className="text-sm">
-                    Save queue configurations as templates for quick loading
-                  </p>
                 </div>
-              )}
+              ))}
             </div>
           </div>
         </div>
