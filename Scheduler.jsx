@@ -14,17 +14,20 @@ import {
   Trash2,
   AlertCircle,
 } from "lucide-react";
-import { useStore } from "./store";
+import { useSchedulerStore, useZoneStore } from "./store.js";
 
 export default function Scheduler() {
   const {
     schedules,
     addSchedule,
-    removeSchedule,
     updateSchedule,
-    templates,
-    zones,
-  } = useStore();
+    deleteSchedule,
+    setSelectedSchedule,
+    saveToHistory,
+    loadFromHistory,
+  } = useSchedulerStore();
+
+  const { zones } = useZoneStore();
 
   // System settings state
   const [systemSettings, setSystemSettings] = useState({
