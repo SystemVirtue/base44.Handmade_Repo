@@ -173,6 +173,63 @@ export const useAudioStore = create(
       },
 
       setAudioInstance: (instance) => set({ audioInstance: instance }),
+
+      // Voting and favorites actions
+      toggleFavorite: (trackId) => {
+        const { favorites } = get();
+        const newFavorites = new Set(favorites);
+
+        if (newFavorites.has(trackId)) {
+          newFavorites.delete(trackId);
+        } else {
+          newFavorites.add(trackId);
+        }
+
+        set({ favorites: newFavorites });
+
+        // In a real implementation, this would sync with backend
+        console.log(
+          `Track ${trackId} ${newFavorites.has(trackId) ? "added to" : "removed from"} favorites`,
+        );
+      },
+
+      voteForTrack: (trackId) => {
+        const { votes, userVotes } = get();
+
+        // Check if user already voted for this track
+        if (userVotes[trackId]) {
+          console.log("You have already voted for this track");
+          return;
+        }
+
+        const newVotes = { ...votes };
+        const newUserVotes = { ...userVotes };
+
+        newVotes[trackId] = (newVotes[trackId] || 0) + 1;
+        newUserVotes[trackId] = true;
+
+        set({ votes: newVotes, userVotes: newUserVotes });
+
+        // In a real implementation, this would sync with backend
+        console.log(
+          `Voted for track ${trackId}. Total votes: ${newVotes[trackId]}`,
+        );
+      },
+
+      isFavorite: (trackId) => {
+        const { favorites } = get();
+        return favorites.has(trackId);
+      },
+
+      hasVoted: (trackId) => {
+        const { userVotes } = get();
+        return !!userVotes[trackId];
+      },
+
+      getVoteCount: (trackId) => {
+        const { votes } = get();
+        return votes[trackId] || 0;
+      },
     }),
     {
       name: "audio-store",
