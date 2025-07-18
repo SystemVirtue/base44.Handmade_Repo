@@ -518,6 +518,32 @@ export default function UILookAndFeel() {
                   <option value="extra-large">Extra Large</option>
                 </select>
               </div>
+
+              {/* Font Preview */}
+              <div className="mt-4 p-3 bg-gray-700 rounded-lg">
+                <p className="text-xs text-gray-400 mb-2">Preview:</p>
+                <div
+                  style={{
+                    fontFamily: localTheme.customFont,
+                    fontSize:
+                      localTheme.fontSize === "small"
+                        ? "14px"
+                        : localTheme.fontSize === "large"
+                          ? "18px"
+                          : localTheme.fontSize === "extra-large"
+                            ? "20px"
+                            : "16px",
+                  }}
+                >
+                  <h4 className="font-semibold mb-1">DJAMMS Music System</h4>
+                  <p className="text-gray-300 text-sm">
+                    The quick brown fox jumps over the lazy dog
+                  </p>
+                  <p className="text-xs text-gray-400 mt-1">
+                    Font: {localTheme.customFont} • Size: {localTheme.fontSize}
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
 
