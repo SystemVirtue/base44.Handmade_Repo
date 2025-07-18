@@ -134,7 +134,7 @@ export default function Layout({ children, currentPageName }) {
     sidebarCollapsed,
     notifications,
     toggleSidebar,
-    setCurrentPage,
+    setActiveTab,
   } = useUIStore();
 
   const { currentZone } = useZoneStore();
