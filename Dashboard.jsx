@@ -233,6 +233,28 @@ export default function Dashboard() {
     // TODO: Implement reporting system
   };
 
+  // Library browser handlers
+  const handleOpenLibraryBrowser = () => {
+    setShowLibraryBrowser(true);
+  };
+
+  const handleCloseLibraryBrowser = () => {
+    setShowLibraryBrowser(false);
+  };
+
+  const handlePlayTrackNow = (track) => {
+    // Set as current track and play immediately
+    const newTrack = {
+      ...track,
+      url: null, // This would be set by the backend in a real implementation
+    };
+
+    // Add to beginning of queue and play
+    addToQueue(newTrack);
+    // In a real implementation, this would also set as current track
+    console.log("Playing track now:", track);
+  };
+
   const getRepeatIcon = () => {
     switch (repeatMode) {
       case "one":
