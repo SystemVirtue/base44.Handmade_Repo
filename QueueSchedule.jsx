@@ -569,6 +569,16 @@ export default function QueueSchedule() {
 
                     <div className="flex items-center gap-2">
                       <button
+                        onClick={() => {
+                          setEditingSchedule(schedule);
+                          setShowScheduleModal(true);
+                        }}
+                        className="text-gray-400 hover:text-white"
+                        title="Edit schedule"
+                      >
+                        <Edit className="w-4 h-4" />
+                      </button>
+                      <button
                         onClick={() =>
                           updateSchedule(schedule.id, {
                             active: !schedule.active,
