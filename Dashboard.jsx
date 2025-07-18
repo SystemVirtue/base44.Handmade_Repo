@@ -515,10 +515,26 @@ export default function Dashboard() {
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => handleVote(song.id)}
-                          className="p-1 text-gray-400 hover:text-green-400 transition-colors"
-                          title="Vote for this song"
+                          disabled={hasVoted(song.id)}
+                          className={`p-1 transition-colors relative ${
+                            hasVoted(song.id)
+                              ? "text-green-400 cursor-not-allowed"
+                              : "text-gray-400 hover:text-green-400"
+                          }`}
+                          title={
+                            hasVoted(song.id)
+                              ? "Already voted"
+                              : "Vote for this song"
+                          }
                         >
-                          <ThumbsUp className="w-4 h-4" />
+                          <ThumbsUp
+                            className={`w-4 h-4 ${hasVoted(song.id) ? "fill-current" : ""}`}
+                          />
+                          {getVoteCount(song.id) > 0 && (
+                            <span className="absolute -top-1 -right-1 bg-green-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
+                              {getVoteCount(song.id)}
+                            </span>
+                          )}
                         </button>
 
                         <button
