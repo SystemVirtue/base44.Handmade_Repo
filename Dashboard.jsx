@@ -51,6 +51,7 @@ export default function Dashboard() {
   const [isShuffled, setIsShuffled] = useState(false);
   const [repeatMode, setRepeatMode] = useState("none"); // 'none', 'one', 'all'
   const [showQueue, setShowQueue] = useState(true);
+  const [showLibraryBrowser, setShowLibraryBrowser] = useState(false);
 
   // Initialize audio element
   useEffect(() => {
