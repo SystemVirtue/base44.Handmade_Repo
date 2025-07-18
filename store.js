@@ -734,3 +734,72 @@ export const formatTime = (seconds) => {
   const secs = Math.floor(seconds % 60);
   return `${mins}:${secs.toString().padStart(2, "0")}`;
 };
+
+// Unified store that combines all functionality
+export const useStore = () => {
+  const audioStore = useAudioStore();
+  const uiStore = useUIStore();
+  const zoneStore = useZoneStore();
+  const searchStore = useSearchStore();
+
+  return {
+    // Audio/Queue functionality
+    currentTrack: audioStore.currentTrack,
+    isPlaying: audioStore.isPlaying,
+    volume: audioStore.volume,
+    queue: audioStore.queue,
+    favorites: audioStore.favorites,
+    votes: audioStore.votes,
+    templates: audioStore.templates,
+    schedules: audioStore.schedules,
+
+    // Audio actions
+    play: audioStore.play,
+    pause: audioStore.pause,
+    playTrack: audioStore.setCurrentTrack,
+    pauseTrack: audioStore.pause,
+    skipTrack: audioStore.nextTrack,
+    setVolume: audioStore.setVolume,
+    addToQueue: audioStore.addToQueue,
+    removeFromQueue: audioStore.removeFromQueue,
+    reorderQueue: audioStore.reorderQueue,
+    clearQueue: audioStore.clearQueue,
+    shuffleQueue: audioStore.shuffleQueue,
+    voteForTrack: audioStore.voteForTrack,
+    favoriteTrack: audioStore.toggleFavorite,
+
+    // Template actions
+    addTemplate: audioStore.addTemplate,
+    removeTemplate: audioStore.removeTemplate,
+
+    // Schedule actions
+    addSchedule: audioStore.addSchedule,
+    removeSchedule: audioStore.removeSchedule,
+    updateSchedule: audioStore.updateSchedule,
+
+    // Zone functionality
+    zones: zoneStore.zones,
+    currentZone: zoneStore.currentZone,
+    setCurrentZone: zoneStore.setCurrentZone,
+    addZone: zoneStore.addZone,
+    updateZone: zoneStore.updateZone,
+    removeZone: zoneStore.removeZone,
+
+    // Search functionality
+    searchQuery: searchStore.query,
+    searchResults: searchStore.results,
+    isSearching: searchStore.isSearching,
+    searchFilters: searchStore.filters,
+    performSearch: searchStore.performSearch,
+    setSearchQuery: searchStore.setQuery,
+    setSearchFilters: searchStore.setFilters,
+    clearSearchResults: searchStore.clearResults,
+    searchTracks: searchStore.performSearch,
+
+    // UI functionality
+    theme: uiStore.theme,
+    notifications: uiStore.notifications,
+    setTheme: uiStore.setTheme,
+    addNotification: uiStore.addNotification,
+  };
+};
