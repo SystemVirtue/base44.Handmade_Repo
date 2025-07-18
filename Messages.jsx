@@ -421,6 +421,14 @@ export default function Messages() {
           )}
         </div>
       </div>
+
+      {/* Click outside to close logs menu */}
+      {showLogsMenu && (
+        <div
+          className="fixed inset-0 z-5"
+          onClick={() => setShowLogsMenu(false)}
+        />
+      )}
     </div>
   );
 }
