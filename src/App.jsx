@@ -6,6 +6,7 @@ import {
   Navigate,
 } from "react-router-dom";
 import { AuthProvider, useAuth } from "./contexts/AuthContext.jsx";
+import { ErrorProvider, ErrorBoundary } from "./contexts/ErrorContext.jsx";
 import Login from "./Login.jsx";
 import Layout from "../Layout.jsx";
 import Dashboard from "../Dashboard.jsx";
@@ -19,6 +20,7 @@ import Scheduler from "../Scheduler.jsx";
 import Messages from "../Messages.jsx";
 import MusicZoneInfo from "../MusicZoneInfo.jsx";
 import ChangeMusicZone from "../ChangeMusicZone.jsx";
+import Settings from "../Settings.jsx";
 
 // Protected Route component
 const ProtectedRoute = ({ children }) => {
@@ -177,17 +179,31 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/settings"
+        element={
+          <ProtectedRoute>
+            <Layout currentPageName="Settings">
+              <Settings />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
     </Routes>
   );
 }
 
 function App() {
   return (
-    <AuthProvider>
-      <Router>
-        <AppRoutes />
-      </Router>
-    </AuthProvider>
+    <ErrorBoundary>
+      <ErrorProvider>
+        <AuthProvider>
+          <Router>
+            <AppRoutes />
+          </Router>
+        </AuthProvider>
+      </ErrorProvider>
+    </ErrorBoundary>
   );
 }
 

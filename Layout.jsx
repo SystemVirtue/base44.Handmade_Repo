@@ -24,6 +24,9 @@ import {
   formatTime,
 } from "./store.js";
 import { useAuth } from "./src/contexts/AuthContext.jsx";
+import { useError } from "./src/contexts/ErrorContext.jsx";
+import useNetworkStatus from "./src/hooks/useNetworkStatus.js";
+import { NetworkStatus } from "./components/ui/shared.jsx";
 
 const navigationItems = [
   {
@@ -116,6 +119,8 @@ export default function Layout({ children, currentPageName }) {
   const location = useLocation();
   const navigate = useNavigate();
   const { logout, user } = useAuth();
+  const { showError, showWarning } = useError();
+  const { isOnline, connectionType } = useNetworkStatus();
 
   // Store state
   const {
