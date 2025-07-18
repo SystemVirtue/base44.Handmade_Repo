@@ -113,16 +113,6 @@ export default function Controls() {
     });
   };
 
-  const handleEmergencyStop = () => {
-    // Emergency stop all audio
-    setVolume(0);
-    setSystemVolume(0);
-    setMicVolume(0);
-    if (isPlaying) {
-      togglePlayPause();
-    }
-  };
-
   return (
     <div className="p-8 text-white bg-gray-900 h-full overflow-y-auto">
       <div className="max-w-4xl mx-auto space-y-6">
