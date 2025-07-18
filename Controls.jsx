@@ -153,19 +153,67 @@ export default function Controls() {
   };
 
   const handleEQChange = (band, value) => {
-    setEqSettings((prev) => ({
-      ...prev,
-      [band]: value,
-    }));
+    setEqSettings((prev) => {
+      const newSettings = {
+        ...prev,
+        [band]: value,
+      };
+
+      // Apply to real-time audio processing
+      if (isAudioProcessingInitialized) {
+        audioProcessing.setEQBand(band, value);
+      }
+
+      return newSettings;
+    });
+
+    // Clear preset selection if manually adjusting
+    if (selectedEQPreset !== "custom") {
+      setSelectedEQPreset("custom");
+    }
   };
 
   const resetEQ = () => {
-    setEqSettings({
+    const flatSettings = {
       bass: 0,
       mid: 0,
       treble: 0,
       presence: 0,
-    });
+    };
+
+    setEqSettings(flatSettings);
+    setSelectedEQPreset("flat");
+
+    // Apply to real-time audio processing
+    if (isAudioProcessingInitialized) {
+      audioProcessing.setEQSettings(flatSettings);
+    }
+  };
+
+  // EQ Preset handlers
+  const handleEQPresetChange = (presetName) => {
+    setSelectedEQPreset(presetName);
+
+    if (isAudioProcessingInitialized) {
+      const success = audioProcessing.applyEQPreset(presetName);
+      if (success) {
+        // Update UI to reflect preset values
+        const presetSettings = audioProcessing.getCurrentEQSettings();
+        if (presetSettings) {
+          setEqSettings(presetSettings);
+        }
+      }
+    }
+  };
+
+  // Compressor handlers
+  const handleCompressorToggle = () => {
+    const newState = !compressorEnabled;
+    setCompressorEnabled(newState);
+
+    if (isAudioProcessingInitialized) {
+      audioProcessing.toggleCompressor(newState);
+    }
   };
 
   // Emergency handlers
