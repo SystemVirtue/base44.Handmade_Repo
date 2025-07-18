@@ -128,12 +128,27 @@ export default function Settings() {
   };
 
   const handleSaveSettings = () => {
-    // In a real app, this would save to backend
+    // Save to backend (simulated)
     console.log("Saving settings:", settings);
+
+    // Update relevant stores
+    if (settings.general.language !== theme.language) {
+      setTheme({ language: settings.general.language });
+    }
+
+    // In a real app, this would sync with backend
+    localStorage.setItem("djamms-settings", JSON.stringify(settings));
+
     setUnsavedChanges(false);
 
-    // Show success notification
-    alert("Settings saved successfully!");
+    // Show success notification using UI store
+    const { addNotification } = useUIStore.getState();
+    addNotification({
+      type: "success",
+      title: "Settings Saved",
+      message: "All settings have been saved successfully",
+      priority: "normal",
+    });
   };
 
   const handleResetSettings = () => {
