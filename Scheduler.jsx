@@ -357,7 +357,7 @@ export default function Scheduler() {
           s.playlist === currentEntry.playlist,
       );
 
-      relatedSchedules.forEach((s) => removeSchedule(s.id));
+      relatedSchedules.forEach((s) => deleteSchedule(s.id));
       setSelectedSlot(null);
       setCurrentEntry({
         id: "",
