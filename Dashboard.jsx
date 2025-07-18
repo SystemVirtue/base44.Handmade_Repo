@@ -309,13 +309,38 @@ export default function Dashboard() {
 
               {/* Track actions */}
               <div className="flex items-center gap-3 mt-3">
-                <button className="flex items-center gap-1 text-red-400 hover:text-red-300 transition-colors">
-                  <Heart className="w-4 h-4" />
-                  <span className="text-sm">Like</span>
+                <button
+                  onClick={() => handleToggleFavorite(currentTrack.id)}
+                  className={`flex items-center gap-1 transition-colors ${
+                    isFavorite(currentTrack.id)
+                      ? "text-red-400 hover:text-red-300"
+                      : "text-gray-400 hover:text-red-400"
+                  }`}
+                >
+                  <Heart
+                    className={`w-4 h-4 ${isFavorite(currentTrack.id) ? "fill-current" : ""}`}
+                  />
+                  <span className="text-sm">
+                    {isFavorite(currentTrack.id) ? "Liked" : "Like"}
+                  </span>
                 </button>
-                <button className="flex items-center gap-1 text-gray-400 hover:text-white transition-colors">
-                  <ThumbsUp className="w-4 h-4" />
-                  <span className="text-sm">Vote</span>
+                <button
+                  onClick={() => handleVote(currentTrack.id)}
+                  disabled={hasVoted(currentTrack.id)}
+                  className={`flex items-center gap-1 transition-colors ${
+                    hasVoted(currentTrack.id)
+                      ? "text-green-400 cursor-not-allowed"
+                      : "text-gray-400 hover:text-green-400"
+                  }`}
+                >
+                  <ThumbsUp
+                    className={`w-4 h-4 ${hasVoted(currentTrack.id) ? "fill-current" : ""}`}
+                  />
+                  <span className="text-sm">
+                    {hasVoted(currentTrack.id) ? "Voted" : "Vote"}
+                    {getVoteCount(currentTrack.id) > 0 &&
+                      ` (${getVoteCount(currentTrack.id)})`}
+                  </span>
                 </button>
                 <TrackOptionsMenu
                   track={currentTrack}
