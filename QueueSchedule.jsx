@@ -689,7 +689,10 @@ export default function QueueSchedule() {
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-semibold">Queue Templates</h2>
               <button
-                onClick={() => setShowTemplateModal(true)}
+                onClick={() => {
+                  setEditingTemplate(null);
+                  setShowTemplateModal(true);
+                }}
                 className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg flex items-center gap-2"
               >
                 <Plus className="w-4 h-4" />
