@@ -180,7 +180,7 @@ export default function MusicZoneInfo() {
           <div className="flex items-center gap-4">
             <Info className="w-8 h-8 text-blue-400" />
             <div>
-              <h1 className="text-3xl font-bold">{zone.name}</h1>
+              <h1 className="text-3xl font-bold">Network and Devices</h1>
               <p className="text-gray-400 flex items-center gap-2 mt-1">
                 <MapPin className="w-4 h-4" />
                 {zone.location}
