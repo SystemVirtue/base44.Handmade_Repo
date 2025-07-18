@@ -67,6 +67,8 @@ export default function QueueSchedule() {
   const [showTemplates, setShowTemplates] = useState(false);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [showTemplateModal, setShowTemplateModal] = useState(false);
+  const [editingSchedule, setEditingSchedule] = useState(null);
+  const [editingTemplate, setEditingTemplate] = useState(null);
   const [draggedItem, setDraggedItem] = useState(null);
   const [dropPosition, setDropPosition] = useState(null);
   const [queueSettings, setQueueSettings] = useState({
