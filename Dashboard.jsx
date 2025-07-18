@@ -388,13 +388,12 @@ export default function Dashboard() {
                       </div>
 
                       {/* Track thumbnail */}
-                      <div className="w-12 h-12 bg-gray-700 rounded overflow-hidden">
-                        <img
-                          src={song.thumbnail}
-                          alt={song.title}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
+                      <ArtworkImage
+                        track={song}
+                        size="small"
+                        className="w-12 h-12 rounded"
+                        showLoadingState={false}
+                      />
 
                       {/* Track info */}
                       <div className="flex-1 min-w-0">
