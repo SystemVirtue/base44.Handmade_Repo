@@ -33,8 +33,32 @@ export default function Settings() {
   const { volume, setVolume } = useAudioStore();
   const { currentZone } = useZoneStore();
 
+    // Initialize settings from localStorage or defaults
+  const getInitialSettings = () => {
+    try {
+      const saved = localStorage.getItem('djamms-settings');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        // Ensure all required fields exist by merging with defaults
+        const defaults = getDefaultSettingsStatic();
+        return {
+          general: { ...defaults.general, ...parsed.general },
+          audio: { ...defaults.audio, ...parsed.audio },
+          network: { ...defaults.network, ...parsed.network },
+          security: { ...defaults.security, ...parsed.security },
+          notifications: { ...defaults.notifications, ...parsed.notifications },
+          backup: { ...defaults.backup, ...parsed.backup },
+          advanced: { ...defaults.advanced, ...parsed.advanced },
+        };
+      }
+    } catch (error) {
+      console.error('Failed to load settings from localStorage:', error);
+    }
+    return getDefaultSettingsStatic();
+  };
+
   // Settings state
-  const [settings, setSettings] = useState({
+  const [settings, setSettings] = useState(getInitialSettings());
     general: {
       appName: "DJAMMS",
       language: "en",
@@ -128,7 +152,7 @@ export default function Settings() {
     setUnsavedChanges(true);
   };
 
-  const handleSaveSettings = () => {
+    const handleSaveSettings = () => {
     // Save to backend (simulated)
     console.log("Saving settings:", settings);
 
@@ -138,21 +162,21 @@ export default function Settings() {
     }
 
     // In a real app, this would sync with backend
-    localStorage.setItem("djamms-settings", JSON.stringify(settings));
+    localStorage.setItem('djamms-settings', JSON.stringify(settings));
 
     setUnsavedChanges(false);
 
     // Show success notification using UI store
     const { addNotification } = useUIStore.getState();
     addNotification({
-      type: "success",
-      title: "Settings Saved",
-      message: "All settings have been saved successfully",
-      priority: "normal",
+      type: 'success',
+      title: 'Settings Saved',
+      message: 'All settings have been saved successfully',
+      priority: 'normal'
     });
   };
 
-  const getDefaultSettings = () => ({
+    const getDefaultSettings = () => ({
     general: {
       appName: "DJAMMS",
       language: "en",
@@ -230,9 +254,9 @@ export default function Settings() {
     const defaultSettings = getDefaultSettings();
 
     // Reset current tab to defaults
-    setSettings((prev) => ({
+    setSettings(prev => ({
       ...prev,
-      [activeTab]: defaultSettings[activeTab],
+      [activeTab]: defaultSettings[activeTab]
     }));
 
     setUnsavedChanges(true);
@@ -240,10 +264,10 @@ export default function Settings() {
     // Show notification
     const { addNotification } = useUIStore.getState();
     addNotification({
-      type: "info",
-      title: "Settings Reset",
-      message: `${tabs.find((t) => t.id === activeTab)?.label} settings have been reset to defaults`,
-      priority: "normal",
+      type: 'info',
+      title: 'Settings Reset',
+      message: `${tabs.find(t => t.id === activeTab)?.label} settings have been reset to defaults`,
+      priority: 'normal'
     });
   };
 
@@ -259,7 +283,7 @@ export default function Settings() {
     URL.revokeObjectURL(url);
   };
 
-  const handleImportSettings = (event) => {
+    const handleImportSettings = (event) => {
     const file = event.target.files[0];
     if (file) {
       const reader = new FileReader();
@@ -271,11 +295,11 @@ export default function Settings() {
           const defaultSettings = getDefaultSettings();
           const validatedSettings = {};
 
-          Object.keys(defaultSettings).forEach((category) => {
+          Object.keys(defaultSettings).forEach(category => {
             if (importedSettings[category]) {
               validatedSettings[category] = {
                 ...defaultSettings[category],
-                ...importedSettings[category],
+                ...importedSettings[category]
               };
             } else {
               validatedSettings[category] = defaultSettings[category];
@@ -288,19 +312,19 @@ export default function Settings() {
           // Show success notification
           const { addNotification } = useUIStore.getState();
           addNotification({
-            type: "success",
-            title: "Settings Imported",
+            type: 'success',
+            title: 'Settings Imported',
             message: `Settings imported from ${file.name}`,
-            priority: "normal",
+            priority: 'normal'
           });
         } catch (error) {
           // Show error notification
           const { addNotification } = useUIStore.getState();
           addNotification({
-            type: "error",
-            title: "Import Failed",
-            message: "Failed to import settings. Invalid file format.",
-            priority: "high",
+            type: 'error',
+            title: 'Import Failed',
+            message: 'Failed to import settings. Invalid file format.',
+            priority: 'high'
           });
         }
       };
@@ -308,7 +332,7 @@ export default function Settings() {
     }
 
     // Reset file input
-    event.target.value = "";
+    event.target.value = '';
   };
 
   const renderGeneralSettings = () => (
