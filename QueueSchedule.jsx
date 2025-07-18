@@ -79,6 +79,62 @@ export default function QueueSchedule() {
     gapless: true,
   });
 
+  // Spotify playlists state
+  const [spotifyPlaylists, setSpotifyPlaylists] = useState([
+    {
+      id: "spotify_1",
+      name: "Morning Vibes",
+      description: "Perfect morning energy tracks",
+      trackCount: 45,
+      duration: "2h 34m",
+      image:
+        "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=300&h=200&fit=crop",
+      isStarred: true,
+      spotifyUrl: "https://open.spotify.com/playlist/example1",
+      owner: "DJAMMS",
+    },
+    {
+      id: "spotify_2",
+      name: "Lunch Mix",
+      description: "Chill afternoon background music",
+      trackCount: 32,
+      duration: "1h 58m",
+      image:
+        "https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=300&h=200&fit=crop",
+      isStarred: false,
+      spotifyUrl: "https://open.spotify.com/playlist/example2",
+      owner: "DJAMMS",
+    },
+    {
+      id: "spotify_3",
+      name: "Evening Chill",
+      description: "Relaxing evening atmosphere",
+      trackCount: 28,
+      duration: "1h 45m",
+      image:
+        "https://images.unsplash.com/photo-1551538827-9c037cb4f32a?w=300&h=200&fit=crop",
+      isStarred: true,
+      spotifyUrl: "https://open.spotify.com/playlist/example3",
+      owner: "DJAMMS",
+    },
+    {
+      id: "spotify_4",
+      name: "High Energy",
+      description: "Upbeat tracks for busy periods",
+      trackCount: 52,
+      duration: "3h 12m",
+      image:
+        "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=300&h=200&fit=crop",
+      isStarred: false,
+      spotifyUrl: "https://open.spotify.com/playlist/example4",
+      owner: "DJAMMS",
+    },
+  ]);
+
+  const [activePlaylists, setActivePlaylists] = useState(
+    spotifyPlaylists.filter((p) => p.isStarred),
+  );
+
   // Drag and Drop handlers
   const handleDragStart = useCallback((e, item, index) => {
     setDraggedItem({ item, index });
