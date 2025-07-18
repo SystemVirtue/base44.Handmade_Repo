@@ -33,6 +33,8 @@ import {
   VolumeX,
 } from "lucide-react";
 import { useStore } from "./store";
+import ScheduleModal from "./components/ui/schedule-modal";
+import TemplateModal from "./components/ui/template-modal";
 
 export default function QueueSchedule() {
   const {
