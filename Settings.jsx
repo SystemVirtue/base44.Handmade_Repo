@@ -265,15 +265,49 @@ export default function Settings() {
       reader.onload = (e) => {
         try {
           const importedSettings = JSON.parse(e.target.result);
-          setSettings(importedSettings);
+
+          // Validate settings structure
+          const defaultSettings = getDefaultSettings();
+          const validatedSettings = {};
+
+          Object.keys(defaultSettings).forEach((category) => {
+            if (importedSettings[category]) {
+              validatedSettings[category] = {
+                ...defaultSettings[category],
+                ...importedSettings[category],
+              };
+            } else {
+              validatedSettings[category] = defaultSettings[category];
+            }
+          });
+
+          setSettings(validatedSettings);
           setUnsavedChanges(true);
-          alert("Settings imported successfully!");
+
+          // Show success notification
+          const { addNotification } = useUIStore.getState();
+          addNotification({
+            type: "success",
+            title: "Settings Imported",
+            message: `Settings imported from ${file.name}`,
+            priority: "normal",
+          });
         } catch (error) {
-          alert("Failed to import settings. Invalid file format.");
+          // Show error notification
+          const { addNotification } = useUIStore.getState();
+          addNotification({
+            type: "error",
+            title: "Import Failed",
+            message: "Failed to import settings. Invalid file format.",
+            priority: "high",
+          });
         }
       };
       reader.readAsText(file);
     }
+
+    // Reset file input
+    event.target.value = "";
   };
 
   const renderGeneralSettings = () => (
