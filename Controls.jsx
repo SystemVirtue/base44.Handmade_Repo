@@ -103,6 +103,34 @@ export default function Controls() {
     return () => clearInterval(interval);
   }, []);
 
+  // Initialize audio processing when audio instance is available
+  useEffect(() => {
+    const { audioInstance } = useAudioStore.getState();
+
+    if (audioInstance && !isAudioProcessingInitialized) {
+      initializeAudioProcessing(audioInstance)
+        .then((success) => {
+          if (success) {
+            setIsAudioProcessingInitialized(true);
+            console.log("Audio processing initialized successfully");
+
+            // Apply initial EQ settings
+            audioProcessing.setEQSettings(eqSettings);
+          } else {
+            console.error("Failed to initialize audio processing");
+          }
+        })
+        .catch((error) => {
+          console.error("Audio processing initialization error:", error);
+        });
+    }
+  }, [
+    audioInstance,
+    isAudioProcessingInitialized,
+    audioProcessing,
+    eqSettings,
+  ]);
+
   const handleVolumeChange = (newVolume) => {
     setVolume(newVolume);
     if (currentZone) {
