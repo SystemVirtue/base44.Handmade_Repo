@@ -26,6 +26,7 @@ export default function Settings() {
   const [activeTab, setActiveTab] = useState("general");
   const [unsavedChanges, setUnsavedChanges] = useState(false);
   const [showResetModal, setShowResetModal] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Store integration
   const { theme, setTheme } = useUIStore();
