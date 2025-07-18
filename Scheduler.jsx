@@ -546,7 +546,8 @@ export default function Scheduler() {
                         {schedule.name || schedule.title}
                         {span > 1 && (
                           <div className="text-xs text-gray-300 mt-1">
-                            ({span} hours)
+                            {formatTime(schedule.startTime)} -{" "}
+                            {formatTime(schedule.endTime)}
                           </div>
                         )}
                       </div>
