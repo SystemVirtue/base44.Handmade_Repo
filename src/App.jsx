@@ -178,6 +178,16 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/settings"
+        element={
+          <ProtectedRoute>
+            <Layout currentPageName="Settings">
+              <Settings />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
     </Routes>
   );
 }
