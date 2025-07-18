@@ -368,8 +368,16 @@ export default function Scheduler() {
     }
   }, [currentEntry, schedules, removeSchedule]);
 
-  // Get schedule for a specific day and hour
+  // Get schedule for a specific day and hour (only return if it's the starting slot)
   const getScheduleForSlot = useCallback(
+    (day, hour) => {
+      return schedules.find((s) => s.day === day && s.startTime === hour);
+    },
+    [schedules],
+  );
+
+  // Check if a slot is part of a schedule (for styling purposes)
+  const isSlotInSchedule = useCallback(
     (day, hour) => {
       return schedules.find(
         (s) => s.day === day && s.startTime <= hour && s.endTime > hour,
@@ -377,6 +385,14 @@ export default function Scheduler() {
     },
     [schedules],
   );
+
+  // Calculate the span duration for a schedule entry
+  const getScheduleSpan = useCallback((schedule) => {
+    if (!schedule) return 1;
+    const startHour = parseInt(schedule.startTime.split(":")[0]);
+    const endHour = parseInt(schedule.endTime.split(":")[0]);
+    return Math.max(1, endHour - startHour);
+  }, []);
 
   const formatTime = (time24) => {
     const [hours, minutes] = time24.split(":");
@@ -494,8 +510,15 @@ export default function Scheduler() {
               </div>
               {days.map((day) => {
                 const schedule = getScheduleForSlot(day.key, hour);
+                const inSchedule = isSlotInSchedule(day.key, hour);
                 const isSelected =
                   selectedSlot?.day === day.key && selectedSlot?.hour === hour;
+                const span = schedule ? getScheduleSpan(schedule) : 1;
+
+                // Skip rendering this slot if it's part of a multi-hour entry but not the starting slot
+                if (inSchedule && !schedule) {
+                  return null;
+                }
 
                 return (
                   <div
@@ -504,10 +527,14 @@ export default function Scheduler() {
                     className={`p-1 min-h-12 border border-gray-700 rounded cursor-pointer transition-colors ${
                       isSelected
                         ? "bg-yellow-600/70 border-yellow-400"
-                        : schedule
+                        : schedule || inSchedule
                           ? "bg-blue-600/50 hover:bg-blue-600/70"
                           : "hover:bg-gray-700"
                     }`}
+                    style={{
+                      gridRowEnd: span > 1 ? `span ${span}` : undefined,
+                      minHeight: span > 1 ? `${span * 3.5}rem` : "3rem",
+                    }}
                   >
                     {schedule && (
                       <div
@@ -515,6 +542,11 @@ export default function Scheduler() {
                         title={schedule.name || schedule.title}
                       >
                         {schedule.name || schedule.title}
+                        {span > 1 && (
+                          <div className="text-xs text-gray-300 mt-1">
+                            ({span} hours)
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
