@@ -56,6 +56,14 @@ export default function Controls() {
   } = useAudioStore();
 
   const { currentZone, updateZone } = useZoneStore();
+  const uiStore = useUIStore;
+
+  // Emergency system
+  const [emergencyActions] = useState(
+    () => new EmergencyActions(useAudioStore, useZoneStore, uiStore),
+  );
+  const [isEmergencyActive, setIsEmergencyActive] = useState(false);
+  const [fadeOutDuration, setFadeOutDuration] = useState(3);
 
   // System status
   const [systemStatus, setSystemStatus] = useState({
