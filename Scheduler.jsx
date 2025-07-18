@@ -369,7 +369,7 @@ export default function Scheduler() {
         day: "monday",
       });
     }
-  }, [currentEntry, schedules, removeSchedule]);
+  }, [currentEntry, schedules, deleteSchedule]);
 
   // Get schedule for a specific day and hour (only return if it's the starting slot)
   const getScheduleForSlot = useCallback(
