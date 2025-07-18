@@ -133,6 +133,12 @@ export default function Controls() {
 
   const handleVolumeChange = (newVolume) => {
     setVolume(newVolume);
+
+    // Apply to audio processing
+    if (isAudioProcessingInitialized) {
+      audioProcessing.setVolume(newVolume);
+    }
+
     if (currentZone) {
       updateZone(currentZone.id, { volume: newVolume });
     }
