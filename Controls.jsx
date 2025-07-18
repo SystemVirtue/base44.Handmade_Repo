@@ -128,24 +128,8 @@ export default function Controls() {
       <div className="max-w-4xl mx-auto space-y-6">
         <h1 className="text-3xl font-bold text-center mb-8">System Controls</h1>
 
-        {/* Emergency Controls */}
-        <div className="bg-red-900/20 border border-red-600/30 rounded-lg p-6">
-          <h2 className="text-xl font-semibold mb-4 text-red-400">
-            Emergency Controls
-          </h2>
-          <div className="flex gap-4">
-            <button
-              onClick={handleEmergencyStop}
-              className="flex-1 bg-red-600 hover:bg-red-700 text-white py-3 px-6 rounded-lg font-medium transition-colors"
-            >
-              <Square className="w-5 h-5 inline mr-2" />
-              EMERGENCY STOP
-            </button>
-            <button className="bg-orange-600 hover:bg-orange-700 text-white py-3 px-6 rounded-lg font-medium transition-colors">
-              Fade Out All
-            </button>
-          </div>
-        </div>
+        {/* Enhanced Emergency Controls */}
+        <EmergencyControls />
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Playback Controls */}
