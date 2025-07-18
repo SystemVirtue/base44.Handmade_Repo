@@ -7,11 +7,15 @@ import {
   Reply,
   Archive,
   Trash2,
+  FileText,
+  Download,
+  ChevronDown,
 } from "lucide-react";
 
 export default function Messages() {
   const [selectedMessage, setSelectedMessage] = useState(null);
   const [filter, setFilter] = useState("all");
+  const [showLogsMenu, setShowLogsMenu] = useState(false);
 
   // Mock messages data
   const messages = [
@@ -95,7 +99,7 @@ export default function Messages() {
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-3xl font-bold flex items-center gap-3">
           <MessageSquare className="w-8 h-8" />
-          Messages
+          Messages and Logs
           {unreadCount > 0 && (
             <span className="bg-red-600 text-white text-sm px-2 py-1 rounded-full">
               {unreadCount}
@@ -104,6 +108,124 @@ export default function Messages() {
         </h1>
 
         <div className="flex gap-2">
+          <div className="relative">
+            <button
+              onClick={() => setShowLogsMenu(!showLogsMenu)}
+              className="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded flex items-center gap-2"
+            >
+              <FileText className="w-4 h-4" />
+              VIEW LOGS
+              <ChevronDown className="w-4 h-4" />
+            </button>
+
+            {showLogsMenu && (
+              <div className="absolute top-full right-0 mt-1 bg-gray-800 border border-gray-700 rounded-lg shadow-lg z-10 min-w-48">
+                <div className="p-2">
+                  <button
+                    onClick={() => {
+                      // Download player history log
+                      const blob = new Blob(
+                        ["Player History Log\n" + new Date().toISOString()],
+                        { type: "text/plain" },
+                      );
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement("a");
+                      a.href = url;
+                      a.download = "player-history.txt";
+                      a.click();
+                      URL.revokeObjectURL(url);
+                      setShowLogsMenu(false);
+                    }}
+                    className="w-full text-left px-3 py-2 hover:bg-gray-700 rounded flex items-center gap-2"
+                  >
+                    <Download className="w-4 h-4" />
+                    Player History
+                  </button>
+                  <button
+                    onClick={() => {
+                      // Download request history log
+                      const blob = new Blob(
+                        ["Request History Log\n" + new Date().toISOString()],
+                        { type: "text/plain" },
+                      );
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement("a");
+                      a.href = url;
+                      a.download = "request-history.txt";
+                      a.click();
+                      URL.revokeObjectURL(url);
+                      setShowLogsMenu(false);
+                    }}
+                    className="w-full text-left px-3 py-2 hover:bg-gray-700 rounded flex items-center gap-2"
+                  >
+                    <Download className="w-4 h-4" />
+                    Request History
+                  </button>
+                  <button
+                    onClick={() => {
+                      // Download system log
+                      const blob = new Blob(
+                        ["System Log\n" + new Date().toISOString()],
+                        { type: "text/plain" },
+                      );
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement("a");
+                      a.href = url;
+                      a.download = "system.log";
+                      a.click();
+                      URL.revokeObjectURL(url);
+                      setShowLogsMenu(false);
+                    }}
+                    className="w-full text-left px-3 py-2 hover:bg-gray-700 rounded flex items-center gap-2"
+                  >
+                    <Download className="w-4 h-4" />
+                    System Log
+                  </button>
+                  <button
+                    onClick={() => {
+                      // Download network log
+                      const blob = new Blob(
+                        ["Network Log\n" + new Date().toISOString()],
+                        { type: "text/plain" },
+                      );
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement("a");
+                      a.href = url;
+                      a.download = "network.log";
+                      a.click();
+                      URL.revokeObjectURL(url);
+                      setShowLogsMenu(false);
+                    }}
+                    className="w-full text-left px-3 py-2 hover:bg-gray-700 rounded flex items-center gap-2"
+                  >
+                    <Download className="w-4 h-4" />
+                    Network Log
+                  </button>
+                  <button
+                    onClick={() => {
+                      // Download error log
+                      const blob = new Blob(
+                        ["Error Log\n" + new Date().toISOString()],
+                        { type: "text/plain" },
+                      );
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement("a");
+                      a.href = url;
+                      a.download = "error.log";
+                      a.click();
+                      URL.revokeObjectURL(url);
+                      setShowLogsMenu(false);
+                    }}
+                    className="w-full text-left px-3 py-2 hover:bg-gray-700 rounded flex items-center gap-2"
+                  >
+                    <Download className="w-4 h-4" />
+                    Error Log
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
           <button className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded flex items-center gap-2">
             <Bell className="w-4 h-4" />
             Mark All Read
