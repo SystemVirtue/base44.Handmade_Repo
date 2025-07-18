@@ -68,6 +68,13 @@ export default function Controls() {
   const [isEmergencyActive, setIsEmergencyActive] = useState(false);
   const [fadeOutDuration, setFadeOutDuration] = useState(3);
 
+  // Audio processing
+  const audioProcessing = useAudioProcessing();
+  const [isAudioProcessingInitialized, setIsAudioProcessingInitialized] =
+    useState(false);
+  const [selectedEQPreset, setSelectedEQPreset] = useState("flat");
+  const [compressorEnabled, setCompressorEnabled] = useState(false);
+
   // System status
   const [systemStatus, setSystemStatus] = useState({
     cpuUsage: 25,
