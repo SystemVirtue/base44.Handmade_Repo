@@ -238,6 +238,15 @@ export const useAudioStore = create(
         volume: state.volume,
         queue: state.queue,
         currentQueueIndex: state.currentQueueIndex,
+        favorites: Array.from(state.favorites), // Convert Set to Array for persistence
+        votes: state.votes,
+        userVotes: state.userVotes,
+      }),
+      // Custom merge function to handle Set conversion
+      merge: (persistedState, currentState) => ({
+        ...currentState,
+        ...persistedState,
+        favorites: new Set(persistedState.favorites || []), // Convert Array back to Set
       }),
     },
   ),
