@@ -640,23 +640,26 @@ export default function Scheduler() {
 
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
-                Repeats
+                Repeat on Days
               </label>
-              <select
-                value={currentEntry.repeat}
-                onChange={(e) =>
-                  setCurrentEntry((prev) => ({
-                    ...prev,
-                    repeat: e.target.value,
-                  }))
-                }
-                className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white"
-              >
-                <option value="None">None</option>
-                <option value="Week Days">Week Days (Mon-Fri)</option>
-                <option value="Weekends">Weekends (Sat-Sun)</option>
-                <option value="Every Day">Every Day (Mon-Sun)</option>
-              </select>
+              <div className="flex gap-2 flex-wrap">
+                {days.map((day) => (
+                  <label
+                    key={day.key}
+                    className="flex items-center gap-2 bg-gray-700 px-3 py-2 rounded-lg cursor-pointer hover:bg-gray-600 transition-colors"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={currentEntry.selectedDays.includes(day.key)}
+                      onChange={(e) =>
+                        handleDayToggle(day.key, e.target.checked)
+                      }
+                      className="rounded"
+                    />
+                    <span className="text-sm text-gray-300">{day.label}</span>
+                  </label>
+                ))}
+              </div>
             </div>
           </div>
 
