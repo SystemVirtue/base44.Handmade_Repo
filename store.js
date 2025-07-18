@@ -150,12 +150,28 @@ export const useAudioStore = create(
         set({ queue: [...queue, newTrack] });
       },
 
-      removeFromQueue: (trackId) => {
-        const { queue } = get();
+      removeFromQueue: (index) => {
+        const { queue, currentQueueIndex } = get();
         const updatedQueue = queue
-          .filter((track) => track.id !== trackId)
-          .map((track, index) => ({ ...track, position: index + 1 }));
-        set({ queue: updatedQueue });
+          .filter((_, i) => i !== index)
+          .map((track, i) => ({ ...track, position: i + 1 }));
+
+        // Adjust current index if needed
+        let newCurrentIndex = currentQueueIndex;
+        if (index < currentQueueIndex) {
+          newCurrentIndex = currentQueueIndex - 1;
+        } else if (
+          index === currentQueueIndex &&
+          index >= updatedQueue.length
+        ) {
+          newCurrentIndex = Math.max(0, updatedQueue.length - 1);
+        }
+
+        set({ queue: updatedQueue, currentQueueIndex: newCurrentIndex });
+      },
+
+      clearQueue: () => {
+        set({ queue: [], currentQueueIndex: 0 });
       },
 
       reorderQueue: (startIndex, endIndex) => {
@@ -230,6 +246,119 @@ export const useAudioStore = create(
         const { votes } = get();
         return votes[trackId] || 0;
       },
+
+      // Queue templates
+      templates: [],
+
+      addTemplate: (template) => {
+        const newTemplate = {
+          ...template,
+          id: template.id || Date.now(),
+          createdAt: template.createdAt || new Date().toISOString(),
+        };
+        set((state) => ({ templates: [...state.templates, newTemplate] }));
+      },
+
+      removeTemplate: (templateId) => {
+        set((state) => ({
+          templates: state.templates.filter((t) => t.id !== templateId),
+        }));
+      },
+
+      // Scheduling system
+      schedules: [],
+
+      addSchedule: (schedule) => {
+        const newSchedule = {
+          ...schedule,
+          id: schedule.id || Date.now(),
+          createdAt: schedule.createdAt || new Date().toISOString(),
+          active: schedule.active !== undefined ? schedule.active : true,
+        };
+        set((state) => ({ schedules: [...state.schedules, newSchedule] }));
+      },
+
+      removeSchedule: (scheduleId) => {
+        set((state) => ({
+          schedules: state.schedules.filter((s) => s.id !== scheduleId),
+        }));
+      },
+
+      updateSchedule: (scheduleId, updates) => {
+        set((state) => ({
+          schedules: state.schedules.map((s) =>
+            s.id === scheduleId ? { ...s, ...updates } : s,
+          ),
+        }));
+      },
+
+      // Advanced queue actions
+      shuffleQueue: () => {
+        const { queue, currentQueueIndex } = get();
+        if (queue.length <= 1) return;
+
+        const currentTrack = queue[currentQueueIndex];
+        const otherTracks = queue.filter((_, i) => i !== currentQueueIndex);
+
+        // Fisher-Yates shuffle
+        for (let i = otherTracks.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [otherTracks[i], otherTracks[j]] = [otherTracks[j], otherTracks[i]];
+        }
+
+        const shuffledQueue = [currentTrack, ...otherTracks].map(
+          (track, index) => ({
+            ...track,
+            position: index + 1,
+          }),
+        );
+
+        set({ queue: shuffledQueue, currentQueueIndex: 0 });
+      },
+
+      moveTrackInQueue: (fromIndex, toIndex) => {
+        const { queue } = get();
+        if (
+          fromIndex === toIndex ||
+          fromIndex < 0 ||
+          toIndex < 0 ||
+          fromIndex >= queue.length ||
+          toIndex >= queue.length
+        ) {
+          return;
+        }
+
+        const newQueue = [...queue];
+        const [movedTrack] = newQueue.splice(fromIndex, 1);
+        newQueue.splice(toIndex, 0, movedTrack);
+
+        const reorderedQueue = newQueue.map((track, index) => ({
+          ...track,
+          position: index + 1,
+        }));
+
+        set({ queue: reorderedQueue });
+      },
+
+      // Queue management utilities
+      getQueueStats: () => {
+        const { queue, favorites, votes } = get();
+        return {
+          totalTracks: queue.length,
+          totalDuration: queue.reduce(
+            (sum, track) => sum + (track.duration || 180),
+            0,
+          ),
+          favoritedTracks: queue.filter((track) => favorites.has(track.id))
+            .length,
+          votedTracks: queue.filter((track) => votes[track.id] > 0).length,
+          averageDuration:
+            queue.length > 0
+              ? queue.reduce((sum, track) => sum + (track.duration || 180), 0) /
+                queue.length
+              : 0,
+        };
+      },
     }),
     {
       name: "audio-store",
@@ -241,6 +370,8 @@ export const useAudioStore = create(
         favorites: Array.from(state.favorites), // Convert Set to Array for persistence
         votes: state.votes,
         userVotes: state.userVotes,
+        templates: state.templates,
+        schedules: state.schedules,
       }),
       // Custom merge function to handle Set conversion
       merge: (persistedState, currentState) => ({
