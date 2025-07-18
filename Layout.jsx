@@ -119,6 +119,8 @@ export default function Layout({ children, currentPageName }) {
   const location = useLocation();
   const navigate = useNavigate();
   const { logout, user } = useAuth();
+  const { showError, showWarning } = useError();
+  const { isOnline, connectionType } = useNetworkStatus();
 
   // Store state
   const {
