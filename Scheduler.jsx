@@ -303,7 +303,7 @@ export default function Scheduler() {
       playlist: "",
       startTime: "",
       endTime: "",
-      repeat: "None",
+      selectedDays: [],
       day: "monday",
     });
   }, [pendingOverwrite, schedules, removeSchedule, addSchedule]);
