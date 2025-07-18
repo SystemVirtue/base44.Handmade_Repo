@@ -393,7 +393,7 @@ export default function DigitalSignage() {
                     : "text-gray-400 hover:text-white"
                 }`}
               >
-                <Grid3x3 className="w-4 h-4" />
+                <LayoutGrid className="w-4 h-4" />
               </button>
               <button
                 onClick={() => setViewMode("list")}
