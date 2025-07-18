@@ -31,6 +31,7 @@ import {
   StopCircle,
   Volume2,
   VolumeX,
+  ExternalLink,
 } from "lucide-react";
 import { useStore } from "./store";
 import ScheduleModal from "./components/ui/schedule-modal";
