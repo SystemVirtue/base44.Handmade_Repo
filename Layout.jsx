@@ -150,7 +150,7 @@ export default function Layout({ children, currentPageName }) {
       (item) => item.url === currentPath,
     );
     if (matchedItem) {
-      setCurrentPage(matchedItem.key);
+      setActiveTab(matchedItem.key);
     }
   }, [location.pathname, setCurrentPage]);
 
