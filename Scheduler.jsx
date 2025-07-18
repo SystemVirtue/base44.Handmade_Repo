@@ -131,24 +131,35 @@ export default function Scheduler() {
 
       if (existingSchedule) {
         // Load existing schedule for editing
+        // Find all related schedules with same title and time
+        const relatedSchedules = schedules.filter(
+          (s) =>
+            s.title === existingSchedule.title &&
+            s.startTime === existingSchedule.startTime &&
+            s.endTime === existingSchedule.endTime &&
+            s.playlist === existingSchedule.playlist,
+        );
+
+        const selectedDays = relatedSchedules.map((s) => s.day);
+
         setCurrentEntry({
           id: existingSchedule.id,
           title: existingSchedule.title || existingSchedule.name,
           playlist: existingSchedule.playlist || "",
           startTime: existingSchedule.startTime,
           endTime: existingSchedule.endTime,
-          repeat: existingSchedule.repeat || "None",
+          selectedDays: selectedDays,
           day: existingSchedule.day,
         });
       } else {
-        // Create new entry
+        // Create new entry - auto-tick the selected day
         setCurrentEntry({
           id: `schedule_${Date.now()}`,
           title: "",
           playlist: "",
           startTime: hour,
           endTime: "",
-          repeat: "None",
+          selectedDays: [day],
           day: day,
         });
       }
