@@ -6,7 +6,7 @@ import {
   Plus,
   X,
   Filter,
-  Grid3X3,
+  Grid,
   List,
   Clock,
   Heart,
