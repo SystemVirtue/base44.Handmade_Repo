@@ -302,7 +302,7 @@ export default function QueueSchedule() {
   return (
     <div className="p-8 text-white bg-gray-900 h-full overflow-auto">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold">Queue & Schedule Management</h1>
+        <h1 className="text-3xl font-bold">Queue & Playlist Manager</h1>
         <div className="flex items-center gap-3">
           <button
             onClick={handleSaveAsTemplate}
@@ -344,7 +344,7 @@ export default function QueueSchedule() {
           }`}
         >
           <Calendar className="w-4 h-4" />
-          Scheduled Content
+          Active Playlists
         </button>
         <button
           onClick={() => setActiveTab("templates")}
@@ -355,7 +355,7 @@ export default function QueueSchedule() {
           }`}
         >
           <Save className="w-4 h-4" />
-          Queue Templates
+          All Playlists
         </button>
       </div>
 
