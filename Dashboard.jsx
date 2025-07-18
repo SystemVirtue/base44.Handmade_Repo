@@ -173,13 +173,16 @@ export default function Dashboard() {
 
   const handleVote = async (songId) => {
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      console.log("Voted for song:", songId);
-      // In a real app, this would update the backend and refresh data
+      // Use store voting functionality
+      voteForTrack(songId);
+      // In a real app, this would also sync with backend
     } catch (error) {
       console.error("Error voting:", error);
     }
+  };
+
+  const handleToggleFavorite = (trackId) => {
+    toggleFavorite(trackId);
   };
 
   const handleAddToQueue = (song) => {
