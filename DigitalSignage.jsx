@@ -12,7 +12,7 @@ import {
   Download,
   Search,
   Filter,
-  Grid3x3,
+  LayoutGrid,
   List,
   Calendar,
   Clock,
