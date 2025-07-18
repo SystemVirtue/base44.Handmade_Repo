@@ -605,7 +605,7 @@ export default function QueueSchedule() {
           {/* Schedule Controls */}
           <div className="bg-gray-800 rounded-lg p-6">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold">Scheduled Content</h2>
+              <h2 className="text-xl font-semibold">Active Playlists</h2>
               <button
                 onClick={() => {
                   setEditingSchedule(null);
@@ -764,7 +764,7 @@ export default function QueueSchedule() {
           {/* Template Controls */}
           <div className="bg-gray-800 rounded-lg p-6">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold">Queue Templates</h2>
+              <h2 className="text-xl font-semibold">All Playlists</h2>
               <button
                 onClick={() => {
                   setEditingTemplate(null);
