@@ -6,6 +6,7 @@ import {
   Navigate,
 } from "react-router-dom";
 import { AuthProvider, useAuth } from "./contexts/AuthContext.jsx";
+import { ErrorProvider, ErrorBoundary } from "./contexts/ErrorContext.jsx";
 import Login from "./Login.jsx";
 import Layout from "../Layout.jsx";
 import Dashboard from "../Dashboard.jsx";
