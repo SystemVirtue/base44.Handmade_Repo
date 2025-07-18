@@ -17,6 +17,7 @@ import {
 import { useAudioStore, useUIStore, formatTime } from "./store.js";
 import ArtworkImage from "./components/ui/artwork-image.jsx";
 import TrackOptionsMenu from "./components/ui/track-options-menu.jsx";
+import MusicLibraryBrowser from "./components/ui/music-library-browser.jsx";
 
 export default function Dashboard() {
   const audioRef = useRef(null);
