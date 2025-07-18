@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { useAudioStore, useUIStore, formatTime } from "./store.js";
 import ArtworkImage from "./components/ui/artwork-image.jsx";
+import TrackOptionsMenu from "./components/ui/track-options-menu.jsx";
 
 export default function Dashboard() {
   const audioRef = useRef(null);
