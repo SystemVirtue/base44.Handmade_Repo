@@ -372,5 +372,5 @@ _Fixed: Grid3X3 icon import issue_
 ---
 
 _Last Updated: 2024-01-16_
-_Development Progress: 10/25 tasks completed (40% complete)_
-_Core Functionality: Dashboard (95%) + Controls (85%) + Search (95%) + Settings (100%) + Zone Management (95%)_
+_Development Progress: 11/25 tasks completed (44% complete)_
+_Core Functionality: Dashboard (95%) + Controls (85%) + Queue/Schedule (100%) + Search (95%) + Settings (100%) + Zone Management (95%)_
