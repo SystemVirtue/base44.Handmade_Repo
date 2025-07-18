@@ -152,7 +152,7 @@ export default function Layout({ children, currentPageName }) {
     if (matchedItem) {
       setActiveTab(matchedItem.key);
     }
-  }, [location.pathname, setCurrentPage]);
+  }, [location.pathname, setActiveTab]);
 
   // Get unread message count
   const unreadCount = notifications.filter((n) => !n.read).length;
