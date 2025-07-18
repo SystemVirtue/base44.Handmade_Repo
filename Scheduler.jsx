@@ -282,7 +282,7 @@ export default function Scheduler() {
               s.endTime <= pendingOverwrite.endTime)),
       );
 
-      conflictingSchedules.forEach((s) => removeSchedule(s.id));
+      conflictingSchedules.forEach((s) => deleteSchedule(s.id));
 
       // Add new schedule
       const scheduleData = {
