@@ -552,6 +552,9 @@ export default function Scheduler() {
                         )}
                       </div>
                     )}
+                    {inSchedule && !schedule && (
+                      <div className="text-xs text-gray-400 text-center">⋮</div>
+                    )}
                   </div>
                 );
               })}
