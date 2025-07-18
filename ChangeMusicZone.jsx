@@ -1,282 +1,624 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
-  Users,
+  ArrowRightLeft,
   Plus,
   Settings,
-  Wifi,
+  Users,
   Volume2,
-  Play,
-  Pause,
+  Wifi,
+  CheckCircle,
+  XCircle,
+  AlertTriangle,
+  RefreshCw,
   MapPin,
   Edit,
+  Trash2,
+  Copy,
+  Power,
+  Eye,
+  Monitor,
+  Speaker,
+  Activity,
 } from "lucide-react";
+import { useZoneStore, useUIStore } from "./store.js";
+import {
+  getZoneManager,
+  ZONE_STATUS,
+  CONNECTION_STATUS,
+} from "./services/zone-management.js";
 
 export default function ChangeMusicZone() {
-  const [selectedZone, setSelectedZone] = useState(1);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [selectedZoneForEdit, setSelectedZoneForEdit] = useState(null);
+  const [zoneManager] = useState(() => getZoneManager());
+  const [allZones, setAllZones] = useState([]);
+  const [selectedZones, setSelectedZones] = useState(new Set());
+  const [viewMode, setViewMode] = useState("grid"); // grid, list
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [sortBy, setSortBy] = useState("name");
 
-  // Mock zones data
-  const musicZones = [
-    {
-      id: 1,
-      name: "Main Floor - Restaurant",
-      location: "Building A, Floor 1",
-      status: "online",
-      currentSong: "Shape of You - Ed Sheeran",
-      volume: 75,
-      devices: 4,
-      users: 12,
-      lastActive: "Active now",
-      description: "Primary dining area with ambient background music",
-    },
-    {
-      id: 2,
-      name: "Bar & Lounge",
-      location: "Building A, Floor 2",
-      status: "online",
-      currentSong: "Blinding Lights - The Weeknd",
-      volume: 85,
-      devices: 3,
-      users: 8,
-      lastActive: "Active now",
-      description: "Upbeat music zone for evening entertainment",
-    },
-    {
-      id: 3,
-      name: "Private Event Room",
-      location: "Building B, Floor 1",
-      status: "offline",
-      currentSong: "No music playing",
-      volume: 0,
-      devices: 2,
-      users: 0,
-      lastActive: "2 hours ago",
-      description: "Configurable space for special events and parties",
-    },
-    {
-      id: 4,
-      name: "Outdoor Patio",
-      location: "Building A, Outdoor",
-      status: "online",
-      currentSong: "Levitating - Dua Lipa",
-      volume: 60,
-      devices: 6,
-      users: 5,
-      lastActive: "Active now",
-      description: "Weather-dependent outdoor dining and entertainment area",
-    },
-  ];
+  const { currentZone, setCurrentZone, zones, addZone, updateZone } =
+    useZoneStore();
+  const { addNotification } = useUIStore();
 
-  const currentZone =
-    musicZones.find((zone) => zone.id === selectedZone) || musicZones[0];
+  // Zone creation form
+  const [newZone, setNewZone] = useState({
+    name: "",
+    location: "",
+    description: "",
+    maxVolume: 85,
+    autoFade: true,
+    allowGuests: true,
+    priorityLevel: 2,
+  });
 
-  const handleZoneSwitch = (zoneId) => {
-    setSelectedZone(zoneId);
-    // In a real app, this would trigger zone switching logic
+  // Load zones and set up real-time updates
+  useEffect(() => {
+    const updateZones = () => {
+      const zonesData = zoneManager.getZones();
+      setAllZones(zonesData);
+    };
+
+    updateZones();
+
+    // Real-time updates
+    const interval = setInterval(updateZones, 3000);
+
+    const handleZoneUpdate = () => updateZones();
+    zoneManager.on("zoneUpdated", handleZoneUpdate);
+    zoneManager.on("deviceUpdated", handleZoneUpdate);
+
+    return () => {
+      clearInterval(interval);
+      zoneManager.off("zoneUpdated", handleZoneUpdate);
+      zoneManager.off("deviceUpdated", handleZoneUpdate);
+    };
+  }, [zoneManager]);
+
+  // Filter and sort zones
+  const filteredAndSortedZones = allZones
+    .filter((zone) => {
+      if (filterStatus === "all") return true;
+      return zone.status === filterStatus;
+    })
+    .sort((a, b) => {
+      switch (sortBy) {
+        case "name":
+          return a.name.localeCompare(b.name);
+        case "status":
+          return a.status.localeCompare(b.status);
+        case "location":
+          return a.location.localeCompare(b.location);
+        case "volume":
+          return b.volume - a.volume;
+        case "devices":
+          return b.devices.length - a.devices.length;
+        default:
+          return 0;
+      }
+    });
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case ZONE_STATUS.ONLINE:
+        return "bg-green-500";
+      case ZONE_STATUS.OFFLINE:
+        return "bg-red-500";
+      case ZONE_STATUS.ERROR:
+        return "bg-orange-500";
+      case ZONE_STATUS.SYNCING:
+        return "bg-blue-500";
+      case ZONE_STATUS.EMERGENCY_STOP:
+        return "bg-red-700";
+      default:
+        return "bg-gray-500";
+    }
+  };
+
+  const getStatusIcon = (status) => {
+    switch (status) {
+      case ZONE_STATUS.ONLINE:
+        return <CheckCircle className="w-5 h-5 text-green-400" />;
+      case ZONE_STATUS.OFFLINE:
+        return <XCircle className="w-5 h-5 text-red-400" />;
+      case ZONE_STATUS.ERROR:
+        return <AlertTriangle className="w-5 h-5 text-orange-400" />;
+      case ZONE_STATUS.SYNCING:
+        return <RefreshCw className="w-5 h-5 text-blue-400 animate-spin" />;
+      case ZONE_STATUS.EMERGENCY_STOP:
+        return <AlertTriangle className="w-5 h-5 text-red-600" />;
+      default:
+        return <XCircle className="w-5 h-5 text-gray-400" />;
+    }
+  };
+
+  const handleZoneSwitch = (zone) => {
+    setCurrentZone(zone);
+    updateZone(zone.id, { lastActivity: new Date().toISOString() });
+
+    addNotification({
+      type: "success",
+      title: "Zone Changed",
+      message: `Switched to ${zone.name}`,
+      priority: "normal",
+    });
+  };
+
+  const handleCreateZone = () => {
+    if (!newZone.name.trim() || !newZone.location.trim()) {
+      addNotification({
+        type: "error",
+        title: "Validation Error",
+        message: "Zone name and location are required",
+        priority: "high",
+      });
+      return;
+    }
+
+    const zoneData = {
+      ...newZone,
+      status: ZONE_STATUS.OFFLINE,
+      volume: 50,
+      muted: false,
+      devices: [],
+      currentPlaylist: null,
+      activeSince: null,
+      lastActivity: new Date().toISOString(),
+      settings: {
+        maxVolume: newZone.maxVolume,
+        autoFade: newZone.autoFade,
+        emergencyStopEnabled: true,
+        allowGuests: newZone.allowGuests,
+        priorityLevel: newZone.priorityLevel,
+      },
+      stats: {
+        totalPlaytime: 0,
+        tracksPlayed: 0,
+        averageVolume: 0,
+        peakVolume: 0,
+        connectedUsers: 0,
+      },
+      network: {
+        ipAddress: `192.168.1.${Math.floor(Math.random() * 200) + 50}`,
+        quality: "unknown",
+        latency: 0,
+        bandwidth: 0,
+        lastPing: Date.now(),
+      },
+    };
+
+    const createdZone = addZone(zoneData);
+
+    setShowCreateModal(false);
+    setNewZone({
+      name: "",
+      location: "",
+      description: "",
+      maxVolume: 85,
+      autoFade: true,
+      allowGuests: true,
+      priorityLevel: 2,
+    });
+
+    addNotification({
+      type: "success",
+      title: "Zone Created",
+      message: `Created zone "${zoneData.name}"`,
+      priority: "normal",
+    });
+  };
+
+  const handleEditZone = (zone) => {
+    setSelectedZoneForEdit(zone);
+    setNewZone({
+      name: zone.name,
+      location: zone.location,
+      description: zone.description,
+      maxVolume: zone.settings.maxVolume,
+      autoFade: zone.settings.autoFade,
+      allowGuests: zone.settings.allowGuests,
+      priorityLevel: zone.settings.priorityLevel,
+    });
+    setShowEditModal(true);
+  };
+
+  const handleUpdateZone = () => {
+    if (!selectedZoneForEdit) return;
+
+    const updates = {
+      name: newZone.name,
+      location: newZone.location,
+      description: newZone.description,
+      settings: {
+        ...selectedZoneForEdit.settings,
+        maxVolume: newZone.maxVolume,
+        autoFade: newZone.autoFade,
+        allowGuests: newZone.allowGuests,
+        priorityLevel: newZone.priorityLevel,
+      },
+    };
+
+    updateZone(selectedZoneForEdit.id, updates);
+    zoneManager.updateZone(selectedZoneForEdit.id, updates);
+
+    setShowEditModal(false);
+    setSelectedZoneForEdit(null);
+
+    addNotification({
+      type: "success",
+      title: "Zone Updated",
+      message: `Updated zone "${newZone.name}"`,
+      priority: "normal",
+    });
+  };
+
+  const handleBulkAction = (action) => {
+    const selectedZoneIds = Array.from(selectedZones);
+
+    switch (action) {
+      case "mute":
+        selectedZoneIds.forEach((zoneId) => {
+          zoneManager.updateZone(zoneId, { muted: true, volume: 0 });
+        });
+        addNotification({
+          type: "info",
+          title: "Zones Muted",
+          message: `Muted ${selectedZoneIds.length} zones`,
+          priority: "normal",
+        });
+        break;
+
+      case "unmute":
+        selectedZoneIds.forEach((zoneId) => {
+          zoneManager.updateZone(zoneId, { muted: false, volume: 50 });
+        });
+        addNotification({
+          type: "info",
+          title: "Zones Unmuted",
+          message: `Unmuted ${selectedZoneIds.length} zones`,
+          priority: "normal",
+        });
+        break;
+
+      case "emergency_stop":
+        selectedZoneIds.forEach((zoneId) => {
+          zoneManager.updateZone(zoneId, {
+            status: ZONE_STATUS.EMERGENCY_STOP,
+            muted: true,
+            volume: 0,
+          });
+        });
+        addNotification({
+          type: "warning",
+          title: "Emergency Stop Activated",
+          message: `Emergency stop activated for ${selectedZoneIds.length} zones`,
+          priority: "high",
+        });
+        break;
+    }
+
+    setSelectedZones(new Set());
+  };
+
+  const handleZoneSelect = (zoneId) => {
+    const newSelection = new Set(selectedZones);
+    if (newSelection.has(zoneId)) {
+      newSelection.delete(zoneId);
+    } else {
+      newSelection.add(zoneId);
+    }
+    setSelectedZones(newSelection);
   };
 
   return (
-    <div className="p-8 text-white bg-gray-900 h-full overflow-y-auto">
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <Users className="w-8 h-8 text-blue-400" />
-          <h1 className="text-3xl font-bold">Change Music Zone</h1>
-        </div>
-        <button
-          onClick={() => setShowCreateModal(true)}
-          className="bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg flex items-center gap-2"
-        >
-          <Plus className="w-4 h-4" />
-          Create Zone
-        </button>
-      </div>
-
-      {/* Current Zone Status */}
-      <div className="bg-gray-800 rounded-lg p-6 mb-6">
-        <h2 className="text-xl font-semibold mb-4">Currently Active Zone</h2>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center">
-              <MapPin className="w-6 h-6" />
-            </div>
+    <div className="h-full bg-gray-900 text-white flex flex-col">
+      {/* Header */}
+      <div className="p-6 border-b border-gray-700">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <ArrowRightLeft className="w-8 h-8 text-blue-400" />
             <div>
-              <h3 className="text-lg font-semibold">{currentZone.name}</h3>
-              <p className="text-gray-400">{currentZone.location}</p>
-              <p className="text-sm text-gray-500">{currentZone.description}</p>
+              <h1 className="text-3xl font-bold">Zone Management</h1>
+              <p className="text-gray-400">
+                Currently in:{" "}
+                <span className="font-medium text-blue-400">
+                  {currentZone?.name || "No Zone Selected"}
+                </span>
+              </p>
             </div>
           </div>
-          <div className="text-right">
-            <div
-              className={`inline-flex items-center gap-2 px-3 py-1 rounded-full mb-2 ${
-                currentZone.status === "online"
-                  ? "bg-green-600/20 text-green-400"
-                  : "bg-red-600/20 text-red-400"
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowCreateModal(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+            >
+              <Plus className="w-4 h-4" />
+              Create Zone
+            </button>
+          </div>
+        </div>
+
+        {/* Controls */}
+        <div className="flex flex-wrap items-center gap-4">
+          {/* Filters */}
+          <select
+            value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value)}
+            className="bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-sm"
+          >
+            <option value="all">All Status</option>
+            <option value={ZONE_STATUS.ONLINE}>Online</option>
+            <option value={ZONE_STATUS.OFFLINE}>Offline</option>
+            <option value={ZONE_STATUS.ERROR}>Error</option>
+            <option value={ZONE_STATUS.EMERGENCY_STOP}>Emergency Stop</option>
+          </select>
+
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+            className="bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-sm"
+          >
+            <option value="name">Sort by Name</option>
+            <option value="status">Sort by Status</option>
+            <option value="location">Sort by Location</option>
+            <option value="volume">Sort by Volume</option>
+            <option value="devices">Sort by Device Count</option>
+          </select>
+
+          {/* View Mode Toggle */}
+          <div className="flex bg-gray-700 rounded-lg">
+            <button
+              onClick={() => setViewMode("grid")}
+              className={`p-2 rounded-l-lg transition-colors ${
+                viewMode === "grid"
+                  ? "bg-blue-600 text-white"
+                  : "text-gray-400 hover:text-white"
               }`}
             >
-              <div
-                className={`w-2 h-2 rounded-full ${
-                  currentZone.status === "online"
-                    ? "bg-green-400 animate-pulse"
-                    : "bg-red-400"
-                }`}
-              ></div>
-              <span className="text-sm font-medium capitalize">
-                {currentZone.status}
-              </span>
-            </div>
-            <p className="text-sm text-gray-400">{currentZone.lastActive}</p>
+              <Monitor className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => setViewMode("list")}
+              className={`p-2 rounded-r-lg transition-colors ${
+                viewMode === "list"
+                  ? "bg-blue-600 text-white"
+                  : "text-gray-400 hover:text-white"
+              }`}
+            >
+              <Activity className="w-4 h-4" />
+            </button>
           </div>
-        </div>
-      </div>
 
-      {/* Available Zones Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        {musicZones.map((zone) => (
-          <div
-            key={zone.id}
-            className={`bg-gray-800 rounded-lg p-6 cursor-pointer transition-all duration-200 ${
-              selectedZone === zone.id
-                ? "ring-2 ring-blue-500 bg-gray-750"
-                : "hover:bg-gray-700"
-            }`}
-            onClick={() => handleZoneSwitch(zone.id)}
-          >
-            {/* Zone Header */}
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <div
-                  className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                    zone.status === "online" ? "bg-green-600" : "bg-gray-600"
-                  }`}
-                >
-                  <MapPin className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="font-semibold">{zone.name}</h3>
-                  <p className="text-sm text-gray-400">{zone.location}</p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <button className="p-2 text-gray-400 hover:text-white">
-                  <Settings className="w-4 h-4" />
-                </button>
-                <div
-                  className={`w-3 h-3 rounded-full ${
-                    zone.status === "online" ? "bg-green-400" : "bg-red-400"
-                  }`}
-                ></div>
-              </div>
-            </div>
-
-            {/* Zone Stats */}
-            <div className="grid grid-cols-3 gap-3 mb-4">
-              <div className="bg-gray-700 rounded p-2 text-center">
-                <div className="text-lg font-bold text-blue-400">
-                  {zone.devices}
-                </div>
-                <div className="text-xs text-gray-400">Devices</div>
-              </div>
-              <div className="bg-gray-700 rounded p-2 text-center">
-                <div className="text-lg font-bold text-green-400">
-                  {zone.users}
-                </div>
-                <div className="text-xs text-gray-400">Users</div>
-              </div>
-              <div className="bg-gray-700 rounded p-2 text-center">
-                <div className="text-lg font-bold text-purple-400">
-                  {zone.volume}%
-                </div>
-                <div className="text-xs text-gray-400">Volume</div>
-              </div>
-            </div>
-
-            {/* Currently Playing */}
-            <div className="flex items-center gap-3 mb-4">
-              {zone.status === "online" ? (
-                <>
-                  <Play className="w-4 h-4 text-green-400" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">
-                      {zone.currentSong}
-                    </p>
-                    <p className="text-xs text-gray-400">Now Playing</p>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <Pause className="w-4 h-4 text-gray-400" />
-                  <div className="flex-1">
-                    <p className="text-sm text-gray-400">{zone.currentSong}</p>
-                  </div>
-                </>
-              )}
-            </div>
-
-            {/* Zone Description */}
-            <p className="text-sm text-gray-500 mb-4">{zone.description}</p>
-
-            {/* Zone Actions */}
-            <div className="flex gap-2">
-              {selectedZone === zone.id ? (
-                <div className="flex-1 bg-blue-600 text-white text-center py-2 rounded text-sm font-medium">
-                  Current Zone
-                </div>
-              ) : (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleZoneSwitch(zone.id);
-                  }}
-                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded text-sm font-medium transition-colors"
-                >
-                  Switch to Zone
-                </button>
-              )}
-              <button className="p-2 bg-gray-700 hover:bg-gray-600 rounded transition-colors">
-                <Edit className="w-4 h-4" />
+          {/* Bulk Actions */}
+          {selectedZones.size > 0 && (
+            <div className="flex items-center gap-2 ml-auto">
+              <span className="text-sm text-gray-400">
+                {selectedZones.size} selected
+              </span>
+              <button
+                onClick={() => handleBulkAction("mute")}
+                className="px-3 py-1 bg-orange-600 hover:bg-orange-700 rounded text-sm transition-colors"
+              >
+                Mute
+              </button>
+              <button
+                onClick={() => handleBulkAction("unmute")}
+                className="px-3 py-1 bg-green-600 hover:bg-green-700 rounded text-sm transition-colors"
+              >
+                Unmute
+              </button>
+              <button
+                onClick={() => handleBulkAction("emergency_stop")}
+                className="px-3 py-1 bg-red-600 hover:bg-red-700 rounded text-sm transition-colors"
+              >
+                Emergency Stop
+              </button>
+              <button
+                onClick={() => setSelectedZones(new Set())}
+                className="px-3 py-1 bg-gray-600 hover:bg-gray-500 rounded text-sm transition-colors"
+              >
+                Clear
               </button>
             </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Zone Management */}
-      <div className="bg-gray-800 rounded-lg p-6">
-        <h3 className="text-lg font-semibold mb-4">Zone Management</h3>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <button className="bg-gray-700 hover:bg-gray-600 p-4 rounded-lg transition-colors">
-            <Settings className="w-6 h-6 text-blue-400 mx-auto mb-2" />
-            <div className="text-sm font-medium">Zone Settings</div>
-            <div className="text-xs text-gray-400">
-              Configure audio and permissions
-            </div>
-          </button>
-
-          <button className="bg-gray-700 hover:bg-gray-600 p-4 rounded-lg transition-colors">
-            <Volume2 className="w-6 h-6 text-green-400 mx-auto mb-2" />
-            <div className="text-sm font-medium">Audio Sync</div>
-            <div className="text-xs text-gray-400">
-              Synchronize playback across zones
-            </div>
-          </button>
-
-          <button className="bg-gray-700 hover:bg-gray-600 p-4 rounded-lg transition-colors">
-            <Wifi className="w-6 h-6 text-purple-400 mx-auto mb-2" />
-            <div className="text-sm font-medium">Network Status</div>
-            <div className="text-xs text-gray-400">Check zone connectivity</div>
-          </button>
+          )}
         </div>
       </div>
 
-      {/* Create Zone Modal (Placeholder) */}
+      {/* Zone Grid/List */}
+      <div className="flex-1 overflow-auto p-6">
+        {filteredAndSortedZones.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-64 text-gray-400">
+            <ArrowRightLeft className="w-16 h-16 mb-4 opacity-50" />
+            <p className="text-lg">No zones found</p>
+            <p className="text-sm">Create your first zone to get started</p>
+          </div>
+        ) : viewMode === "grid" ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {filteredAndSortedZones.map((zone) => (
+              <div
+                key={zone.id}
+                className={`bg-gray-800 rounded-lg p-6 border transition-all cursor-pointer hover:border-gray-600 ${
+                  currentZone?.id === zone.id
+                    ? "border-blue-500 bg-blue-900/20"
+                    : selectedZones.has(zone.id)
+                      ? "border-yellow-500 bg-yellow-900/10"
+                      : "border-gray-700"
+                }`}
+              >
+                {/* Zone Header */}
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="checkbox"
+                      checked={selectedZones.has(zone.id)}
+                      onChange={() => handleZoneSelect(zone.id)}
+                      onClick={(e) => e.stopPropagation()}
+                      className="rounded"
+                    />
+                    <div>
+                      <h3 className="font-semibold text-lg truncate">
+                        {zone.name}
+                      </h3>
+                      <p className="text-sm text-gray-400 flex items-center gap-1">
+                        <MapPin className="w-3 h-3" />
+                        {zone.location}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    {getStatusIcon(zone.status)}
+                    <div
+                      className={`w-3 h-3 rounded-full ${getStatusColor(zone.status)}`}
+                    />
+                  </div>
+                </div>
+
+                {/* Zone Stats */}
+                <div className="space-y-3 mb-4">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-400">Volume</span>
+                    <span className={zone.muted ? "text-red-400" : ""}>
+                      {zone.volume}%
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-400">Devices</span>
+                    <span>{zone.devices.length}</span>
+                  </div>
+
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-400">Users</span>
+                    <span>{zone.stats.connectedUsers}</span>
+                  </div>
+
+                  {zone.currentPlaylist && (
+                    <div className="text-sm">
+                      <span className="text-gray-400">Playing: </span>
+                      <span className="text-blue-400">
+                        {zone.currentPlaylist}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Actions */}
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handleZoneSwitch(zone)}
+                    disabled={currentZone?.id === zone.id}
+                    className={`flex-1 py-2 px-3 rounded text-sm font-medium transition-colors ${
+                      currentZone?.id === zone.id
+                        ? "bg-blue-600 text-white cursor-not-allowed"
+                        : "bg-gray-700 hover:bg-gray-600 text-gray-300"
+                    }`}
+                  >
+                    {currentZone?.id === zone.id ? "Current" : "Switch"}
+                  </button>
+
+                  <button
+                    onClick={() => handleEditZone(zone)}
+                    className="p-2 bg-gray-700 hover:bg-gray-600 rounded transition-colors"
+                    title="Edit Zone"
+                  >
+                    <Edit className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {filteredAndSortedZones.map((zone) => (
+              <div
+                key={zone.id}
+                className={`flex items-center gap-4 p-4 bg-gray-800 rounded-lg border transition-all ${
+                  currentZone?.id === zone.id
+                    ? "border-blue-500 bg-blue-900/20"
+                    : selectedZones.has(zone.id)
+                      ? "border-yellow-500 bg-yellow-900/10"
+                      : "border-gray-700 hover:border-gray-600"
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  checked={selectedZones.has(zone.id)}
+                  onChange={() => handleZoneSelect(zone.id)}
+                  className="rounded"
+                />
+
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  {getStatusIcon(zone.status)}
+                  <div className="min-w-0 flex-1">
+                    <h3 className="font-semibold truncate">{zone.name}</h3>
+                    <p className="text-sm text-gray-400 truncate">
+                      {zone.location}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-6 text-sm">
+                  <div className="text-center">
+                    <p className="text-gray-400">Volume</p>
+                    <p className={zone.muted ? "text-red-400" : ""}>
+                      {zone.volume}%
+                    </p>
+                  </div>
+
+                  <div className="text-center">
+                    <p className="text-gray-400">Devices</p>
+                    <p>{zone.devices.length}</p>
+                  </div>
+
+                  <div className="text-center">
+                    <p className="text-gray-400">Users</p>
+                    <p>{zone.stats.connectedUsers}</p>
+                  </div>
+
+                  <div className="text-center min-w-0">
+                    <p className="text-gray-400">Playlist</p>
+                    <p className="truncate max-w-24">
+                      {zone.currentPlaylist || "None"}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handleZoneSwitch(zone)}
+                    disabled={currentZone?.id === zone.id}
+                    className={`py-2 px-4 rounded text-sm font-medium transition-colors ${
+                      currentZone?.id === zone.id
+                        ? "bg-blue-600 text-white cursor-not-allowed"
+                        : "bg-gray-700 hover:bg-gray-600 text-gray-300"
+                    }`}
+                  >
+                    {currentZone?.id === zone.id ? "Current" : "Switch"}
+                  </button>
+
+                  <button
+                    onClick={() => handleEditZone(zone)}
+                    className="p-2 bg-gray-700 hover:bg-gray-600 rounded transition-colors"
+                    title="Edit Zone"
+                  >
+                    <Edit className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Create Zone Modal */}
       {showCreateModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-gray-800 rounded-lg p-6 w-full max-w-md">
-            <h3 className="text-lg font-semibold mb-4">
-              Create New Music Zone
-            </h3>
+            <h3 className="text-lg font-semibold mb-4">Create New Zone</h3>
+
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-1">
@@ -284,30 +626,96 @@ export default function ChangeMusicZone() {
                 </label>
                 <input
                   type="text"
+                  value={newZone.name}
+                  onChange={(e) =>
+                    setNewZone({ ...newZone, name: e.target.value })
+                  }
                   className="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2"
                   placeholder="Enter zone name"
                 />
               </div>
+
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-1">
                   Location
                 </label>
                 <input
                   type="text"
+                  value={newZone.location}
+                  onChange={(e) =>
+                    setNewZone({ ...newZone, location: e.target.value })
+                  }
                   className="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2"
                   placeholder="Enter location"
                 />
               </div>
+
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-1">
                   Description
                 </label>
                 <textarea
-                  className="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 h-20"
-                  placeholder="Enter zone description"
+                  value={newZone.description}
+                  onChange={(e) =>
+                    setNewZone({ ...newZone, description: e.target.value })
+                  }
+                  className="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2"
+                  placeholder="Optional description"
+                  rows={3}
                 />
               </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">
+                  Max Volume
+                </label>
+                <input
+                  type="range"
+                  min="50"
+                  max="100"
+                  value={newZone.maxVolume}
+                  onChange={(e) =>
+                    setNewZone({
+                      ...newZone,
+                      maxVolume: parseInt(e.target.value),
+                    })
+                  }
+                  className="w-full"
+                />
+                <div className="flex justify-between text-xs text-gray-400">
+                  <span>50%</span>
+                  <span>{newZone.maxVolume}%</span>
+                  <span>100%</span>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={newZone.autoFade}
+                    onChange={(e) =>
+                      setNewZone({ ...newZone, autoFade: e.target.checked })
+                    }
+                    className="rounded"
+                  />
+                  <span className="text-sm">Auto fade between tracks</span>
+                </label>
+
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={newZone.allowGuests}
+                    onChange={(e) =>
+                      setNewZone({ ...newZone, allowGuests: e.target.checked })
+                    }
+                    className="rounded"
+                  />
+                  <span className="text-sm">Allow guest access</span>
+                </label>
+              </div>
             </div>
+
             <div className="flex gap-2 mt-6">
               <button
                 onClick={() => setShowCreateModal(false)}
@@ -316,10 +724,128 @@ export default function ChangeMusicZone() {
                 Cancel
               </button>
               <button
-                onClick={() => setShowCreateModal(false)}
+                onClick={handleCreateZone}
                 className="flex-1 bg-blue-600 hover:bg-blue-700 py-2 rounded transition-colors"
               >
                 Create Zone
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Zone Modal */}
+      {showEditModal && selectedZoneForEdit && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-gray-800 rounded-lg p-6 w-full max-w-md">
+            <h3 className="text-lg font-semibold mb-4">Edit Zone</h3>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">
+                  Zone Name
+                </label>
+                <input
+                  type="text"
+                  value={newZone.name}
+                  onChange={(e) =>
+                    setNewZone({ ...newZone, name: e.target.value })
+                  }
+                  className="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">
+                  Location
+                </label>
+                <input
+                  type="text"
+                  value={newZone.location}
+                  onChange={(e) =>
+                    setNewZone({ ...newZone, location: e.target.value })
+                  }
+                  className="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">
+                  Description
+                </label>
+                <textarea
+                  value={newZone.description}
+                  onChange={(e) =>
+                    setNewZone({ ...newZone, description: e.target.value })
+                  }
+                  className="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2"
+                  rows={3}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">
+                  Max Volume
+                </label>
+                <input
+                  type="range"
+                  min="50"
+                  max="100"
+                  value={newZone.maxVolume}
+                  onChange={(e) =>
+                    setNewZone({
+                      ...newZone,
+                      maxVolume: parseInt(e.target.value),
+                    })
+                  }
+                  className="w-full"
+                />
+                <div className="flex justify-between text-xs text-gray-400">
+                  <span>50%</span>
+                  <span>{newZone.maxVolume}%</span>
+                  <span>100%</span>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={newZone.autoFade}
+                    onChange={(e) =>
+                      setNewZone({ ...newZone, autoFade: e.target.checked })
+                    }
+                    className="rounded"
+                  />
+                  <span className="text-sm">Auto fade between tracks</span>
+                </label>
+
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={newZone.allowGuests}
+                    onChange={(e) =>
+                      setNewZone({ ...newZone, allowGuests: e.target.checked })
+                    }
+                    className="rounded"
+                  />
+                  <span className="text-sm">Allow guest access</span>
+                </label>
+              </div>
+            </div>
+
+            <div className="flex gap-2 mt-6">
+              <button
+                onClick={() => setShowEditModal(false)}
+                className="flex-1 bg-gray-600 hover:bg-gray-500 py-2 rounded transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleUpdateZone}
+                className="flex-1 bg-blue-600 hover:bg-blue-700 py-2 rounded transition-colors"
+              >
+                Update Zone
               </button>
             </div>
           </div>

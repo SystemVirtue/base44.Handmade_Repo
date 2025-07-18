@@ -24,6 +24,11 @@ export const useAudioStore = create(
       isMuted: false,
       previousVolume: 75,
 
+      // Voting and favorites state
+      favorites: new Set(), // Track IDs that are favorited
+      votes: {}, // Track ID -> vote count mapping
+      userVotes: {}, // Track ID -> boolean (has user voted)
+
       // Queue state
       queue: [
         {
@@ -145,12 +150,28 @@ export const useAudioStore = create(
         set({ queue: [...queue, newTrack] });
       },
 
-      removeFromQueue: (trackId) => {
-        const { queue } = get();
+      removeFromQueue: (index) => {
+        const { queue, currentQueueIndex } = get();
         const updatedQueue = queue
-          .filter((track) => track.id !== trackId)
-          .map((track, index) => ({ ...track, position: index + 1 }));
-        set({ queue: updatedQueue });
+          .filter((_, i) => i !== index)
+          .map((track, i) => ({ ...track, position: i + 1 }));
+
+        // Adjust current index if needed
+        let newCurrentIndex = currentQueueIndex;
+        if (index < currentQueueIndex) {
+          newCurrentIndex = currentQueueIndex - 1;
+        } else if (
+          index === currentQueueIndex &&
+          index >= updatedQueue.length
+        ) {
+          newCurrentIndex = Math.max(0, updatedQueue.length - 1);
+        }
+
+        set({ queue: updatedQueue, currentQueueIndex: newCurrentIndex });
+      },
+
+      clearQueue: () => {
+        set({ queue: [], currentQueueIndex: 0 });
       },
 
       reorderQueue: (startIndex, endIndex) => {
@@ -168,6 +189,176 @@ export const useAudioStore = create(
       },
 
       setAudioInstance: (instance) => set({ audioInstance: instance }),
+
+      // Voting and favorites actions
+      toggleFavorite: (trackId) => {
+        const { favorites } = get();
+        const newFavorites = new Set(favorites);
+
+        if (newFavorites.has(trackId)) {
+          newFavorites.delete(trackId);
+        } else {
+          newFavorites.add(trackId);
+        }
+
+        set({ favorites: newFavorites });
+
+        // In a real implementation, this would sync with backend
+        console.log(
+          `Track ${trackId} ${newFavorites.has(trackId) ? "added to" : "removed from"} favorites`,
+        );
+      },
+
+      voteForTrack: (trackId) => {
+        const { votes, userVotes } = get();
+
+        // Check if user already voted for this track
+        if (userVotes[trackId]) {
+          console.log("You have already voted for this track");
+          return;
+        }
+
+        const newVotes = { ...votes };
+        const newUserVotes = { ...userVotes };
+
+        newVotes[trackId] = (newVotes[trackId] || 0) + 1;
+        newUserVotes[trackId] = true;
+
+        set({ votes: newVotes, userVotes: newUserVotes });
+
+        // In a real implementation, this would sync with backend
+        console.log(
+          `Voted for track ${trackId}. Total votes: ${newVotes[trackId]}`,
+        );
+      },
+
+      isFavorite: (trackId) => {
+        const { favorites } = get();
+        return favorites.has(trackId);
+      },
+
+      hasVoted: (trackId) => {
+        const { userVotes } = get();
+        return !!userVotes[trackId];
+      },
+
+      getVoteCount: (trackId) => {
+        const { votes } = get();
+        return votes[trackId] || 0;
+      },
+
+      // Queue templates
+      templates: [],
+
+      addTemplate: (template) => {
+        const newTemplate = {
+          ...template,
+          id: template.id || Date.now(),
+          createdAt: template.createdAt || new Date().toISOString(),
+        };
+        set((state) => ({ templates: [...state.templates, newTemplate] }));
+      },
+
+      removeTemplate: (templateId) => {
+        set((state) => ({
+          templates: state.templates.filter((t) => t.id !== templateId),
+        }));
+      },
+
+      // Scheduling system
+      schedules: [],
+
+      addSchedule: (schedule) => {
+        const newSchedule = {
+          ...schedule,
+          id: schedule.id || Date.now(),
+          createdAt: schedule.createdAt || new Date().toISOString(),
+          active: schedule.active !== undefined ? schedule.active : true,
+        };
+        set((state) => ({ schedules: [...state.schedules, newSchedule] }));
+      },
+
+      removeSchedule: (scheduleId) => {
+        set((state) => ({
+          schedules: state.schedules.filter((s) => s.id !== scheduleId),
+        }));
+      },
+
+      updateSchedule: (scheduleId, updates) => {
+        set((state) => ({
+          schedules: state.schedules.map((s) =>
+            s.id === scheduleId ? { ...s, ...updates } : s,
+          ),
+        }));
+      },
+
+      // Advanced queue actions
+      shuffleQueue: () => {
+        const { queue, currentQueueIndex } = get();
+        if (queue.length <= 1) return;
+
+        const currentTrack = queue[currentQueueIndex];
+        const otherTracks = queue.filter((_, i) => i !== currentQueueIndex);
+
+        // Fisher-Yates shuffle
+        for (let i = otherTracks.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [otherTracks[i], otherTracks[j]] = [otherTracks[j], otherTracks[i]];
+        }
+
+        const shuffledQueue = [currentTrack, ...otherTracks].map(
+          (track, index) => ({
+            ...track,
+            position: index + 1,
+          }),
+        );
+
+        set({ queue: shuffledQueue, currentQueueIndex: 0 });
+      },
+
+      moveTrackInQueue: (fromIndex, toIndex) => {
+        const { queue } = get();
+        if (
+          fromIndex === toIndex ||
+          fromIndex < 0 ||
+          toIndex < 0 ||
+          fromIndex >= queue.length ||
+          toIndex >= queue.length
+        ) {
+          return;
+        }
+
+        const newQueue = [...queue];
+        const [movedTrack] = newQueue.splice(fromIndex, 1);
+        newQueue.splice(toIndex, 0, movedTrack);
+
+        const reorderedQueue = newQueue.map((track, index) => ({
+          ...track,
+          position: index + 1,
+        }));
+
+        set({ queue: reorderedQueue });
+      },
+
+      // Queue management utilities
+      getQueueStats: () => {
+        const { queue, favorites, votes } = get();
+        return {
+          totalTracks: queue.length,
+          totalDuration: queue.reduce(
+            (sum, track) => sum + (track.duration || 180),
+            0,
+          ),
+          favoritedTracks: queue.filter((track) => favorites.has(track.id))
+            .length,
+          votedTracks: queue.filter((track) => votes[track.id] > 0).length,
+          averageDuration:
+            queue.length > 0
+              ? queue.reduce((sum, track) => sum + (track.duration || 180), 0) /
+                queue.length
+              : 0,
+        };
+      },
     }),
     {
       name: "audio-store",
@@ -176,6 +367,17 @@ export const useAudioStore = create(
         volume: state.volume,
         queue: state.queue,
         currentQueueIndex: state.currentQueueIndex,
+        favorites: Array.from(state.favorites), // Convert Set to Array for persistence
+        votes: state.votes,
+        userVotes: state.userVotes,
+        templates: state.templates,
+        schedules: state.schedules,
+      }),
+      // Custom merge function to handle Set conversion
+      merge: (persistedState, currentState) => ({
+        ...currentState,
+        ...persistedState,
+        favorites: new Set(persistedState.favorites || []), // Convert Array back to Set
       }),
     },
   ),
@@ -333,21 +535,33 @@ export const useZoneStore = create(
   ),
 );
 
-// Search Store
+// Search Store - Enhanced with multi-source search
 export const useSearchStore = create((set, get) => ({
   // Search state
   query: "",
   results: [],
+  searchResults: null, // Full search response with metadata
   isSearching: false,
   filters: {
-    source: "all",
+    sources: ["all"], // Array of enabled sources
     genre: "all",
     year: "any",
     duration: "any",
+    explicit: "any",
   },
 
-  // Recent searches
+  // Search history and suggestions
   recentSearches: [],
+  searchSuggestions: [],
+  searchHistory: [],
+
+  // Search analytics
+  searchStats: {
+    totalSearches: 0,
+    avgSearchTime: 0,
+    mostSearchedTerms: [],
+    preferredSources: {},
+  },
 
   // Actions
   setQuery: (query) => set({ query }),
@@ -358,56 +572,234 @@ export const useSearchStore = create((set, get) => ({
     })),
 
   performSearch: async (searchQuery) => {
+    if (!searchQuery.trim()) {
+      set({ results: [], searchResults: null });
+      return;
+    }
+
     set({ isSearching: true });
 
     try {
-      // Simulate API call delay
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // Import search service dynamically
+      const { performMultiSourceSearch } = await import(
+        "./services/search-service.js"
+      );
 
-      // Mock search results
-      const mockResults = [
+      // Get current filters
+      const { filters } = get();
+
+      // Perform multi-source search
+      const searchResponse = await performMultiSourceSearch(
+        searchQuery,
+        filters,
+        filters.sources,
+      );
+
+      // Update search history and stats
+      const newSearchHistory = [
         {
-          id: `search-${Date.now()}-1`,
-          title: `${searchQuery} Result 1`,
-          artist: "Artist Name",
-          album: "Album Name",
-          duration: 180,
-          source: "spotify",
-          thumbnail:
-            "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=100&h=100&fit=crop",
-          preview_url: "#",
+          query: searchQuery,
+          timestamp: new Date().toISOString(),
+          resultCount: searchResponse.total_results,
+          searchTime: searchResponse.search_time_ms,
+          sources: Object.keys(searchResponse.sources),
         },
-        {
-          id: `search-${Date.now()}-2`,
-          title: `${searchQuery} Result 2`,
-          artist: "Another Artist",
-          album: "Another Album",
-          duration: 210,
-          source: "youtube",
-          thumbnail:
-            "https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=100&h=100&fit=crop",
-          preview_url: "#",
-        },
-      ];
+        ...get().searchHistory.slice(0, 49),
+      ]; // Keep last 50 searches
+
+      // Update stats
+      const currentStats = get().searchStats;
+      const newStats = {
+        totalSearches: currentStats.totalSearches + 1,
+        avgSearchTime: Math.round(
+          (currentStats.avgSearchTime * currentStats.totalSearches +
+            searchResponse.search_time_ms) /
+            (currentStats.totalSearches + 1),
+        ),
+        mostSearchedTerms: updateSearchTermFrequency(
+          currentStats.mostSearchedTerms,
+          searchQuery,
+        ),
+        preferredSources: updateSourcePreferences(
+          currentStats.preferredSources,
+          filters.sources,
+        ),
+      };
 
       set({
-        results: mockResults,
-        recentSearches: [searchQuery, ...get().recentSearches.slice(0, 4)],
+        results: searchResponse.combined_results,
+        searchResults: searchResponse,
+        recentSearches: [
+          searchQuery,
+          ...get()
+            .recentSearches.filter((q) => q !== searchQuery)
+            .slice(0, 9),
+        ],
+        searchHistory: newSearchHistory,
+        searchStats: newStats,
       });
     } catch (error) {
       console.error("Search failed:", error);
-      set({ results: [] });
+      set({
+        results: [],
+        searchResults: {
+          query: searchQuery,
+          error: error.message,
+          total_results: 0,
+          combined_results: [],
+          sources: {},
+        },
+      });
     } finally {
       set({ isSearching: false });
     }
   },
 
-  clearResults: () => set({ results: [], query: "" }),
+  // Get search suggestions
+  getSuggestions: async (query) => {
+    if (!query.trim()) {
+      set({ searchSuggestions: [] });
+      return;
+    }
+
+    try {
+      const { getSearchSuggestions } = await import(
+        "./services/search-service.js"
+      );
+      const suggestions = await getSearchSuggestions(query);
+      set({ searchSuggestions: suggestions });
+    } catch (error) {
+      console.error("Failed to get suggestions:", error);
+      set({ searchSuggestions: [] });
+    }
+  },
+
+  // Clear search results
+  clearResults: () =>
+    set({
+      results: [],
+      searchResults: null,
+      query: "",
+      searchSuggestions: [],
+    }),
+
+  // Add track to favorites from search
+  addToFavorites: (trackId) => {
+    // This would integrate with the main audio store
+    console.log("Adding to favorites:", trackId);
+  },
+
+  // Get search analytics
+  getSearchAnalytics: () => {
+    const { searchHistory, searchStats } = get();
+    return {
+      ...searchStats,
+      recentSearches: searchHistory.slice(0, 10),
+      topSources: Object.entries(searchStats.preferredSources)
+        .sort(([, a], [, b]) => b - a)
+        .slice(0, 5),
+    };
+  },
 }));
+
+// Helper functions for search statistics
+function updateSearchTermFrequency(currentTerms, newTerm) {
+  const updatedTerms = [...currentTerms];
+  const existingTerm = updatedTerms.find((term) => term.query === newTerm);
+
+  if (existingTerm) {
+    existingTerm.count += 1;
+  } else {
+    updatedTerms.push({ query: newTerm, count: 1 });
+  }
+
+  return updatedTerms.sort((a, b) => b.count - a.count).slice(0, 20); // Keep top 20 most searched terms
+}
+
+function updateSourcePreferences(currentPrefs, usedSources) {
+  const updatedPrefs = { ...currentPrefs };
+
+  usedSources.forEach((source) => {
+    if (source !== "all") {
+      updatedPrefs[source] = (updatedPrefs[source] || 0) + 1;
+    }
+  });
+
+  return updatedPrefs;
+}
 
 // Format time utility
 export const formatTime = (seconds) => {
   const mins = Math.floor(seconds / 60);
   const secs = Math.floor(seconds % 60);
   return `${mins}:${secs.toString().padStart(2, "0")}`;
+};
+
+// Unified store that combines all functionality
+export const useStore = () => {
+  const audioStore = useAudioStore();
+  const uiStore = useUIStore();
+  const zoneStore = useZoneStore();
+  const searchStore = useSearchStore();
+
+  return {
+    // Audio/Queue functionality
+    currentTrack: audioStore.currentTrack,
+    isPlaying: audioStore.isPlaying,
+    volume: audioStore.volume,
+    queue: audioStore.queue,
+    favorites: audioStore.favorites,
+    votes: audioStore.votes,
+    templates: audioStore.templates,
+    schedules: audioStore.schedules,
+
+    // Audio actions
+    play: audioStore.play,
+    pause: audioStore.pause,
+    playTrack: audioStore.setCurrentTrack,
+    pauseTrack: audioStore.pause,
+    skipTrack: audioStore.nextTrack,
+    setVolume: audioStore.setVolume,
+    addToQueue: audioStore.addToQueue,
+    removeFromQueue: audioStore.removeFromQueue,
+    reorderQueue: audioStore.reorderQueue,
+    clearQueue: audioStore.clearQueue,
+    shuffleQueue: audioStore.shuffleQueue,
+    voteForTrack: audioStore.voteForTrack,
+    favoriteTrack: audioStore.toggleFavorite,
+
+    // Template actions
+    addTemplate: audioStore.addTemplate,
+    removeTemplate: audioStore.removeTemplate,
+
+    // Schedule actions
+    addSchedule: audioStore.addSchedule,
+    removeSchedule: audioStore.removeSchedule,
+    updateSchedule: audioStore.updateSchedule,
+
+    // Zone functionality
+    zones: zoneStore.zones,
+    currentZone: zoneStore.currentZone,
+    setCurrentZone: zoneStore.setCurrentZone,
+    addZone: zoneStore.addZone,
+    updateZone: zoneStore.updateZone,
+    removeZone: zoneStore.removeZone,
+
+    // Search functionality
+    searchQuery: searchStore.query,
+    searchResults: searchStore.results,
+    isSearching: searchStore.isSearching,
+    searchFilters: searchStore.filters,
+    performSearch: searchStore.performSearch,
+    setSearchQuery: searchStore.setQuery,
+    setSearchFilters: searchStore.setFilters,
+    clearSearchResults: searchStore.clearResults,
+    searchTracks: searchStore.performSearch,
+
+    // UI functionality
+    theme: uiStore.theme,
+    notifications: uiStore.notifications,
+    setTheme: uiStore.setTheme,
+    addNotification: uiStore.addNotification,
+  };
 };

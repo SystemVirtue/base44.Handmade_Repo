@@ -12,8 +12,12 @@ import {
   MoreHorizontal,
   Shuffle,
   Repeat,
+  Music,
 } from "lucide-react";
 import { useAudioStore, useUIStore, formatTime } from "./store.js";
+import ArtworkImage from "./components/ui/artwork-image.jsx";
+import TrackOptionsMenu from "./components/ui/track-options-menu.jsx";
+import MusicLibraryBrowser from "./components/ui/music-library-browser.jsx";
 
 export default function Dashboard() {
   const audioRef = useRef(null);
@@ -39,6 +43,11 @@ export default function Dashboard() {
     addToQueue,
     removeFromQueue,
     setAudioInstance,
+    toggleFavorite,
+    voteForTrack,
+    isFavorite,
+    hasVoted,
+    getVoteCount,
   } = useAudioStore();
 
   const { setLoading } = useUIStore();
@@ -47,6 +56,7 @@ export default function Dashboard() {
   const [isShuffled, setIsShuffled] = useState(false);
   const [repeatMode, setRepeatMode] = useState("none"); // 'none', 'one', 'all'
   const [showQueue, setShowQueue] = useState(true);
+  const [showLibraryBrowser, setShowLibraryBrowser] = useState(false);
 
   // Initialize audio element
   useEffect(() => {
@@ -163,13 +173,16 @@ export default function Dashboard() {
 
   const handleVote = async (songId) => {
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      console.log("Voted for song:", songId);
-      // In a real app, this would update the backend and refresh data
+      // Use store voting functionality
+      voteForTrack(songId);
+      // In a real app, this would also sync with backend
     } catch (error) {
       console.error("Error voting:", error);
     }
+  };
+
+  const handleToggleFavorite = (trackId) => {
+    toggleFavorite(trackId);
   };
 
   const handleAddToQueue = (song) => {
@@ -189,6 +202,65 @@ export default function Dashboard() {
     const currentIndex = modes.indexOf(repeatMode);
     const nextIndex = (currentIndex + 1) % modes.length;
     setRepeatMode(modes[nextIndex]);
+  };
+
+  // Track action handlers for options menu
+  const handleAddToPlaylist = (track) => {
+    console.log("Add to playlist:", track);
+    // TODO: Implement playlist functionality
+  };
+
+  const handleShareTrack = (track) => {
+    if (navigator.share) {
+      navigator
+        .share({
+          title: track.title,
+          text: `Check out "${track.title}" by ${track.artist}`,
+          url: window.location.href,
+        })
+        .catch(console.error);
+    } else {
+      // Fallback: copy to clipboard
+      const shareText = `${track.title} by ${track.artist}`;
+      navigator.clipboard
+        .writeText(shareText)
+        .then(() => {
+          console.log("Track info copied to clipboard");
+        })
+        .catch(console.error);
+    }
+  };
+
+  const handleShowTrackInfo = (track) => {
+    console.log("Show track info:", track);
+    // TODO: Implement track info modal/panel
+  };
+
+  const handleReportTrack = (track) => {
+    console.log("Report track:", track);
+    // TODO: Implement reporting system
+  };
+
+  // Library browser handlers
+  const handleOpenLibraryBrowser = () => {
+    setShowLibraryBrowser(true);
+  };
+
+  const handleCloseLibraryBrowser = () => {
+    setShowLibraryBrowser(false);
+  };
+
+  const handlePlayTrackNow = (track) => {
+    // Set as current track and play immediately
+    const newTrack = {
+      ...track,
+      url: null, // This would be set by the backend in a real implementation
+    };
+
+    // Add to beginning of queue and play
+    addToQueue(newTrack);
+    // In a real implementation, this would also set as current track
+    console.log("Playing track now:", track);
   };
 
   const getRepeatIcon = () => {
@@ -217,13 +289,12 @@ export default function Dashboard() {
         <div className="p-6 border-b border-gray-700">
           {/* Track Info */}
           <div className="flex items-center gap-6 mb-6">
-            <div className="w-24 h-24 bg-gray-800 rounded-lg overflow-hidden shadow-lg">
-              <img
-                src={currentTrack.thumbnail}
-                alt={currentTrack.title}
-                className="w-full h-full object-cover"
-              />
-            </div>
+            <ArtworkImage
+              track={currentTrack}
+              size="large"
+              className="w-24 h-24 rounded-lg shadow-lg"
+              showLoadingState={true}
+            />
 
             <div className="flex-1 min-w-0">
               <h1 className="text-2xl font-bold text-white mb-1 truncate">
@@ -238,17 +309,48 @@ export default function Dashboard() {
 
               {/* Track actions */}
               <div className="flex items-center gap-3 mt-3">
-                <button className="flex items-center gap-1 text-red-400 hover:text-red-300 transition-colors">
-                  <Heart className="w-4 h-4" />
-                  <span className="text-sm">Like</span>
+                <button
+                  onClick={() => handleToggleFavorite(currentTrack.id)}
+                  className={`flex items-center gap-1 transition-colors ${
+                    isFavorite(currentTrack.id)
+                      ? "text-red-400 hover:text-red-300"
+                      : "text-gray-400 hover:text-red-400"
+                  }`}
+                >
+                  <Heart
+                    className={`w-4 h-4 ${isFavorite(currentTrack.id) ? "fill-current" : ""}`}
+                  />
+                  <span className="text-sm">
+                    {isFavorite(currentTrack.id) ? "Liked" : "Like"}
+                  </span>
                 </button>
-                <button className="flex items-center gap-1 text-gray-400 hover:text-white transition-colors">
-                  <ThumbsUp className="w-4 h-4" />
-                  <span className="text-sm">Vote</span>
+                <button
+                  onClick={() => handleVote(currentTrack.id)}
+                  disabled={hasVoted(currentTrack.id)}
+                  className={`flex items-center gap-1 transition-colors ${
+                    hasVoted(currentTrack.id)
+                      ? "text-green-400 cursor-not-allowed"
+                      : "text-gray-400 hover:text-green-400"
+                  }`}
+                >
+                  <ThumbsUp
+                    className={`w-4 h-4 ${hasVoted(currentTrack.id) ? "fill-current" : ""}`}
+                  />
+                  <span className="text-sm">
+                    {hasVoted(currentTrack.id) ? "Voted" : "Vote"}
+                    {getVoteCount(currentTrack.id) > 0 &&
+                      ` (${getVoteCount(currentTrack.id)})`}
+                  </span>
                 </button>
-                <button className="text-gray-400 hover:text-white transition-colors">
-                  <MoreHorizontal className="w-4 h-4" />
-                </button>
+                <TrackOptionsMenu
+                  track={currentTrack}
+                  onAddToQueue={handleAddToQueue}
+                  onAddToPlaylist={handleAddToPlaylist}
+                  onShare={handleShareTrack}
+                  onShowInfo={handleShowTrackInfo}
+                  onReport={handleReportTrack}
+                  size="medium"
+                />
               </div>
             </div>
           </div>
@@ -387,13 +489,12 @@ export default function Dashboard() {
                       </div>
 
                       {/* Track thumbnail */}
-                      <div className="w-12 h-12 bg-gray-700 rounded overflow-hidden">
-                        <img
-                          src={song.thumbnail}
-                          alt={song.title}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
+                      <ArtworkImage
+                        track={song}
+                        size="small"
+                        className="w-12 h-12 rounded"
+                        showLoadingState={false}
+                      />
 
                       {/* Track info */}
                       <div className="flex-1 min-w-0">
@@ -414,10 +515,26 @@ export default function Dashboard() {
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => handleVote(song.id)}
-                          className="p-1 text-gray-400 hover:text-green-400 transition-colors"
-                          title="Vote for this song"
+                          disabled={hasVoted(song.id)}
+                          className={`p-1 transition-colors relative ${
+                            hasVoted(song.id)
+                              ? "text-green-400 cursor-not-allowed"
+                              : "text-gray-400 hover:text-green-400"
+                          }`}
+                          title={
+                            hasVoted(song.id)
+                              ? "Already voted"
+                              : "Vote for this song"
+                          }
                         >
-                          <ThumbsUp className="w-4 h-4" />
+                          <ThumbsUp
+                            className={`w-4 h-4 ${hasVoted(song.id) ? "fill-current" : ""}`}
+                          />
+                          {getVoteCount(song.id) > 0 && (
+                            <span className="absolute -top-1 -right-1 bg-green-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
+                              {getVoteCount(song.id)}
+                            </span>
+                          )}
                         </button>
 
                         <button
@@ -454,7 +571,10 @@ export default function Dashboard() {
                 >
                   Add Sample Song
                 </button>
-                <button className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded text-sm transition-colors">
+                <button
+                  onClick={handleOpenLibraryBrowser}
+                  className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded text-sm transition-colors"
+                >
                   Browse Library
                 </button>
               </div>
@@ -462,6 +582,15 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+
+      {/* Music Library Browser Modal */}
+      <MusicLibraryBrowser
+        isOpen={showLibraryBrowser}
+        onClose={handleCloseLibraryBrowser}
+        onAddToQueue={handleAddToQueue}
+        onPlayNow={handlePlayTrackNow}
+        mode="select"
+      />
     </div>
   );
 }

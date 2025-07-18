@@ -14,8 +14,21 @@ import {
   MicOff,
   Headphones,
   Speaker,
+  AlertTriangle,
+  Shield,
+  RotateCcw,
 } from "lucide-react";
-import { useAudioStore, useZoneStore, formatTime } from "./store.js";
+import {
+  useAudioStore,
+  useZoneStore,
+  useUIStore,
+  formatTime,
+} from "./store.js";
+import { EmergencyActions } from "./utils/emergency-system.js";
+import {
+  useAudioProcessing,
+  initializeAudioProcessing,
+} from "./services/audio-processing.js";
 
 export default function Controls() {
   const [systemVolume, setSystemVolume] = useState(75);
@@ -46,6 +59,21 @@ export default function Controls() {
   } = useAudioStore();
 
   const { currentZone, updateZone } = useZoneStore();
+  const uiStore = useUIStore;
+
+  // Emergency system
+  const [emergencyActions] = useState(
+    () => new EmergencyActions(useAudioStore, useZoneStore, uiStore),
+  );
+  const [isEmergencyActive, setIsEmergencyActive] = useState(false);
+  const [fadeOutDuration, setFadeOutDuration] = useState(3);
+
+  // Audio processing
+  const audioProcessing = useAudioProcessing();
+  const [isAudioProcessingInitialized, setIsAudioProcessingInitialized] =
+    useState(false);
+  const [selectedEQPreset, setSelectedEQPreset] = useState("flat");
+  const [compressorEnabled, setCompressorEnabled] = useState(false);
 
   // System status
   const [systemStatus, setSystemStatus] = useState({
@@ -75,8 +103,42 @@ export default function Controls() {
     return () => clearInterval(interval);
   }, []);
 
+  // Initialize audio processing when audio instance is available
+  useEffect(() => {
+    const { audioInstance } = useAudioStore.getState();
+
+    if (audioInstance && !isAudioProcessingInitialized) {
+      initializeAudioProcessing(audioInstance)
+        .then((success) => {
+          if (success) {
+            setIsAudioProcessingInitialized(true);
+            console.log("Audio processing initialized successfully");
+
+            // Apply initial EQ settings
+            audioProcessing.setEQSettings(eqSettings);
+          } else {
+            console.error("Failed to initialize audio processing");
+          }
+        })
+        .catch((error) => {
+          console.error("Audio processing initialization error:", error);
+        });
+    }
+  }, [
+    audioInstance,
+    isAudioProcessingInitialized,
+    audioProcessing,
+    eqSettings,
+  ]);
+
   const handleVolumeChange = (newVolume) => {
     setVolume(newVolume);
+
+    // Apply to audio processing
+    if (isAudioProcessingInitialized) {
+      audioProcessing.setVolume(newVolume);
+    }
+
     if (currentZone) {
       updateZone(currentZone.id, { volume: newVolume });
     }
@@ -97,29 +159,93 @@ export default function Controls() {
   };
 
   const handleEQChange = (band, value) => {
-    setEqSettings((prev) => ({
-      ...prev,
-      [band]: value,
-    }));
+    setEqSettings((prev) => {
+      const newSettings = {
+        ...prev,
+        [band]: value,
+      };
+
+      // Apply to real-time audio processing
+      if (isAudioProcessingInitialized) {
+        audioProcessing.setEQBand(band, value);
+      }
+
+      return newSettings;
+    });
+
+    // Clear preset selection if manually adjusting
+    if (selectedEQPreset !== "custom") {
+      setSelectedEQPreset("custom");
+    }
   };
 
   const resetEQ = () => {
-    setEqSettings({
+    const flatSettings = {
       bass: 0,
       mid: 0,
       treble: 0,
       presence: 0,
-    });
+    };
+
+    setEqSettings(flatSettings);
+    setSelectedEQPreset("flat");
+
+    // Apply to real-time audio processing
+    if (isAudioProcessingInitialized) {
+      audioProcessing.setEQSettings(flatSettings);
+    }
   };
 
-  const handleEmergencyStop = () => {
-    // Emergency stop all audio
-    setVolume(0);
-    setSystemVolume(0);
-    setMicVolume(0);
-    if (isPlaying) {
-      togglePlayPause();
+  // EQ Preset handlers
+  const handleEQPresetChange = (presetName) => {
+    setSelectedEQPreset(presetName);
+
+    if (isAudioProcessingInitialized) {
+      const success = audioProcessing.applyEQPreset(presetName);
+      if (success) {
+        // Update UI to reflect preset values
+        const presetSettings = audioProcessing.getCurrentEQSettings();
+        if (presetSettings) {
+          setEqSettings(presetSettings);
+        }
+      }
     }
+  };
+
+  // Compressor handlers
+  const handleCompressorToggle = () => {
+    const newState = !compressorEnabled;
+    setCompressorEnabled(newState);
+
+    if (isAudioProcessingInitialized) {
+      audioProcessing.toggleCompressor(newState);
+    }
+  };
+
+  // Emergency handlers
+  const handleEmergencyStop = async () => {
+    const success = await emergencyActions.immediateStop();
+    if (success) {
+      setIsEmergencyActive(true);
+    }
+  };
+
+  const handleFadeOutStop = async () => {
+    const success = await emergencyActions.fadeOutStop(fadeOutDuration * 1000);
+    if (success) {
+      setIsEmergencyActive(true);
+    }
+  };
+
+  const handleSystemRecovery = async () => {
+    const success = await emergencyActions.systemRecovery();
+    if (success) {
+      setIsEmergencyActive(false);
+    }
+  };
+
+  const handleTestEmergency = async () => {
+    await emergencyActions.testEmergencySystems();
   };
 
   return (
@@ -127,22 +253,138 @@ export default function Controls() {
       <div className="max-w-4xl mx-auto space-y-6">
         <h1 className="text-3xl font-bold text-center mb-8">System Controls</h1>
 
-        {/* Emergency Controls */}
-        <div className="bg-red-900/20 border border-red-600/30 rounded-lg p-6">
-          <h2 className="text-xl font-semibold mb-4 text-red-400">
-            Emergency Controls
-          </h2>
-          <div className="flex gap-4">
+        {/* Enhanced Emergency Controls */}
+        <div
+          className={`rounded-lg p-6 border-2 transition-all duration-300 ${
+            isEmergencyActive
+              ? "bg-red-900/30 border-red-600"
+              : "bg-red-900/20 border-red-600/30"
+          }`}
+        >
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <AlertTriangle className="w-6 h-6 text-red-400" />
+              <h2 className="text-xl font-semibold text-red-400">
+                Emergency Controls
+              </h2>
+            </div>
+
+            {isEmergencyActive && (
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+                <span className="text-sm font-medium text-red-400">
+                  EMERGENCY ACTIVE
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* Primary Emergency Controls */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            {/* Immediate Stop */}
             <button
               onClick={handleEmergencyStop}
-              className="flex-1 bg-red-600 hover:bg-red-700 text-white py-3 px-6 rounded-lg font-medium transition-colors"
+              disabled={isEmergencyActive}
+              className={`
+                py-4 px-6 rounded-lg font-bold text-white text-lg
+                transition-all duration-200 min-h-[80px] flex flex-col items-center justify-center
+                ${
+                  isEmergencyActive
+                    ? "bg-gray-600 cursor-not-allowed opacity-50"
+                    : "bg-red-600 hover:bg-red-700"
+                }
+              `}
             >
-              <Square className="w-5 h-5 inline mr-2" />
-              EMERGENCY STOP
+              <Square className="w-6 h-6 mb-2" />
+              IMMEDIATE STOP
             </button>
-            <button className="bg-orange-600 hover:bg-orange-700 text-white py-3 px-6 rounded-lg font-medium transition-colors">
-              Fade Out All
+
+            {/* Fade Out Stop */}
+            <div className="space-y-2">
+              <button
+                onClick={handleFadeOutStop}
+                disabled={isEmergencyActive}
+                className={`
+                  w-full py-4 px-6 rounded-lg font-bold text-white
+                  transition-colors min-h-[60px] flex items-center justify-center gap-2
+                  ${
+                    isEmergencyActive
+                      ? "bg-gray-600 cursor-not-allowed opacity-50"
+                      : "bg-orange-600 hover:bg-orange-700"
+                  }
+                `}
+              >
+                <VolumeX className="w-5 h-5" />
+                FADE OUT STOP
+              </button>
+
+              <div className="flex items-center gap-2">
+                <label className="text-sm text-gray-400">Duration:</label>
+                <select
+                  value={fadeOutDuration}
+                  onChange={(e) => setFadeOutDuration(Number(e.target.value))}
+                  disabled={isEmergencyActive}
+                  className="bg-gray-700 border border-gray-600 rounded px-2 py-1 text-sm text-white"
+                >
+                  <option value={1}>1s</option>
+                  <option value={3}>3s</option>
+                  <option value={5}>5s</option>
+                  <option value={10}>10s</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {/* Recovery and Test Controls */}
+          <div className="flex flex-wrap gap-3">
+            <button
+              onClick={handleSystemRecovery}
+              disabled={!isEmergencyActive}
+              className={`
+                flex items-center gap-2 px-4 py-2 rounded-lg font-medium
+                transition-colors
+                ${
+                  isEmergencyActive
+                    ? "bg-green-600 hover:bg-green-700 text-white"
+                    : "bg-gray-600 cursor-not-allowed opacity-50 text-gray-400"
+                }
+              `}
+            >
+              <RotateCcw className="w-4 h-4" />
+              System Recovery
             </button>
+
+            <button
+              onClick={handleTestEmergency}
+              disabled={isEmergencyActive}
+              className={`
+                flex items-center gap-2 px-4 py-2 rounded-lg font-medium
+                transition-colors
+                ${
+                  !isEmergencyActive
+                    ? "bg-blue-600 hover:bg-blue-700 text-white"
+                    : "bg-gray-600 cursor-not-allowed opacity-50 text-gray-400"
+                }
+              `}
+            >
+              <Shield className="w-4 h-4" />
+              Test Systems
+            </button>
+          </div>
+
+          {/* Safety Notice */}
+          <div className="mt-4 p-3 bg-yellow-900/20 border border-yellow-600/30 rounded-lg">
+            <div className="flex items-start gap-2">
+              <AlertTriangle className="w-4 h-4 text-yellow-400 mt-0.5 flex-shrink-0" />
+              <div className="text-xs text-yellow-200">
+                <p className="font-medium mb-1">SAFETY NOTICE:</p>
+                <p>
+                  Emergency controls will immediately affect all zones and
+                  connected devices. Use responsibly and ensure proper safety
+                  protocols are followed.
+                </p>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -379,12 +621,67 @@ export default function Controls() {
         <div className="bg-gray-800 rounded-lg p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-semibold">Equalizer</h2>
-            <button
-              onClick={resetEQ}
-              className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded transition-colors text-sm"
-            >
-              Reset
-            </button>
+            <div className="flex items-center gap-2">
+              {/* Audio Processing Status */}
+              <div
+                className={`w-2 h-2 rounded-full ${
+                  isAudioProcessingInitialized ? "bg-green-400" : "bg-red-400"
+                }`}
+                title={
+                  isAudioProcessingInitialized
+                    ? "Audio processing active"
+                    : "Audio processing inactive"
+                }
+              />
+
+              <button
+                onClick={resetEQ}
+                className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded transition-colors text-sm"
+              >
+                Reset
+              </button>
+            </div>
+          </div>
+
+          {/* EQ Presets */}
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              EQ Presets
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {audioProcessing.getEQPresets().map((preset) => (
+                <button
+                  key={preset.name}
+                  onClick={() => handleEQPresetChange(preset.name)}
+                  className={`px-3 py-1 rounded text-sm transition-colors ${
+                    selectedEQPreset === preset.name
+                      ? "bg-blue-600 text-white"
+                      : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                  }`}
+                >
+                  {preset.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Audio Effects */}
+          <div className="mb-6 flex items-center gap-4">
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={compressorEnabled}
+                onChange={handleCompressorToggle}
+                className="rounded"
+              />
+              <span className="text-sm">Dynamic Compressor</span>
+            </label>
+
+            <div className="text-xs text-gray-400">
+              {isAudioProcessingInitialized
+                ? `Sample Rate: ${audioProcessing.getProcessingStats()?.sampleRate || "N/A"} Hz`
+                : "Audio processing not initialized"}
+            </div>
           </div>
 
           <div className="grid grid-cols-4 gap-6">
