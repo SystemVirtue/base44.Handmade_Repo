@@ -16,6 +16,7 @@ import {
   Speaker,
 } from "lucide-react";
 import { useAudioStore, useZoneStore, formatTime } from "./store.js";
+import EmergencyControls from "./components/ui/emergency-controls.jsx";
 
 export default function Controls() {
   const [systemVolume, setSystemVolume] = useState(75);
