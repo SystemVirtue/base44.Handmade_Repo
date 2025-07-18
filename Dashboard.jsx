@@ -219,13 +219,12 @@ export default function Dashboard() {
         <div className="p-6 border-b border-gray-700">
           {/* Track Info */}
           <div className="flex items-center gap-6 mb-6">
-            <div className="w-24 h-24 bg-gray-800 rounded-lg overflow-hidden shadow-lg">
-              <img
-                src={currentTrack.thumbnail}
-                alt={currentTrack.title}
-                className="w-full h-full object-cover"
-              />
-            </div>
+            <ArtworkImage
+              track={currentTrack}
+              size="large"
+              className="w-24 h-24 rounded-lg shadow-lg"
+              showLoadingState={true}
+            />
 
             <div className="flex-1 min-w-0">
               <h1 className="text-2xl font-bold text-white mb-1 truncate">
