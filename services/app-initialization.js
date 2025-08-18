@@ -141,6 +141,39 @@ class AppInitializationService {
   }
 
   /**
+   * Initialize YouTube services
+   */
+  async _initializeYouTubeServices() {
+    console.log("🎥 Initializing YouTube services...");
+
+    try {
+      // Initialize API key manager
+      const apiKeyManager = getAPIKeyManager();
+      await apiKeyManager.initialize();
+
+      // Initialize YouTube API service
+      const youtubeAPI = getYouTubeAPI();
+
+      this.services.youtube = {
+        status: "ready",
+        apiKeyManager,
+        youtubeAPI,
+        hasKeys: apiKeyManager.isReady(),
+      };
+
+      console.log("✅ YouTube services initialized");
+    } catch (error) {
+      console.error("❌ YouTube services initialization failed:", error);
+      // Don't throw - app can run without YouTube initially
+      this.services.youtube = {
+        status: "error",
+        error: error.message,
+        hasKeys: false,
+      };
+    }
+  }
+
+  /**
    * Initialize Zustand stores
    */
   async _initializeStores() {
