@@ -48,7 +48,14 @@ const YouTubePlayer = ({
   useEffect(() => {
     const loadYouTubeAPI = () => {
       if (window.YT && window.YT.Player) {
-        initializePlayer();
+        // Small delay to ensure DOM is ready
+        setTimeout(initializePlayer, 100);
+        return;
+      }
+
+      // Check if script is already loading
+      if (document.querySelector('script[src*="youtube.com/iframe_api"]')) {
+        window.onYouTubeIframeAPIReady = initializePlayer;
         return;
       }
 
