@@ -7,16 +7,17 @@ import persistenceService from "./services/persistence-service.js";
 export const useAudioStore = create(
   persist(
     (set, get) => ({
-      // Current track state
-      currentTrack: {
+      // Current video state
+      currentVideo: {
         id: null,
-        title: "Deep Cover (Explicit)",
-        artist: "FAT JOE",
-        album: "Unknown Album",
-        duration: 235, // seconds
-        thumbnail:
-          "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=100&h=100&fit=crop",
-        url: null,
+        title: "No video selected",
+        channelTitle: "",
+        description: "",
+        duration: 0, // seconds
+        thumbnail: "",
+        videoId: null,
+        publishedAt: null,
+        viewCount: 0,
       },
 
       // Playback state
