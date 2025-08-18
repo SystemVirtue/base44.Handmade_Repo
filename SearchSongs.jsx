@@ -175,13 +175,35 @@ export default function SearchSongs() {
         }
       } catch (error) {
         console.error("YouTube search failed:", error);
-        addNotification({
-          type: "error",
-          message: error.message.includes('API keys')
-            ? "YouTube API not configured. Please add API keys in Settings."
-            : "Search failed. Please try again.",
-          duration: 5000,
-        });
+
+        if (error.message.includes('API keys')) {
+          // Show more helpful guidance for missing API keys
+          addNotification({
+            type: "warning",
+            message: "YouTube API not configured. Please add API keys in Settings to enable video search.",
+            duration: 8000,
+          });
+
+          // Set a helpful message in search results
+          setSearchResults([{
+            id: 'no-api-key',
+            videoId: 'no-api-key',
+            title: '🔑 YouTube API Key Required',
+            channelTitle: 'System Message',
+            duration: 0,
+            thumbnail: 'https://via.placeholder.com/320x180/3b82f6/ffffff?text=YouTube+API+Required',
+            viewCount: 0,
+            description: 'Add YouTube Data API v3 keys in Settings → API Keys to enable video search and playback.',
+            isSystemMessage: true
+          }]);
+          setTotalResults(1);
+        } else {
+          addNotification({
+            type: "error",
+            message: "Search failed. Please try again.",
+            duration: 3000,
+          });
+        }
       } finally {
         setIsSearching(false);
       }
