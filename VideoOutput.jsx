@@ -78,6 +78,66 @@ export default function VideoOutput() {
     };
   }, [isRecording]);
 
+  // Video window management
+  const openVideoWindow = () => {
+    if (videoWindow && !videoWindow.closed) {
+      videoWindow.focus();
+      return;
+    }
+
+    const features = `
+      width=${videoWindowSettings.width},
+      height=${videoWindowSettings.height + 50},
+      left=${videoWindowSettings.position.x},
+      top=${videoWindowSettings.position.y},
+      resizable=yes,
+      scrollbars=no,
+      status=no,
+      menubar=no,
+      toolbar=no,
+      location=no
+    `.replace(/\s+/g, '');
+
+    const newWindow = window.open('', 'djamms-video-player', features);
+
+    if (newWindow) {
+      newWindow.document.title = 'DJAMMS Video Player';
+      newWindow.document.body.innerHTML = `
+        <div id="video-player-container" style="width: 100%; height: calc(100vh - 50px); background: black;"></div>
+        <div style="height: 50px; background: #1f2937; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; color: white;">
+          <span id="video-title">${currentVideo?.title || 'No video playing'}</span>
+          <button onclick="window.close()" style="background: #ef4444; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">Close</button>
+        </div>
+      `;
+
+      // Add styles
+      const style = newWindow.document.createElement('style');
+      style.textContent = `
+        body { margin: 0; font-family: system-ui, sans-serif; }
+        #video-player-container { position: relative; }
+      `;
+      newWindow.document.head.appendChild(style);
+
+      setVideoWindow(newWindow);
+
+      // Handle window close
+      newWindow.addEventListener('beforeunload', () => {
+        setVideoWindow(null);
+      });
+    }
+  };
+
+  const closeVideoWindow = () => {
+    if (videoWindow && !videoWindow.closed) {
+      videoWindow.close();
+    }
+    setVideoWindow(null);
+  };
+
+  const updateVideoWindowSettings = (newSettings) => {
+    setVideoWindowSettings(prev => ({ ...prev, ...newSettings }));
+  };
+
   // Canvas animation for live preview
   useEffect(() => {
     const canvas = canvasRef.current;
