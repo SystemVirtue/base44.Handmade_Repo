@@ -5,6 +5,8 @@
 
 import apiService from "./api-service.js";
 import persistenceService from "./persistence-service.js";
+import { getYouTubeAPI } from "./youtube-api.js";
+import { getAPIKeyManager } from "./api-key-manager.js";
 import { initializeStores } from "../store.js";
 
 class AppInitializationService {
