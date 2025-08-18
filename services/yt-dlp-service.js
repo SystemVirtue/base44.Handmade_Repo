@@ -32,6 +32,58 @@ class YtDlpService {
   }
 
   /**
+   * Check if we should attempt to connect to backend
+   */
+  shouldAttemptConnection() {
+    // If backend is explicitly disabled, never attempt
+    if (this.backendDisabled) {
+      return false;
+    }
+
+    const now = Date.now();
+    const timeSinceLastCheck = now - this.serviceStatus.lastCheck;
+
+    // If we know the service is unavailable and we're in backoff period
+    if (this.serviceStatus.available === false &&
+        this.serviceStatus.failureCount >= this.serviceStatus.maxFailures &&
+        timeSinceLastCheck < this.serviceStatus.backoffTime) {
+      return false;
+    }
+
+    // If we recently checked and service was available
+    if (this.serviceStatus.available === true &&
+        timeSinceLastCheck < this.serviceStatus.checkInterval) {
+      return true;
+    }
+
+    // If enough time has passed since last check, allow attempt
+    if (timeSinceLastCheck >= this.serviceStatus.checkInterval) {
+      return true;
+    }
+
+    // Default to allowing connection if we haven't determined status yet
+    return this.serviceStatus.available !== false;
+  }
+
+  /**
+   * Record connection success
+   */
+  recordSuccess() {
+    this.serviceStatus.available = true;
+    this.serviceStatus.failureCount = 0;
+    this.serviceStatus.lastCheck = Date.now();
+  }
+
+  /**
+   * Record connection failure
+   */
+  recordFailure() {
+    this.serviceStatus.available = false;
+    this.serviceStatus.failureCount++;
+    this.serviceStatus.lastCheck = Date.now();
+  }
+
+  /**
    * Make API request to backend
    */
   async makeApiRequest(endpoint, options = {}) {
