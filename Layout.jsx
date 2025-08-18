@@ -494,7 +494,7 @@ export default function Layout({ children, currentPageName }) {
                   </span>
                 </div>
 
-                <div className="text-gray-200 flex items-center gap-1">
+                <div className="themed-text-secondary flex items-center gap-1">
                   <span>
                     {formatTime(currentTime)} /{" "}
                     {formatTime(currentVideo?.duration || 0)}
