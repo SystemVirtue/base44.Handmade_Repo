@@ -810,7 +810,26 @@ export default function SearchSongs() {
                     />
                   )}
 
-                  {viewMode === "grid" ? (
+                  {track.isSystemMessage ? (
+                    <div className="text-center">
+                      <div className="w-24 h-24 mx-auto mb-4 bg-blue-600/20 rounded-lg flex items-center justify-center">
+                        <Settings className="w-12 h-12 text-blue-400" />
+                      </div>
+                      <h3 className="font-medium text-blue-400 mb-2">
+                        {track.title}
+                      </h3>
+                      <p className="text-gray-300 text-sm mb-4">
+                        {track.description}
+                      </p>
+                      <button
+                        onClick={() => window.location.href = '/settings'}
+                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded transition-colors text-sm"
+                      >
+                        <Settings className="w-4 h-4 inline mr-2" />
+                        Go to Settings
+                      </button>
+                    </div>
+                  ) : viewMode === "grid" ? (
                     <div className="text-center">
                       <ArtworkImage
                         src={track.thumbnail}
