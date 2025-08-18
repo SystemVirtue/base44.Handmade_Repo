@@ -632,7 +632,7 @@ export default function Controls() {
         </div>
 
         {/* Equalizer */}
-        <div className="bg-gray-800 rounded-lg p-6">
+        <div className="themed-card p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-semibold">Equalizer</h2>
             <div className="flex items-center gap-2">
