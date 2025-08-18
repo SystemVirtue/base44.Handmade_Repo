@@ -186,6 +186,26 @@ function AppRoutes() {
 }
 
 function App() {
+  useEffect(() => {
+    // Initialize the application
+    const initApp = async () => {
+      try {
+        const appInit = getAppInitialization();
+        const result = await appInit.initialize();
+
+        if (result.success) {
+          console.log('✅ DJAMMS Application initialized successfully');
+        } else {
+          console.error('❌ Application initialization failed:', result.error);
+        }
+      } catch (error) {
+        console.error('❌ Critical initialization error:', error);
+      }
+    };
+
+    initApp();
+  }, []);
+
   return (
     <ErrorBoundary>
       <ErrorProvider>
