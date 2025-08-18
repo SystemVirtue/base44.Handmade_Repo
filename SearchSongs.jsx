@@ -253,7 +253,7 @@ export default function SearchSongs() {
 
           let title, description, message;
 
-          if (error.message.includes('HTTP 403')) {
+          if (errorMessage.includes('HTTP 403')) {
             title = '🚫 YouTube API Access Denied';
             description = 'Invalid API keys detected. Please update your YouTube Data API v3 keys in Settings → API Configuration.';
             message = "YouTube API keys are invalid or have no permissions. Please check your API key configuration in Settings.";
