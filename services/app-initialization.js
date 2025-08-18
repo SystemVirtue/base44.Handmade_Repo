@@ -143,35 +143,29 @@ class AppInitializationService {
    * Initialize YouTube services
    */
   async _initializeYouTubeServices() {
-    console.log("🎥 Initializing YouTube services...");
+    console.log("🎥 Initializing YouTube yt-dlp services...");
 
     try {
-      // Initialize API key manager
-      const apiKeyManager = getAPIKeyManager();
-      await apiKeyManager.initialize();
-
-      // Initialize YouTube API service
-      const youtubeAPI = getYouTubeAPI();
+      // Initialize yt-dlp service
+      const ytDlpService = getYtDlpService();
 
       // Check service health
-      const healthCheck = youtubeAPI.isServiceReady();
+      const healthCheck = await ytDlpService.isServiceReady();
 
       if (healthCheck.ready) {
         this.services.youtube = {
           status: "ready",
-          apiKeyManager,
-          youtubeAPI,
-          hasKeys: true,
+          ytDlpService,
+          hasKeys: false, // No API keys needed with yt-dlp
           health: healthCheck
         };
-        console.log("✅ YouTube services initialized successfully");
-        console.log(`📊 API Status: ${healthCheck.stats.activeKeys}/${healthCheck.stats.totalKeys} keys active, ${healthCheck.stats.availableQuota} quota available`);
+        console.log("✅ YouTube yt-dlp services initialized successfully");
+        console.log(`📊 Service Status: ${healthCheck.version || 'yt-dlp available'}`);
       } else {
-        console.warn(`⚠️ YouTube services initialized but not ready: ${healthCheck.reason}`);
+        console.warn(`⚠️ YouTube yt-dlp services not ready: ${healthCheck.reason}`);
         this.services.youtube = {
           status: "degraded",
-          apiKeyManager,
-          youtubeAPI,
+          ytDlpService,
           hasKeys: false,
           health: healthCheck,
           warning: healthCheck.reason
