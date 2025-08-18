@@ -275,8 +275,8 @@ export default function Dashboard() {
   };
 
   const progress = isDragging
-    ? (localCurrentTime / currentTrack.duration) * 100
-    : (currentTime / currentTrack.duration) * 100;
+    ? (localCurrentTime / (currentVideo.duration || 1)) * 100
+    : (currentTime / (currentVideo.duration || 1)) * 100;
 
   return (
     <div className="flex h-full bg-gray-900 text-white">
