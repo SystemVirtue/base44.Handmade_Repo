@@ -108,22 +108,56 @@ export default function SearchSongs() {
     const checkApiKeys = async () => {
       try {
         const youtubeAPI = getYouTubeAPI();
-        const apiKeyManager = youtubeAPI.apiKeyManager;
+        const serviceStatus = youtubeAPI.isServiceReady();
 
-        if (!apiKeyManager.isReady()) {
-          // Show helpful initial message if no API keys
+        if (!serviceStatus.ready) {
+          let title, description, thumbnail;
+
+          if (serviceStatus.reason.includes('No API keys')) {
+            title = '🚀 Welcome to YouTube Video Search!';
+            description = 'To search and play YouTube videos, please add YouTube Data API v3 keys in Settings → API Keys.';
+            thumbnail = 'https://via.placeholder.com/320x180/10b981/ffffff?text=Setup+Required';
+          } else if (serviceStatus.reason.includes('quota')) {
+            title = '⏱️ YouTube API Quota Exceeded';
+            description = 'Daily API quota limit reached. Try again tomorrow or add more API keys in Settings.';
+            thumbnail = 'https://via.placeholder.com/320x180/f59e0b/ffffff?text=Quota+Exceeded';
+          } else if (serviceStatus.reason.includes('valid')) {
+            title = '🔑 Invalid YouTube API Keys';
+            description = 'Current API keys are invalid. Please update your YouTube Data API v3 keys in Settings → API Configuration.';
+            thumbnail = 'https://via.placeholder.com/320x180/ef4444/ffffff?text=Invalid+Keys';
+          } else {
+            title = '⚠️ YouTube Service Unavailable';
+            description = `YouTube API service is not ready: ${serviceStatus.reason}`;
+            thumbnail = 'https://via.placeholder.com/320x180/6b7280/ffffff?text=Service+Unavailable';
+          }
+
+          // Show helpful initial message based on specific issue
           setSearchResults([{
-            id: 'setup-guide',
-            videoId: 'setup-guide',
-            title: '🚀 Welcome to YouTube Video Search!',
-            channelTitle: 'Setup Required',
+            id: 'service-status',
+            videoId: 'service-status',
+            title: title,
+            channelTitle: 'System Status',
             duration: 0,
-            thumbnail: 'https://via.placeholder.com/320x180/10b981/ffffff?text=Setup+Required',
+            thumbnail: thumbnail,
             viewCount: 0,
-            description: 'To search and play YouTube videos, please add YouTube Data API v3 keys in Settings → API Keys.',
+            description: description,
             isSystemMessage: true
           }]);
           setTotalResults(1);
+
+          // Also show a notification for invalid keys specifically
+          if (serviceStatus.reason.includes('valid')) {
+            addNotification({
+              type: "warning",
+              title: "YouTube API Keys Invalid",
+              message: "Your YouTube API keys appear to be invalid. Please check your configuration in Settings.",
+              duration: 8000,
+              action: {
+                text: "Update API Keys",
+                url: "/settings"
+              }
+            });
+          }
         }
       } catch (error) {
         console.error('Error checking API keys:', error);
