@@ -275,8 +275,8 @@ export default function Layout({ children, currentPageName }) {
 
           {/* Current Zone Info */}
           {!sidebarCollapsed && (
-            <div className="p-4 border-t border-gray-700">
-              <div className="bg-gray-700 rounded-lg p-3">
+            <div className="p-4" style={{borderTopWidth: '1px', borderTopColor: 'var(--color-border)'}}>
+              <div className="themed-surface rounded-lg p-3">
                 <div className="flex items-center gap-2 mb-1">
                   <div
                     className={`w-2 h-2 rounded-full ${
@@ -285,11 +285,11 @@ export default function Layout({ children, currentPageName }) {
                         : "bg-red-400"
                     }`}
                   ></div>
-                  <span className="text-xs font-medium text-gray-300">
+                  <span className="text-xs font-medium themed-text-secondary">
                     Current Zone
                   </span>
                 </div>
-                <p className="text-sm font-medium text-white truncate">
+                <p className="text-sm font-medium themed-text-primary truncate">
                   {currentZone.name}
                 </p>
                 <p className="text-xs text-gray-400 truncate">
