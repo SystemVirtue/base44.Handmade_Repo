@@ -576,26 +576,19 @@ export default function Dashboard() {
               <h3 className="font-semibold mb-3">Quick Add</h3>
               <div className="flex gap-2">
                 <button
-                  onClick={() =>
-                    handleAddToQueue({
-                      id: Date.now(),
-                      title: "Sample Song",
-                      artist: "Sample Artist",
-                      album: "Sample Album",
-                      duration: 180,
-                      thumbnail:
-                        "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=100&h=100&fit=crop",
-                    })
-                  }
+                  onClick={handleOpenLibraryBrowser}
                   className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded text-sm transition-colors"
                 >
-                  Add Sample Song
+                  Search YouTube Videos
                 </button>
                 <button
-                  onClick={handleOpenLibraryBrowser}
+                  onClick={() => {
+                    // Navigate to search page
+                    window.location.href = '/search-songs';
+                  }}
                   className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded text-sm transition-colors"
                 >
-                  Browse Library
+                  Advanced Search
                 </button>
               </div>
             </div>
