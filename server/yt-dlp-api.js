@@ -212,9 +212,8 @@ app.get('/api/playlist/:playlistId', async (req, res) => {
     const playlistData = await youtubeDl(playlistUrl, {
       dumpSingleJson: true,
       skipDownload: true,
-      extractFlat: false,
-      yesPlaylist: true,
       format: 'best[height<=720]',
+      yesPlaylist: true,
     });
 
     // Process playlist data
