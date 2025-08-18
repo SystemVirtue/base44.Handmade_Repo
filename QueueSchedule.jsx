@@ -240,7 +240,7 @@ export default function QueueSchedule() {
     return filtered;
   }, [
     allPlaylists,
-    spotifyPlaylists,
+    youtubePlaylists,
     activeTab,
     starredPlaylists,
     searchQuery,
