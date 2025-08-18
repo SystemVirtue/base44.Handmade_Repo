@@ -59,8 +59,7 @@ export default function YouTubeServiceStatus({ compact = false }) {
 
   const getStatusText = () => {
     if (serviceStatus.ready) {
-      const { activeKeys, totalKeys } = serviceStatus.stats;
-      return `YouTube Ready (${activeKeys}/${totalKeys} keys)`;
+      return `YouTube Ready (yt-dlp)`;
     } else {
       return `YouTube: ${serviceStatus.reason}`;
     }
