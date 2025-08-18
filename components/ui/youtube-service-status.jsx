@@ -127,10 +127,10 @@ export default function YouTubeServiceStatus({ compact = false }) {
         )}
       </div>
 
-      {serviceStatus.usage && serviceStatus.ready && (
+      {serviceStatus.ready && (
         <div className="mt-3 pt-3 border-t border-gray-700">
           <div className="text-xs text-gray-400">
-            API Keys: {serviceStatus.usage.activeKeys} active, {serviceStatus.usage.totalKeys} total
+            Service: yt-dlp (no API keys required)
           </div>
         </div>
       )}
