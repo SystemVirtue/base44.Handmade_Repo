@@ -27,6 +27,7 @@ import { useAuth } from "./src/contexts/AuthContext.jsx";
 import { useError } from "./src/contexts/ErrorContext.jsx";
 import useNetworkStatus from "./src/hooks/useNetworkStatus.js";
 import { NetworkStatus } from "./components/ui/shared.jsx";
+import NotificationSystem from "./components/ui/notification-system.jsx";
 
 const navigationItems = [
   {
