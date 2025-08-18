@@ -46,15 +46,9 @@ class YtDlpService {
   }
 
   /**
-   * Search for YouTube videos using yt-dlp
+   * Search for YouTube videos using backend yt-dlp API
    */
   async searchVideos(query, options = {}) {
-    // Check if service is ready first
-    const serviceStatus = await this.isServiceReady();
-    if (!serviceStatus.ready) {
-      throw new Error(`yt-dlp service not ready: ${serviceStatus.reason}`);
-    }
-
     const maxResults = options.maxResults || 25;
     const order = options.order || 'relevance';
 
@@ -66,58 +60,36 @@ class YtDlpService {
     }
 
     try {
-      console.log(`Searching YouTube with yt-dlp: "${query}"`);
+      console.log(`Searching YouTube via API: "${query}"`);
 
-      // Use yt-dlp to search YouTube
-      const searchUrl = `ytsearch${maxResults}:${query}`;
-
-      const searchResults = await youtubeDl(searchUrl, {
-        dumpSingleJson: true,
-        noPlaylist: false,
-        extractFlat: false,
-        skipDownload: true,
-        format: 'best[height<=720]', // Limit to 720p for faster extraction
-        getTitle: true,
-        getDescription: true,
-        getThumbnail: true,
-        getDuration: true,
-        getUploader: true,
-        getViewCount: true,
-        getUploadDate: true,
-        writeInfoJson: false,
-        writeDescription: false,
-        writeThumbnail: false,
-        writeSubtitles: false,
-        writeAutoSub: false,
+      const response = await this.makeApiRequest('/api/search', {
+        method: 'POST',
+        body: JSON.stringify({
+          query,
+          maxResults,
+          order
+        })
       });
 
-      // Handle both single result and array of results
-      const entries = Array.isArray(searchResults.entries) 
-        ? searchResults.entries 
-        : searchResults.entries 
-          ? [searchResults.entries]
-          : [searchResults];
-
-      // Process results into our video format
-      const videos = entries
-        .filter(entry => entry && entry.id && entry.title)
-        .map(entry => this.createVideoFromYtDlpData(entry))
+      // Process API response into our video format
+      const videos = response.videos
+        .map(videoData => this.createVideoFromApiData(videoData))
         .filter(video => video !== null);
 
       const result = {
         videos,
-        nextPageToken: null, // yt-dlp doesn't support pagination like API
+        nextPageToken: null, // Backend doesn't support pagination
         totalResults: videos.length,
         resultsPerPage: videos.length
       };
 
       // Cache the results
       this.setCachedData(cacheKey, result, this.searchCacheTimeout);
-      
+
       console.log(`Found ${videos.length} videos for query: "${query}"`);
       return result;
     } catch (error) {
-      console.error('yt-dlp search failed:', error);
+      console.error('YouTube search failed:', error);
       throw new Error(`Search failed: ${error.message}`);
     }
   }
