@@ -300,7 +300,7 @@ export default function Layout({ children, currentPageName }) {
           )}
 
           {/* User section and controls */}
-          <div className="p-4 border-t border-gray-700">
+          <div className="p-4" style={{borderTopWidth: '1px', borderTopColor: 'var(--color-border)'}}>
             {!sidebarCollapsed ? (
               <>
                 {/* Spotify Integration */}
