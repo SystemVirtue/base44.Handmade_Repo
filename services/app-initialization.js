@@ -40,17 +40,23 @@ class AppInitializationService {
       // Step 2: Initialize API service
       await this._initializeAPI();
 
-      // Step 3: Initialize Zustand stores
+      // Step 3: Initialize YouTube services
+      await this._initializeYouTubeServices();
+
+      // Step 4: Initialize Zustand stores
       await this._initializeStores();
 
-      // Step 4: Initialize UI services
+      // Step 5: Initialize UI services
       await this._initializeUI();
 
-      // Step 5: Setup application monitoring
+      // Step 6: Setup application monitoring
       await this._setupMonitoring();
 
-      // Step 6: Load initial data
+      // Step 7: Load initial data
       await this._loadInitialData();
+
+      // Step 8: Load default YouTube playlist
+      await this._loadDefaultPlaylist();
 
       // Step 7: Setup event listeners
       await this._setupEventListeners();
