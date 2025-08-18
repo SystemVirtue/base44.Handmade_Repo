@@ -502,6 +502,9 @@ export default function Layout({ children, currentPageName }) {
           <div className="flex-1 overflow-auto bg-gray-900">{children}</div>
         </div>
       </div>
+
+      {/* Global Notification System */}
+      <NotificationSystem />
     </div>
   );
 }
