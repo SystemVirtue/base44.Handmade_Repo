@@ -13,6 +13,36 @@ class YtDlpService {
     this.cacheTimeout = 5 * 60 * 1000; // 5 minutes
     this.searchCache = new Map();
     this.searchCacheTimeout = 10 * 60 * 1000; // 10 minutes
+
+    // Backend API configuration
+    this.apiBaseUrl = import.meta.env.VITE_YT_DLP_API_URL || 'http://localhost:3001';
+  }
+
+  /**
+   * Make API request to backend
+   */
+  async makeApiRequest(endpoint, options = {}) {
+    const url = `${this.apiBaseUrl}${endpoint}`;
+
+    try {
+      const response = await fetch(url, {
+        headers: {
+          'Content-Type': 'application/json',
+          ...options.headers
+        },
+        ...options
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error(`API request failed: ${endpoint}`, error);
+      throw error;
+    }
   }
 
   /**
