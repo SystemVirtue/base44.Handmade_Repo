@@ -331,6 +331,29 @@ export default function VideoOutput() {
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-3xl font-bold">Video Output</h1>
         <div className="flex items-center gap-2">
+          {/* Video Window Controls */}
+          <button
+            onClick={videoWindow && !videoWindow.closed ? closeVideoWindow : openVideoWindow}
+            className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
+              videoWindow && !videoWindow.closed
+                ? "bg-blue-600 text-white hover:bg-blue-700"
+                : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+            }`}
+            title={videoWindow && !videoWindow.closed ? "Close Video Window" : "Open Video Window"}
+          >
+            {videoWindow && !videoWindow.closed ? (
+              <>
+                <X className="w-4 h-4 inline mr-1" />
+                Close Window
+              </>
+            ) : (
+              <>
+                <ExternalLink className="w-4 h-4 inline mr-1" />
+                Open Window
+              </>
+            )}
+          </button>
+
           <div
             className={`px-3 py-1 rounded-full text-sm font-medium ${
               outputState.isLive
