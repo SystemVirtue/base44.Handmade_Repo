@@ -47,11 +47,33 @@ class YouTubeAPIService {
             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
           }
 
-          if (response.status === 403 && errorData.error?.errors?.[0]?.reason === 'quotaExceeded') {
-            console.warn('Quota exceeded, rotating API key...');
-            this.apiKeyManager.rotateKey();
-            continue; // Retry with next key
+          // Handle specific 403 errors
+          if (response.status === 403) {
+            const errorReason = errorData.error?.errors?.[0]?.reason;
+            const errorMessage = errorData.error?.message || 'Forbidden';
+
+            console.error(`YouTube API 403 Error:`, {
+              reason: errorReason,
+              message: errorMessage,
+              details: errorData.error?.errors,
+              endpoint,
+              currentKey: `...${this.apiKeyManager.getCurrentKey().slice(-8)}`
+            });
+
+            if (errorReason === 'quotaExceeded') {
+              console.warn('Daily quota exceeded, rotating to next API key...');
+              this.apiKeyManager.rotateKey();
+              continue; // Retry with next key
+            } else if (errorReason === 'keyInvalid' || errorReason === 'forbidden') {
+              console.warn('Invalid API key detected, rotating to next key...');
+              this.apiKeyManager.rotateKey();
+              continue; // Retry with next key
+            } else {
+              // Other 403 errors (like disabled API, insufficient permissions)
+              throw new Error(`YouTube API access denied: ${errorMessage} (${errorReason || 'unknown'}). Please check your API key configuration and ensure the YouTube Data API v3 is enabled.`);
+            }
           }
+
           throw new Error(errorData.error?.message || `HTTP ${response.status}: ${response.statusText}`);
         }
 
