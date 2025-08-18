@@ -727,7 +727,7 @@ export default function QueueSchedule() {
               >
                 {displayedPlaylists.map((playlist) => (
                   <div
-                    key={playlist.id}
+                    key={playlist.uniqueId}
                     className={`${
                       viewMode === "grid"
                         ? "bg-gray-700 rounded-lg p-4 hover:bg-gray-650 transition-colors cursor-pointer"
