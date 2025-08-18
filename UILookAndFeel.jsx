@@ -291,7 +291,7 @@ export default function UILookAndFeel() {
             className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed px-4 py-2 rounded transition-colors"
           >
             <Save className="w-4 h-4" />
-            Save Theme
+            Apply Theme
           </button>
         </div>
       </div>
