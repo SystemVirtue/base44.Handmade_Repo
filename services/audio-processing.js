@@ -399,20 +399,53 @@ class AudioProcessor {
   }
 
   /**
-   * Cleanup audio processing
+   * Cleanup current audio processing setup
    */
-  destroy() {
-    if (this.audioContext) {
-      this.audioContext.close();
-      this.audioContext = null;
+  cleanup() {
+    if (this.audioContext && this.audioContext.state !== 'closed') {
+      try {
+        // Disconnect all nodes
+        if (this.sourceNode) {
+          this.sourceNode.disconnect();
+        }
+        if (this.gainNode) {
+          this.gainNode.disconnect();
+        }
+        if (this.analyserNode) {
+          this.analyserNode.disconnect();
+        }
+        if (this.compressorNode) {
+          this.compressorNode.disconnect();
+        }
+
+        // Clear reference from audio element
+        if (this.currentAudioElement) {
+          delete this.currentAudioElement._djammsSourceNode;
+        }
+      } catch (error) {
+        console.warn("Error during cleanup:", error);
+      }
     }
 
     this.sourceNode = null;
+    this.currentAudioElement = null;
     this.eqFilters = {};
     this.gainNode = null;
     this.analyserNode = null;
     this.compressorNode = null;
     this.isInitialized = false;
+  }
+
+  /**
+   * Completely destroy audio processing
+   */
+  destroy() {
+    this.cleanup();
+
+    if (this.audioContext) {
+      this.audioContext.close();
+      this.audioContext = null;
+    }
   }
 
   /**
