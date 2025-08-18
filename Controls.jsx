@@ -400,16 +400,27 @@ export default function Controls() {
             <div className="bg-gray-700 rounded-lg p-4 mb-4">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 bg-gray-600 rounded overflow-hidden">
-                  <img
-                    src={currentTrack.thumbnail}
-                    alt={currentTrack.title}
-                    className="w-full h-full object-cover"
-                  />
+                  {activeTrack?.thumbnail ? (
+                    <img
+                      src={activeTrack.thumbnail}
+                      alt={activeTrack.title || 'Track thumbnail'}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                      }}
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-gray-400">
+                      <Play className="w-6 h-6" />
+                    </div>
+                  )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium truncate">{currentTrack.title}</p>
+                  <p className="font-medium truncate">
+                    {activeTrack?.title || 'No track selected'}
+                  </p>
                   <p className="text-gray-400 text-sm truncate">
-                    {currentTrack.artist}
+                    {activeTrack?.channelTitle || activeTrack?.artist || 'Unknown artist'}
                   </p>
                 </div>
                 <div
