@@ -204,7 +204,7 @@ export const useAudioStore = create(
     {
       name: "djamms-audio-store",
       partialize: (state) => ({
-        currentTrack: state.currentTrack,
+        currentVideo: state.currentVideo,
         volume: state.volume,
         isMuted: state.isMuted,
         queue: state.queue,
