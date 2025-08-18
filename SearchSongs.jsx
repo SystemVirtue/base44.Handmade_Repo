@@ -99,10 +99,38 @@ export default function SearchSongs() {
     useAudioStore();
   const { addNotification } = useUIStore();
 
-  // Load recent searches on mount
+  // Load recent searches and check API keys on mount
   useEffect(() => {
     const recent = persistenceService.getRecentSearches();
     setRecentSearches(recent);
+
+    // Check if YouTube API keys are configured
+    const checkApiKeys = async () => {
+      try {
+        const youtubeAPI = getYouTubeAPI();
+        const apiKeyManager = youtubeAPI.apiKeyManager;
+
+        if (!apiKeyManager.isReady()) {
+          // Show helpful initial message if no API keys
+          setSearchResults([{
+            id: 'setup-guide',
+            videoId: 'setup-guide',
+            title: '🚀 Welcome to YouTube Video Search!',
+            channelTitle: 'Setup Required',
+            duration: 0,
+            thumbnail: 'https://via.placeholder.com/320x180/10b981/ffffff?text=Setup+Required',
+            viewCount: 0,
+            description: 'To search and play YouTube videos, please add YouTube Data API v3 keys in Settings → API Keys.',
+            isSystemMessage: true
+          }]);
+          setTotalResults(1);
+        }
+      } catch (error) {
+        console.error('Error checking API keys:', error);
+      }
+    };
+
+    checkApiKeys();
   }, []);
 
   // Enhanced search function
