@@ -202,8 +202,18 @@ class APIService {
     return this.request(this.endpoints.spotify.auth);
   }
 
-  async getSpotifyPlaylists() {
-    return this.request(this.endpoints.spotify.playlists);
+  async getYouTubePlaylist(playlistId) {
+    return this.request(`${this.endpoints.youtube.playlists}/${playlistId}`);
+  }
+
+  async searchYouTubeVideos(query, options = {}) {
+    const params = new URLSearchParams({
+      q: query,
+      type: 'video',
+      videoCategoryId: '10', // Music category
+      ...options
+    });
+    return this.request(`${this.endpoints.youtube.search}?${params}`);
   }
 
   async getSpotifyPlaylistTracks(playlistId) {
