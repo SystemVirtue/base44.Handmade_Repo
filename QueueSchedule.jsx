@@ -732,17 +732,17 @@ export default function QueueSchedule() {
                       viewMode === "grid"
                         ? "bg-gray-700 rounded-lg p-4 hover:bg-gray-650 transition-colors cursor-pointer"
                         : "flex items-center gap-4 p-3 bg-gray-700 rounded-lg hover:bg-gray-650 transition-colors"
-                    } ${selectedPlaylists.has(playlist.id) ? "ring-2 ring-blue-500" : ""}`}
+                    } ${selectedPlaylists.has(playlist.uniqueId) ? "ring-2 ring-blue-500" : ""}`}
                   >
                     <input
                       type="checkbox"
-                      checked={selectedPlaylists.has(playlist.id)}
+                      checked={selectedPlaylists.has(playlist.uniqueId)}
                       onChange={(e) => {
                         const newSelection = new Set(selectedPlaylists);
                         if (e.target.checked) {
-                          newSelection.add(playlist.id);
+                          newSelection.add(playlist.uniqueId);
                         } else {
-                          newSelection.delete(playlist.id);
+                          newSelection.delete(playlist.uniqueId);
                         }
                         setSelectedPlaylists(newSelection);
                       }}
