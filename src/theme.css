@@ -242,12 +242,14 @@ body {
   transition: background-color var(--transition-normal), color var(--transition-normal);
 }
 
-/* Component Classes */
-.themed-card {
-  background-color: var(--color-card-bg);
-  border: 1px solid var(--color-card-border);
-  border-radius: var(--border-radius);
-  transition: all var(--transition-normal);
+/* Component Classes with higher specificity */
+.themed-card,
+div.themed-card,
+section.themed-card {
+  background-color: var(--color-card-bg) !important;
+  border: 1px solid var(--color-card-border) !important;
+  border-radius: var(--border-radius) !important;
+  transition: all var(--transition-normal) !important;
 }
 
 .themed-button-primary {
