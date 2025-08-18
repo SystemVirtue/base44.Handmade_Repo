@@ -504,21 +504,25 @@ export default function Dashboard() {
                         )}
                       </div>
 
-                      {/* Track thumbnail */}
-                      <ArtworkImage
-                        track={song}
-                        size="small"
-                        className="w-12 h-12 rounded"
-                        showLoadingState={false}
-                      />
+                      {/* Video thumbnail */}
+                      <div className="w-12 h-12 rounded overflow-hidden bg-gray-800 flex-shrink-0">
+                        <img
+                          src={song.thumbnail || 'https://via.placeholder.com/48x48/374151/9ca3af?text=?'}
+                          alt={song.title}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            e.target.src = 'https://via.placeholder.com/48x48/374151/9ca3af?text=?';
+                          }}
+                        />
+                      </div>
 
-                      {/* Track info */}
+                      {/* Video info */}
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-white truncate">
                           {song.title}
                         </p>
                         <p className="text-gray-400 text-sm truncate">
-                          {song.artist}
+                          {song.channelTitle || song.artist}
                         </p>
                       </div>
 
