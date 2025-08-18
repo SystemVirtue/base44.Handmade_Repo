@@ -299,32 +299,40 @@ section.themed-card {
   box-shadow: 0 0 0 3px rgba(var(--color-accent), 0.1);
 }
 
-.themed-text-primary {
-  color: var(--color-text);
+.themed-text-primary,
+.themed-text-primary * {
+  color: var(--color-text) !important;
 }
 
-.themed-text-secondary {
-  color: var(--color-text-secondary);
+.themed-text-secondary,
+.themed-text-secondary * {
+  color: var(--color-text-secondary) !important;
 }
 
-.themed-text-muted {
-  color: var(--color-text-muted);
+.themed-text-muted,
+.themed-text-muted * {
+  color: var(--color-text-muted) !important;
 }
 
-.themed-surface {
-  background-color: var(--color-surface);
+.themed-surface,
+div.themed-surface,
+section.themed-surface {
+  background-color: var(--color-surface) !important;
 }
 
 .themed-border {
-  border-color: var(--color-border);
+  border-color: var(--color-border) !important;
 }
 
-.themed-accent {
-  color: var(--color-accent);
+.themed-accent,
+.themed-accent * {
+  color: var(--color-accent) !important;
 }
 
-.themed-accent-bg {
-  background-color: var(--color-accent);
+.themed-accent-bg,
+div.themed-accent-bg,
+button.themed-accent-bg {
+  background-color: var(--color-accent) !important;
 }
 
 /* Responsive Design */
