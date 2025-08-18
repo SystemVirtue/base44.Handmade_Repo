@@ -492,8 +492,8 @@ export const useUIStore = create(
 // Zone Management Store (simplified for single-zone focus)
 export const useZoneStore = create((set, get) => ({
   currentZone: {
-    id: "main",
-    name: "Main Zone",
+    id: 1,
+    name: "Main Floor - Restaurant",
     status: "active",
     deviceCount: 3,
     lastActive: new Date().toISOString(),
@@ -501,8 +501,8 @@ export const useZoneStore = create((set, get) => ({
 
   zones: [
     {
-      id: "main",
-      name: "Main Zone",
+      id: 1,
+      name: "Main Floor - Restaurant",
       status: "active",
       deviceCount: 3,
       lastActive: new Date().toISOString(),
