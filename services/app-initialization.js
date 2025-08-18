@@ -154,14 +154,30 @@ class AppInitializationService {
       // Initialize YouTube API service
       const youtubeAPI = getYouTubeAPI();
 
-      this.services.youtube = {
-        status: "ready",
-        apiKeyManager,
-        youtubeAPI,
-        hasKeys: apiKeyManager.isReady(),
-      };
+      // Check service health
+      const healthCheck = youtubeAPI.isServiceReady();
 
-      console.log("✅ YouTube services initialized");
+      if (healthCheck.ready) {
+        this.services.youtube = {
+          status: "ready",
+          apiKeyManager,
+          youtubeAPI,
+          hasKeys: true,
+          health: healthCheck
+        };
+        console.log("✅ YouTube services initialized successfully");
+        console.log(`📊 API Status: ${healthCheck.stats.activeKeys}/${healthCheck.stats.totalKeys} keys active, ${healthCheck.stats.availableQuota} quota available`);
+      } else {
+        console.warn(`⚠️ YouTube services initialized but not ready: ${healthCheck.reason}`);
+        this.services.youtube = {
+          status: "degraded",
+          apiKeyManager,
+          youtubeAPI,
+          hasKeys: false,
+          health: healthCheck,
+          warning: healthCheck.reason
+        };
+      }
     } catch (error) {
       console.error("❌ YouTube services initialization failed:", error);
       // Don't throw - app can run without YouTube initially
@@ -309,12 +325,41 @@ class AppInitializationService {
     console.log("🎵 Loading default YouTube playlist...");
 
     try {
-      if (!this.services.youtube?.hasKeys) {
-        console.warn("⚠️ No YouTube API keys available, skipping playlist load");
+      // Check if YouTube services are available
+      if (!this.services.youtube) {
+        console.warn("⚠️ YouTube services not initialized, skipping playlist load");
+        this._setDefaultPlaylistFallback('YouTube services not available');
+        return;
+      }
+
+      // Check service status
+      if (this.services.youtube.status === 'error') {
+        console.warn(`⚠️ YouTube services in error state: ${this.services.youtube.error}`);
+        this._setDefaultPlaylistFallback(`YouTube services error: ${this.services.youtube.error}`);
+        return;
+      }
+
+      if (this.services.youtube.status === 'degraded') {
+        console.warn(`⚠️ YouTube services degraded: ${this.services.youtube.warning}`);
+        this._setDefaultPlaylistFallback(`YouTube services degraded: ${this.services.youtube.warning}`);
+        return;
+      }
+
+      if (!this.services.youtube.hasKeys) {
+        console.warn("⚠️ No valid YouTube API keys available, skipping playlist load");
+        this._setDefaultPlaylistFallback('No valid YouTube API keys configured');
         return;
       }
 
       const youtubeAPI = this.services.youtube.youtubeAPI;
+
+      // Double-check service readiness before making API calls
+      const healthCheck = youtubeAPI.isServiceReady();
+      if (!healthCheck.ready) {
+        console.warn(`⚠️ YouTube API not ready: ${healthCheck.reason}`);
+        this._setDefaultPlaylistFallback(`YouTube API not ready: ${healthCheck.reason}`);
+        return;
+      }
 
       // Load the default playlist
       const playlist = await youtubeAPI.getCompletePlaylist(this.defaultPlaylistId, {
@@ -356,15 +401,100 @@ class AppInitializationService {
           videoCount: playlist.videos.length,
           title: playlist.title
         };
+      } else {
+        console.warn("⚠️ Default playlist returned no videos");
+        this._setDefaultPlaylistFallback('Default playlist is empty or inaccessible');
       }
     } catch (error) {
       console.error("❌ Failed to load default playlist:", error);
+
+      // Check if it's an API key related error
+      if (error.message.includes('YouTube API') || error.message.includes('403') || error.message.includes('quota')) {
+        console.error("💡 Tip: Check your YouTube API key configuration in Settings");
+      }
+
       this.services.defaultPlaylist = {
         status: "error",
         error: error.message,
         playlistId: this.defaultPlaylistId
       };
     }
+  }
+
+  /**
+   * Set fallback state when YouTube playlist cannot be loaded
+   */
+  _setDefaultPlaylistFallback(reason) {
+    this.services.defaultPlaylist = {
+      status: "unavailable",
+      reason: reason,
+      playlistId: this.defaultPlaylistId,
+      videoCount: 0
+    };
+
+    // Show user-friendly notification about API key issues
+    this._showAPIKeyNotification(reason);
+
+    // Initialize empty queue state
+    import("../store.js").then(({ useAudioStore }) => {
+      const store = useAudioStore.getState();
+      // Don't clear existing queue, just ensure we have proper fallback
+      if (!store.currentVideo?.videoId) {
+        console.log("📱 App ready without default playlist - users can search and add videos manually");
+      }
+    }).catch(error => {
+      console.error("Failed to access audio store:", error);
+    });
+  }
+
+  /**
+   * Show user-friendly notification about YouTube API issues
+   */
+  _showAPIKeyNotification(reason) {
+    // Determine the type of issue and create appropriate message
+    let title = "YouTube Service Notice";
+    let message = reason;
+    let type = "warning";
+    let actionText = null;
+    let actionUrl = null;
+
+    if (reason.includes('API key') || reason.includes('403') || reason.includes('forbidden')) {
+      title = "YouTube API Configuration Needed";
+      message = "YouTube features are currently unavailable. Please configure valid API keys in Settings.";
+      type = "warning";
+      actionText = "Configure API Keys";
+      actionUrl = "/settings";
+    } else if (reason.includes('quota')) {
+      title = "YouTube API Quota Exceeded";
+      message = "Daily YouTube API quota has been exceeded. Please try again tomorrow or add more API keys.";
+      type = "warning";
+    } else if (reason.includes('degraded')) {
+      title = "YouTube Service Degraded";
+      message = "YouTube services are running with limited functionality. Some features may not work properly.";
+      type = "info";
+    }
+
+    // Dispatch notification event
+    const notificationEvent = new CustomEvent('djamms-notification', {
+      detail: {
+        type: type,
+        title: title,
+        message: message,
+        duration: 10000, // Show for 10 seconds
+        persistent: true, // Don't auto-dismiss
+        action: actionText ? {
+          text: actionText,
+          url: actionUrl
+        } : null
+      }
+    });
+
+    // Delay notification to ensure UI is ready
+    setTimeout(() => {
+      window.dispatchEvent(notificationEvent);
+    }, 2000);
+
+    console.log(`📢 User notification: ${title} - ${message}`);
   }
 
   /**

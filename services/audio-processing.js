@@ -7,6 +7,7 @@ class AudioProcessor {
   constructor() {
     this.audioContext = null;
     this.sourceNode = null;
+    this.currentAudioElement = null;
     this.eqFilters = {};
     this.gainNode = null;
     this.analyserNode = null;
@@ -58,6 +59,18 @@ class AudioProcessor {
    */
   async initialize(audioElement) {
     try {
+      // Check if already initialized with the same audio element
+      if (this.isInitialized && this.currentAudioElement === audioElement) {
+        console.log("Audio processing already initialized for this element");
+        return true;
+      }
+
+      // If initialized with a different element, cleanup first
+      if (this.isInitialized && this.currentAudioElement !== audioElement) {
+        console.log("Cleaning up previous audio processing initialization");
+        this.cleanup();
+      }
+
       // Create audio context
       this.audioContext = new (window.AudioContext ||
         window.webkitAudioContext)();
@@ -67,9 +80,33 @@ class AudioProcessor {
         await this.audioContext.resume();
       }
 
-      // Create audio source from HTML5 audio element
-      this.sourceNode =
-        this.audioContext.createMediaElementSource(audioElement);
+      // Store reference to current audio element
+      this.currentAudioElement = audioElement;
+
+      // Check if this audio element already has a source node
+      if (audioElement._djammsSourceNode) {
+        console.log("Audio element already has a source node, reusing it");
+        this.sourceNode = audioElement._djammsSourceNode;
+      } else {
+        // Create audio source from HTML5 audio element
+        try {
+          this.sourceNode = this.audioContext.createMediaElementSource(audioElement);
+          // Store reference to prevent duplicate creation
+          audioElement._djammsSourceNode = this.sourceNode;
+        } catch (error) {
+          if (error.name === 'InvalidStateError' && error.message.includes('already connected')) {
+            console.warn("Audio element already connected to a source node, attempting to reuse...");
+            // Try to find existing source node or create a new context
+            this.audioContext.close();
+            this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            if (this.audioContext.state === "suspended") {
+              await this.audioContext.resume();
+            }
+            throw new Error("Audio element already in use. Please refresh the page to reset audio processing.");
+          }
+          throw error;
+        }
+      }
 
       // Create EQ filter chains
       this.createEQFilters();
@@ -362,20 +399,53 @@ class AudioProcessor {
   }
 
   /**
-   * Cleanup audio processing
+   * Cleanup current audio processing setup
    */
-  destroy() {
-    if (this.audioContext) {
-      this.audioContext.close();
-      this.audioContext = null;
+  cleanup() {
+    if (this.audioContext && this.audioContext.state !== 'closed') {
+      try {
+        // Disconnect all nodes
+        if (this.sourceNode) {
+          this.sourceNode.disconnect();
+        }
+        if (this.gainNode) {
+          this.gainNode.disconnect();
+        }
+        if (this.analyserNode) {
+          this.analyserNode.disconnect();
+        }
+        if (this.compressorNode) {
+          this.compressorNode.disconnect();
+        }
+
+        // Clear reference from audio element
+        if (this.currentAudioElement) {
+          delete this.currentAudioElement._djammsSourceNode;
+        }
+      } catch (error) {
+        console.warn("Error during cleanup:", error);
+      }
     }
 
     this.sourceNode = null;
+    this.currentAudioElement = null;
     this.eqFilters = {};
     this.gainNode = null;
     this.analyserNode = null;
     this.compressorNode = null;
     this.isInitialized = false;
+  }
+
+  /**
+   * Completely destroy audio processing
+   */
+  destroy() {
+    this.cleanup();
+
+    if (this.audioContext) {
+      this.audioContext.close();
+      this.audioContext = null;
+    }
   }
 
   /**
@@ -407,8 +477,37 @@ export function getAudioProcessor() {
  * Initialize audio processing for an audio element
  */
 export async function initializeAudioProcessing(audioElement) {
+  if (!audioElement) {
+    console.error("No audio element provided for audio processing initialization");
+    return false;
+  }
+
   const processor = getAudioProcessor();
-  return await processor.initialize(audioElement);
+
+  try {
+    return await processor.initialize(audioElement);
+  } catch (error) {
+    console.error("Failed to initialize audio processing:", error);
+
+    // If the error is about the audio element already being connected,
+    // try to clean up and provide guidance
+    if (error.message.includes("already connected") || error.message.includes("already in use")) {
+      console.warn("Audio element is already in use. Consider refreshing the page or using a different audio element.");
+    }
+
+    return false;
+  }
+}
+
+/**
+ * Reset audio processing (cleanup and recreate processor)
+ */
+export function resetAudioProcessing() {
+  if (audioProcessor) {
+    audioProcessor.destroy();
+    audioProcessor = null;
+  }
+  console.log("Audio processing reset");
 }
 
 /**
@@ -431,6 +530,8 @@ export function useAudioProcessing() {
     getEQPresets: processor.getEQPresets.bind(processor),
     exportSettings: processor.exportSettings.bind(processor),
     importSettings: processor.importSettings.bind(processor),
+    cleanup: processor.cleanup.bind(processor),
+    reset: resetAudioProcessing,
   };
 }
 

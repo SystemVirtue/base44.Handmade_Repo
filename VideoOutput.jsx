@@ -63,6 +63,78 @@ export default function VideoOutput() {
   const { currentVideo, isPlaying, currentTime, volume, isMuted, togglePlayPause, setVolume, toggleMute } = useAudioStore();
   const { setLoading } = useUIStore();
 
+  // Sync video changes with popup window
+  useEffect(() => {
+    if (videoWindow && !videoWindow.closed && currentVideo?.videoId) {
+      // Update video title in popup
+      const titleElement = videoWindow.document.getElementById('video-title');
+      if (titleElement) {
+        titleElement.textContent = currentVideo.title || 'No video playing';
+      }
+
+      // Update video in popup player
+      if (videoWindow.popupPlayer && typeof videoWindow.popupPlayer.loadVideoById === 'function') {
+        try {
+          videoWindow.popupPlayer.loadVideoById(currentVideo.videoId);
+
+          // Sync playback state after a short delay to allow video to load
+          setTimeout(() => {
+            if (videoWindow.popupPlayer) {
+              if (isMuted) {
+                videoWindow.popupPlayer.mute();
+              } else {
+                videoWindow.popupPlayer.setVolume(volume);
+              }
+
+              if (currentTime > 0) {
+                videoWindow.popupPlayer.seekTo(currentTime, true);
+              }
+
+              if (isPlaying) {
+                videoWindow.popupPlayer.playVideo();
+              } else {
+                videoWindow.popupPlayer.pauseVideo();
+              }
+            }
+          }, 1000);
+        } catch (error) {
+          console.error('Error updating video in popup:', error);
+        }
+      }
+    }
+  }, [currentVideo?.videoId, videoWindow]);
+
+  // Sync playback state changes with popup window
+  useEffect(() => {
+    if (videoWindow && !videoWindow.closed && videoWindow.popupPlayer) {
+      try {
+        if (isPlaying) {
+          videoWindow.popupPlayer.playVideo();
+        } else {
+          videoWindow.popupPlayer.pauseVideo();
+        }
+      } catch (error) {
+        console.error('Error syncing playback state with popup:', error);
+      }
+    }
+  }, [isPlaying, videoWindow]);
+
+  // Sync volume changes with popup window
+  useEffect(() => {
+    if (videoWindow && !videoWindow.closed && videoWindow.popupPlayer) {
+      try {
+        if (isMuted) {
+          videoWindow.popupPlayer.mute();
+        } else {
+          videoWindow.popupPlayer.unMute();
+          videoWindow.popupPlayer.setVolume(volume);
+        }
+      } catch (error) {
+        console.error('Error syncing volume with popup:', error);
+      }
+    }
+  }, [volume, isMuted, videoWindow]);
+
   // Recording timer
   useEffect(() => {
     let interval = null;
@@ -77,6 +149,22 @@ export default function VideoOutput() {
       if (interval) clearInterval(interval);
     };
   }, [isRecording]);
+
+  // Cleanup on component unmount
+  useEffect(() => {
+    return () => {
+      if (videoWindow && !videoWindow.closed) {
+        if (videoWindow.popupPlayer && typeof videoWindow.popupPlayer.destroy === 'function') {
+          try {
+            videoWindow.popupPlayer.destroy();
+          } catch (error) {
+            console.error('Error destroying popup player on unmount:', error);
+          }
+        }
+        videoWindow.close();
+      }
+    };
+  }, []);
 
   // Video window management
   const openVideoWindow = () => {
@@ -102,37 +190,193 @@ export default function VideoOutput() {
 
     if (newWindow) {
       newWindow.document.title = 'DJAMMS Video Player';
+
+      // Create the popup window HTML structure
+      newWindow.document.head.innerHTML = `
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>DJAMMS Video Player</title>
+        <script src="https://www.youtube.com/iframe_api"></script>
+        <style>
+          body {
+            margin: 0;
+            font-family: system-ui, sans-serif;
+            background: black;
+            overflow: hidden;
+          }
+          #video-player-container {
+            position: relative;
+            width: 100%;
+            height: calc(100vh - 50px);
+            background: black;
+          }
+          #youtube-player-popup {
+            width: 100%;
+            height: 100%;
+          }
+          .controls-bar {
+            height: 50px;
+            background: #1f2937;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 16px;
+            color: white;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+          }
+          .close-btn {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+          }
+          .close-btn:hover {
+            background: #dc2626;
+          }
+          .video-title {
+            flex: 1;
+            margin-right: 16px;
+            font-size: 14px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+          }
+        </style>
+      `;
+
       newWindow.document.body.innerHTML = `
-        <div id="video-player-container" style="width: 100%; height: calc(100vh - 50px); background: black;"></div>
-        <div style="height: 50px; background: #1f2937; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; color: white;">
-          <span id="video-title">${currentVideo?.title || 'No video playing'}</span>
-          <button onclick="window.close()" style="background: #ef4444; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">Close</button>
+        <div id="video-player-container">
+          <div id="youtube-player-popup"></div>
+        </div>
+        <div class="controls-bar">
+          <span class="video-title" id="video-title">${currentVideo?.title || 'No video playing'}</span>
+          <button class="close-btn" onclick="window.close()">Close Window</button>
         </div>
       `;
 
-      // Add styles
-      const style = newWindow.document.createElement('style');
-      style.textContent = `
-        body { margin: 0; font-family: system-ui, sans-serif; }
-        #video-player-container { position: relative; }
-      `;
-      newWindow.document.head.appendChild(style);
-
       setVideoWindow(newWindow);
+
+      // Initialize YouTube player in the popup window
+      if (currentVideo?.videoId) {
+        // Wait for YouTube API to load in the popup window
+        const initializePopupPlayer = () => {
+          if (newWindow.YT && newWindow.YT.Player) {
+            const popupPlayer = new newWindow.YT.Player('youtube-player-popup', {
+              width: '100%',
+              height: '100%',
+              videoId: currentVideo.videoId,
+              playerVars: {
+                autoplay: isPlaying ? 1 : 0,
+                controls: 1,
+                modestbranding: 1,
+                rel: 0,
+                showinfo: 0,
+                fs: 1,
+                cc_load_policy: 0,
+                iv_load_policy: 3,
+                autohide: 1,
+                playsinline: 1,
+                origin: window.location.origin
+              },
+              events: {
+                onReady: (event) => {
+                  // Sync volume and mute state
+                  if (isMuted) {
+                    event.target.mute();
+                  } else {
+                    event.target.setVolume(volume);
+                  }
+
+                  // Sync playback position
+                  if (currentTime > 0) {
+                    event.target.seekTo(currentTime, true);
+                  }
+
+                  // Start playing if main player was playing
+                  if (isPlaying) {
+                    event.target.playVideo();
+                  }
+                },
+                onStateChange: (event) => {
+                  // Update the video title in the popup
+                  const titleElement = newWindow.document.getElementById('video-title');
+                  if (titleElement && currentVideo?.title) {
+                    titleElement.textContent = currentVideo.title;
+                  }
+                },
+                onError: (event) => {
+                  console.error('YouTube player error in popup:', event.data);
+                }
+              }
+            });
+
+            // Store reference to popup player for potential cleanup
+            newWindow.popupPlayer = popupPlayer;
+          } else {
+            // Retry after a short delay
+            setTimeout(initializePopupPlayer, 100);
+          }
+        };
+
+        // Set up YouTube API ready callback for the popup window
+        newWindow.onYouTubeIframeAPIReady = initializePopupPlayer;
+
+        // If API is already loaded, initialize immediately
+        if (newWindow.YT && newWindow.YT.Player) {
+          initializePopupPlayer();
+        }
+      }
 
       // Handle window close
       newWindow.addEventListener('beforeunload', () => {
         setVideoWindow(null);
+      });
+
+      // Handle window resize to maintain aspect ratio
+      newWindow.addEventListener('resize', () => {
+        const container = newWindow.document.getElementById('video-player-container');
+        if (container) {
+          container.style.height = `${newWindow.innerHeight - 50}px`;
+        }
       });
     }
   };
 
   const closeVideoWindow = () => {
     if (videoWindow && !videoWindow.closed) {
+      // Clean up the popup player
+      if (videoWindow.popupPlayer && typeof videoWindow.popupPlayer.destroy === 'function') {
+        try {
+          videoWindow.popupPlayer.destroy();
+        } catch (error) {
+          console.error('Error destroying popup player:', error);
+        }
+      }
       videoWindow.close();
     }
     setVideoWindow(null);
   };
+
+  // Check if window is still open periodically
+  useEffect(() => {
+    if (videoWindow) {
+      const checkWindowInterval = setInterval(() => {
+        if (videoWindow.closed) {
+          setVideoWindow(null);
+          clearInterval(checkWindowInterval);
+        }
+      }, 1000);
+
+      return () => clearInterval(checkWindowInterval);
+    }
+  }, [videoWindow]);
 
   const updateVideoWindowSettings = (newSettings) => {
     setVideoWindowSettings(prev => ({ ...prev, ...newSettings }));
@@ -173,21 +417,22 @@ export default function VideoOutput() {
       }
 
       // Draw track info overlay
-      if (outputState.showOverlay) {
+      if (outputState.showOverlay && currentVideo) {
         ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
         ctx.fillRect(20, height - 120, width - 40, 80);
 
         ctx.fillStyle = "#ffffff";
         ctx.font = "bold 24px Arial";
-        ctx.fillText(currentTrack.title, 40, height - 80);
+        ctx.fillText(currentVideo.title || 'Unknown Title', 40, height - 80);
 
         ctx.font = "18px Arial";
         ctx.fillStyle = "#cccccc";
-        ctx.fillText(currentTrack.artist, 40, height - 55);
+        ctx.fillText(currentVideo.channelTitle || 'Unknown Artist', 40, height - 55);
 
         // Progress bar
         const progressWidth = 200;
-        const progress = currentTime / currentTrack.duration;
+        const duration = currentVideo.duration || 0;
+        const progress = duration > 0 ? currentTime / duration : 0;
         ctx.fillStyle = "#374151";
         ctx.fillRect(width - progressWidth - 40, height - 80, progressWidth, 4);
         ctx.fillStyle = "#3b82f6";
@@ -400,7 +645,7 @@ export default function VideoOutput() {
             </div>
 
             <div className="relative aspect-video bg-gray-900 rounded-lg overflow-hidden">
-              {currentVideo?.videoId && previewMode === "live" ? (
+              {currentVideo?.videoId && previewMode === "live" && (!videoWindow || videoWindow.closed) ? (
                 <YouTubePlayer
                   key={currentVideo.videoId} // Force remount on video change
                   videoId={currentVideo.videoId}
@@ -419,6 +664,24 @@ export default function VideoOutput() {
                   }}
                   className="rounded-lg"
                 />
+              ) : currentVideo?.videoId && previewMode === "live" && videoWindow && !videoWindow.closed ? (
+                <div className="w-full h-full flex items-center justify-center bg-gray-800">
+                  <div className="text-center">
+                    <ExternalLink className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-300 text-lg font-medium">Video playing in external window</p>
+                    <p className="text-gray-500 text-sm mt-2">{currentVideo.title}</p>
+                    <button
+                      onClick={() => {
+                        if (videoWindow && !videoWindow.closed) {
+                          videoWindow.focus();
+                        }
+                      }}
+                      className="mt-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                    >
+                      Focus Video Window
+                    </button>
+                  </div>
+                </div>
               ) : (
                 <>
                   <canvas

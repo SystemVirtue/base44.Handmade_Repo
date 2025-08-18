@@ -27,6 +27,7 @@ import { useAuth } from "./src/contexts/AuthContext.jsx";
 import { useError } from "./src/contexts/ErrorContext.jsx";
 import useNetworkStatus from "./src/hooks/useNetworkStatus.js";
 import { NetworkStatus } from "./components/ui/shared.jsx";
+import NotificationSystem from "./components/ui/notification-system.jsx";
 
 const navigationItems = [
   {
@@ -173,12 +174,12 @@ export default function Layout({ children, currentPageName }) {
 
   const getActiveClassForItem = (item) => {
     return location.pathname === item.url
-      ? "bg-blue-600 text-white shadow-lg"
-      : "text-gray-300 hover:text-white hover:bg-gray-700";
+      ? "themed-accent-bg text-white shadow-lg"
+      : "themed-text-secondary hover:themed-text-primary" + " hover:themed-surface";
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
+    <div className="min-h-screen themed-text-primary" style={{backgroundColor: 'var(--color-background)'}}>
       {/* Mobile menu backdrop */}
       {isMobileMenuOpen && (
         <div
@@ -194,21 +195,22 @@ export default function Layout({ children, currentPageName }) {
             isMobileMenuOpen
               ? "translate-x-0"
               : "-translate-x-full lg:translate-x-0"
-          } fixed lg:relative inset-y-0 left-0 z-50 bg-gray-800 flex flex-col transition-all duration-300 ease-in-out`}
+          } fixed lg:relative inset-y-0 left-0 z-50 flex flex-col transition-all duration-300 ease-in-out`}
+          style={{backgroundColor: 'var(--color-primary)'}}
         >
           {/* Header */}
-          <div className="p-4 border-b border-gray-700">
+          <div className="p-4 themed-border" style={{borderBottomWidth: '1px', borderBottomColor: 'var(--color-border)'}}>
             <div className="flex items-center justify-between">
               <div
                 className={`flex items-center gap-3 ${sidebarCollapsed ? "justify-center" : ""}`}
               >
-                <div className="w-10 h-10 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 flex items-center justify-center flex-shrink-0">
+                <div className="w-10 h-10 rounded-full themed-accent-bg flex items-center justify-center flex-shrink-0">
                   <Music className="w-5 h-5 text-white" />
                 </div>
                 {!sidebarCollapsed && (
                   <div>
-                    <h1 className="text-lg font-bold text-white">DJAMMS</h1>
-                    <p className="text-xs text-gray-400">Music Management</p>
+                    <h1 className="text-lg font-bold themed-text-primary">DJAMMS</h1>
+                    <p className="text-xs themed-text-muted">Music Management</p>
                   </div>
                 )}
               </div>
@@ -216,7 +218,7 @@ export default function Layout({ children, currentPageName }) {
               {/* Mobile close button */}
               <button
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="lg:hidden p-1 text-gray-400 hover:text-white"
+                className="lg:hidden p-1 themed-text-muted hover:themed-text-primary"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -231,7 +233,25 @@ export default function Layout({ children, currentPageName }) {
                   key={item.title}
                   to={item.url}
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${getActiveClassForItem(item)}`}
+                  className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                    location.pathname === item.url
+                      ? "text-white shadow-lg"
+                      : "themed-text-secondary hover:themed-text-primary"
+                  }`}
+                  style={location.pathname === item.url
+                    ? { backgroundColor: 'var(--color-accent)' }
+                    : {}
+                  }
+                  onMouseEnter={(e) => {
+                    if (location.pathname !== item.url) {
+                      e.target.style.backgroundColor = 'var(--color-surface)';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (location.pathname !== item.url) {
+                      e.target.style.backgroundColor = 'transparent';
+                    }
+                  }}
                   title={sidebarCollapsed ? item.title : ""}
                 >
                   <item.icon className="w-4 h-4 flex-shrink-0" />
@@ -255,8 +275,8 @@ export default function Layout({ children, currentPageName }) {
 
           {/* Current Zone Info */}
           {!sidebarCollapsed && (
-            <div className="p-4 border-t border-gray-700">
-              <div className="bg-gray-700 rounded-lg p-3">
+            <div className="p-4" style={{borderTopWidth: '1px', borderTopColor: 'var(--color-border)'}}>
+              <div className="themed-surface rounded-lg p-3">
                 <div className="flex items-center gap-2 mb-1">
                   <div
                     className={`w-2 h-2 rounded-full ${
@@ -265,14 +285,14 @@ export default function Layout({ children, currentPageName }) {
                         : "bg-red-400"
                     }`}
                   ></div>
-                  <span className="text-xs font-medium text-gray-300">
+                  <span className="text-xs font-medium themed-text-secondary">
                     Current Zone
                   </span>
                 </div>
-                <p className="text-sm font-medium text-white truncate">
+                <p className="text-sm font-medium themed-text-primary truncate">
                   {currentZone.name}
                 </p>
-                <p className="text-xs text-gray-400 truncate">
+                <p className="text-xs themed-text-muted truncate">
                   {currentZone.location}
                 </p>
               </div>
@@ -280,31 +300,31 @@ export default function Layout({ children, currentPageName }) {
           )}
 
           {/* User section and controls */}
-          <div className="p-4 border-t border-gray-700">
+          <div className="p-4" style={{borderTopWidth: '1px', borderTopColor: 'var(--color-border)'}}>
             {!sidebarCollapsed ? (
               <>
                 {/* Spotify Integration */}
                 <button className="w-full bg-green-600 hover:bg-green-700 text-white font-medium rounded-full py-2 px-4 transition-colors mb-3 text-sm">
-                  <span className="mr-2">●</span>
+                  <span className="mr-2">���</span>
                   SPOTIFY LOG IN
                 </button>
 
                 {/* User Info */}
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center">
-                    <span className="text-sm font-medium">
+                  <div className="w-8 h-8 themed-surface rounded-full flex items-center justify-center">
+                    <span className="text-sm font-medium themed-text-primary">
                       {user?.email?.charAt(0).toUpperCase() || "U"}
                     </span>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-white truncate">
+                    <p className="text-sm font-medium themed-text-primary truncate">
                       {user?.name || user?.email || "User"}
                     </p>
-                    <p className="text-xs text-gray-400">Logged in</p>
+                    <p className="text-xs themed-text-muted">Logged in</p>
                   </div>
                   <button
                     onClick={handleLogout}
-                    className="p-1 text-gray-400 hover:text-white transition-colors"
+                    className="p-1 themed-text-muted hover:themed-text-primary transition-colors"
                     title="Logout"
                   >
                     <LogOut className="w-4 h-4" />
@@ -315,7 +335,7 @@ export default function Layout({ children, currentPageName }) {
               <div className="space-y-2">
                 <button
                   onClick={handleLogout}
-                  className="w-full p-2 text-gray-400 hover:text-white transition-colors"
+                  className="w-full p-2 themed-text-muted hover:themed-text-primary transition-colors"
                   title="Logout"
                 >
                   <LogOut className="w-4 h-4" />
@@ -324,14 +344,14 @@ export default function Layout({ children, currentPageName }) {
             )}
 
             {/* Version */}
-            <div className="text-xs text-gray-500 text-center">v3.28.12</div>
+            <div className="text-xs themed-text-muted text-center">v3.28.12</div>
           </div>
         </div>
 
         {/* Main Content */}
         <div className="flex-1 flex flex-col min-w-0">
           {/* Top Bar */}
-          <div className="h-16 bg-gradient-to-r from-purple-500 to-blue-500 flex items-center justify-between px-6 shadow-lg relative">
+          <div className="h-16 flex items-center justify-between px-6 shadow-lg relative" style={{background: `linear-gradient(to right, var(--color-accent), var(--color-accent))`}}>
             {/* Left side - Mobile menu + Track info */}
             <div className="flex items-center gap-4">
               {/* Mobile menu button */}
@@ -353,7 +373,7 @@ export default function Layout({ children, currentPageName }) {
 
               {/* Current video info */}
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-gray-800 rounded-lg overflow-hidden">
+                <div className="w-12 h-12 themed-surface rounded-lg overflow-hidden">
                   <img
                     src={currentVideo?.thumbnail || 'https://via.placeholder.com/48x48/374151/9ca3af?text=No+Video'}
                     alt={currentVideo?.title || 'No video'}
@@ -367,7 +387,7 @@ export default function Layout({ children, currentPageName }) {
                   <h2 className="text-lg font-semibold text-white truncate">
                     {currentVideo?.title || 'No video selected'}
                   </h2>
-                  <p className="text-sm text-gray-200 truncate">
+                  <p className="text-sm themed-text-secondary truncate">
                     {currentVideo?.channelTitle || 'Unknown channel'}
                   </p>
                 </div>
@@ -441,7 +461,7 @@ export default function Layout({ children, currentPageName }) {
                 </button>
 
                 {showVolumeSlider && (
-                  <div className="absolute top-full right-0 mt-2 bg-gray-800 rounded-lg p-3 shadow-lg z-50">
+                  <div className="absolute top-full right-0 mt-2 themed-surface rounded-lg p-3 shadow-lg z-50">
                     <div className="flex items-center gap-2 w-24">
                       <input
                         type="range"
@@ -453,7 +473,7 @@ export default function Layout({ children, currentPageName }) {
                         }
                         className="flex-1"
                       />
-                      <span className="text-xs text-gray-400 w-8">
+                      <span className="text-xs themed-text-muted w-8">
                         {volume}%
                       </span>
                     </div>
@@ -466,7 +486,7 @@ export default function Layout({ children, currentPageName }) {
                 <div className="flex items-center gap-2">
                   <div
                     className={`w-2 h-2 rounded-full ${
-                      isPlaying ? "bg-green-400 animate-pulse" : "bg-gray-400"
+                      isPlaying ? "bg-green-400 animate-pulse" : "themed-text-muted"
                     }`}
                   ></div>
                   <span className="text-white font-medium">
@@ -474,14 +494,14 @@ export default function Layout({ children, currentPageName }) {
                   </span>
                 </div>
 
-                <div className="text-gray-200 flex items-center gap-1">
+                <div className="themed-text-secondary flex items-center gap-1">
                   <span>
                     {formatTime(currentTime)} /{" "}
                     {formatTime(currentVideo?.duration || 0)}
                   </span>
                 </div>
 
-                <div className="text-gray-200">
+                <div className="themed-text-secondary">
                   {currentZone.name.split(" - ")[0]} •{" "}
                   <Volume2 className="w-4 h-4 inline ml-1" />
                 </div>
@@ -498,9 +518,12 @@ export default function Layout({ children, currentPageName }) {
           </div>
 
           {/* Page Content */}
-          <div className="flex-1 overflow-auto bg-gray-900">{children}</div>
+          <div className="flex-1 overflow-auto" style={{backgroundColor: 'var(--color-background)'}}>{children}</div>
         </div>
       </div>
+
+      {/* Global Notification System */}
+      <NotificationSystem />
     </div>
   );
 }

@@ -28,6 +28,7 @@ import { EmergencyActions } from "./utils/emergency-system.js";
 import {
   useAudioProcessing,
   initializeAudioProcessing,
+  resetAudioProcessing,
 } from "./services/audio-processing.js";
 
 export default function Controls() {
@@ -46,6 +47,7 @@ export default function Controls() {
 
   // Audio store integration
   const {
+    currentVideo,
     currentTrack,
     isPlaying,
     volume,
@@ -57,6 +59,9 @@ export default function Controls() {
     setVolume,
     toggleMute,
   } = useAudioStore();
+
+  // Use currentVideo as fallback for currentTrack
+  const activeTrack = currentTrack || currentVideo;
 
   const { currentZone, updateZone } = useZoneStore();
   const uiStore = useUIStore;
@@ -107,7 +112,10 @@ export default function Controls() {
   useEffect(() => {
     const { audioInstance } = useAudioStore.getState();
 
-    if (audioInstance && !isAudioProcessingInitialized) {
+    // Only initialize if we have an audio instance and haven't initialized yet
+    if (audioInstance && !isAudioProcessingInitialized && !audioProcessing.isInitialized) {
+      console.log("Initializing audio processing...");
+
       initializeAudioProcessing(audioInstance)
         .then((success) => {
           if (success) {
@@ -115,20 +123,40 @@ export default function Controls() {
             console.log("Audio processing initialized successfully");
 
             // Apply initial EQ settings
-            audioProcessing.setEQSettings(eqSettings);
+            try {
+              audioProcessing.setEQSettings(eqSettings);
+            } catch (error) {
+              console.warn("Failed to apply initial EQ settings:", error);
+            }
           } else {
             console.error("Failed to initialize audio processing");
+            // Don't retry automatically to avoid infinite loops
           }
         })
         .catch((error) => {
           console.error("Audio processing initialization error:", error);
+          // Don't retry automatically to avoid infinite loops
         });
     }
   }, [
+    audioProcessing.isInitialized,  // Watch the processor's initialization state
     isAudioProcessingInitialized,
-    audioProcessing,
     eqSettings,
   ]);
+
+  // Cleanup on component unmount
+  useEffect(() => {
+    return () => {
+      if (isAudioProcessingInitialized) {
+        console.log("Controls component unmounting, cleaning up audio processing");
+        try {
+          audioProcessing.cleanup();
+        } catch (error) {
+          console.warn("Error during audio processing cleanup:", error);
+        }
+      }
+    };
+  }, [isAudioProcessingInitialized, audioProcessing]);
 
   const handleVolumeChange = (newVolume) => {
     setVolume(newVolume);
@@ -248,7 +276,7 @@ export default function Controls() {
   };
 
   return (
-    <div className="p-8 text-white bg-gray-900 h-full overflow-y-auto">
+    <div className="p-8 themed-text-primary h-full overflow-y-auto" style={{backgroundColor: 'var(--color-background)'}}>
       <div className="max-w-4xl mx-auto space-y-6">
         <h1 className="text-3xl font-bold text-center mb-8">System Controls</h1>
 
@@ -389,23 +417,34 @@ export default function Controls() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Playback Controls */}
-          <div className="bg-gray-800 rounded-lg p-6">
+          <div className="themed-card p-6">
             <h2 className="text-xl font-semibold mb-4">Playback Controls</h2>
 
             {/* Current Track Display */}
-            <div className="bg-gray-700 rounded-lg p-4 mb-4">
+            <div className="themed-surface rounded-lg p-4 mb-4">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 bg-gray-600 rounded overflow-hidden">
-                  <img
-                    src={currentTrack.thumbnail}
-                    alt={currentTrack.title}
-                    className="w-full h-full object-cover"
-                  />
+                  {activeTrack?.thumbnail ? (
+                    <img
+                      src={activeTrack.thumbnail}
+                      alt={activeTrack.title || 'Track thumbnail'}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                      }}
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-gray-400">
+                      <Play className="w-6 h-6" />
+                    </div>
+                  )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium truncate">{currentTrack.title}</p>
+                  <p className="font-medium truncate">
+                    {activeTrack?.title || 'No track selected'}
+                  </p>
                   <p className="text-gray-400 text-sm truncate">
-                    {currentTrack.artist}
+                    {activeTrack?.channelTitle || activeTrack?.artist || 'Unknown artist'}
                   </p>
                 </div>
                 <div
@@ -490,7 +529,7 @@ export default function Controls() {
           </div>
 
           {/* Volume Controls */}
-          <div className="bg-gray-800 rounded-lg p-6">
+          <div className="themed-card p-6">
             <h2 className="text-xl font-semibold mb-4">Volume Controls</h2>
 
             {/* Master Volume */}
@@ -617,7 +656,7 @@ export default function Controls() {
         </div>
 
         {/* Equalizer */}
-        <div className="bg-gray-800 rounded-lg p-6">
+        <div className="themed-card p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-semibold">Equalizer</h2>
             <div className="flex items-center gap-2">
@@ -721,7 +760,7 @@ export default function Controls() {
         </div>
 
         {/* System Status */}
-        <div className="bg-gray-800 rounded-lg p-6">
+        <div className="themed-card p-6">
           <h2 className="text-xl font-semibold mb-4">System Status</h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

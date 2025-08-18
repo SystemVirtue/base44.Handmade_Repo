@@ -20,6 +20,9 @@ export const useAudioStore = create(
         viewCount: 0,
       },
 
+      // Current track (alias for currentVideo for compatibility)
+      currentTrack: null,
+
       // Playback state
       isPlaying: false,
       currentTime: 0,
@@ -41,7 +44,7 @@ export const useAudioStore = create(
 
       // Actions
       setCurrentVideo: (video) => {
-        set({ currentVideo: video });
+        set({ currentVideo: video, currentTrack: video });
         // Add to playback history
         persistenceService.addToPlaybackHistory(video);
       },
@@ -103,6 +106,7 @@ export const useAudioStore = create(
           const nextIndex = currentQueueIndex + 1;
           const nextTrack = queue[nextIndex];
           set({
+            currentVideo: nextTrack,
             currentTrack: nextTrack,
             currentQueueIndex: nextIndex,
           });
@@ -116,6 +120,7 @@ export const useAudioStore = create(
           const prevIndex = currentQueueIndex - 1;
           const prevTrack = queue[prevIndex];
           set({
+            currentVideo: prevTrack,
             currentTrack: prevTrack,
             currentQueueIndex: prevIndex,
           });
@@ -205,6 +210,7 @@ export const useAudioStore = create(
       name: "djamms-audio-store",
       partialize: (state) => ({
         currentVideo: state.currentVideo,
+        currentTrack: state.currentTrack,
         volume: state.volume,
         isMuted: state.isMuted,
         queue: state.queue,
@@ -379,6 +385,14 @@ export const useUIStore = create(
       setTheme: (theme) => {
         set({ theme });
         persistenceService.updateUserPreferences({ theme });
+
+        // Dispatch custom event for theme changes
+        const event = new CustomEvent('djamms-theme-changed', {
+          detail: { theme }
+        });
+        window.dispatchEvent(event);
+
+        console.log('Theme updated and persisted:', theme);
       },
 
       setFont: (fontFamily, fontSize) => {

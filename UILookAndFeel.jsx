@@ -158,15 +158,31 @@ export default function UILookAndFeel() {
   ];
 
   const handleThemeChange = (key, value) => {
-    setLocalTheme((prev) => ({ ...prev, [key]: value }));
+    const updatedTheme = { ...localTheme, [key]: value };
+    setLocalTheme(updatedTheme);
     setUnsavedChanges(true);
+
+    // Apply theme immediately for live preview
+    setTheme(updatedTheme);
   };
 
   const handleSaveTheme = () => {
     setTheme(localTheme);
     setUnsavedChanges(false);
-    // Show success message
-    alert("Theme saved successfully!");
+
+    // Show success message with more details
+    console.log('Theme saved and applied globally:', localTheme);
+
+    // Optional: Add a toast notification instead of alert
+    const event = new CustomEvent('djamms-notification', {
+      detail: {
+        type: 'success',
+        title: 'Theme Applied',
+        message: `${localTheme.colorPalette.charAt(0).toUpperCase() + localTheme.colorPalette.slice(1)} theme has been applied to all pages and frames`,
+        duration: 3000
+      }
+    });
+    window.dispatchEvent(event);
   };
 
   const handleResetTheme = () => {
@@ -191,6 +207,11 @@ export default function UILookAndFeel() {
     };
     setLocalTheme(defaultTheme);
     setUnsavedChanges(true);
+
+    // Apply reset theme immediately
+    setTheme(defaultTheme);
+
+    console.log('Theme reset to default and applied globally');
   };
 
   const handleExportTheme = () => {
@@ -228,7 +249,7 @@ export default function UILookAndFeel() {
     colorPalettes[0];
 
   return (
-    <div className="p-8 text-white bg-gray-900 h-full overflow-hidden flex flex-col">
+    <div className="p-8 themed-text-primary h-full overflow-hidden flex flex-col" style={{backgroundColor: 'var(--color-background)'}}>
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <Palette className="w-8 h-8 text-blue-400" />
@@ -270,7 +291,7 @@ export default function UILookAndFeel() {
             className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed px-4 py-2 rounded transition-colors"
           >
             <Save className="w-4 h-4" />
-            Save Theme
+            Apply Theme
           </button>
         </div>
       </div>

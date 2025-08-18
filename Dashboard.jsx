@@ -279,7 +279,7 @@ export default function Dashboard() {
     : (currentTime / (currentVideo.duration || 1)) * 100;
 
   return (
-    <div className="flex h-full bg-gray-900 text-white">
+    <div className="flex h-full themed-text-primary" style={{backgroundColor: 'var(--color-background)'}}>
       {/* Hidden audio element */}
       <audio ref={audioRef} preload="metadata" />
 
@@ -289,7 +289,7 @@ export default function Dashboard() {
         <div className="p-6 border-b border-gray-700">
           {/* Video Info */}
           <div className="flex items-center gap-6 mb-6">
-            <div className="relative w-24 h-24 rounded-lg shadow-lg overflow-hidden bg-gray-800">
+            <div className="relative w-24 h-24 rounded-lg shadow-lg overflow-hidden themed-surface">
               <img
                 src={currentVideo.thumbnail || 'https://via.placeholder.com/96x96/374151/9ca3af?text=No+Video'}
                 alt={currentVideo.title}
@@ -382,7 +382,8 @@ export default function Dashboard() {
 
             <div
               ref={progressRef}
-              className="relative h-2 bg-gray-700 rounded-full cursor-pointer group"
+              className="relative h-2 rounded-full cursor-pointer group"
+              style={{backgroundColor: 'var(--color-surface)'}}
               onMouseDown={handleProgressMouseDown}
             >
               <div
@@ -461,7 +462,7 @@ export default function Dashboard() {
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setShowQueue(!showQueue)}
-                  className="px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded text-sm transition-colors"
+                  className="px-3 py-1 themed-surface hover:bg-opacity-80 rounded text-sm transition-colors"
                 >
                   {showQueue ? "Hide Queue" : "Show Queue"}
                 </button>
@@ -572,7 +573,7 @@ export default function Dashboard() {
             )}
 
             {/* Quick add section */}
-            <div className="mt-8 p-4 bg-gray-800 rounded-lg">
+            <div className="mt-8 p-4 themed-surface rounded-lg">
               <h3 className="font-semibold mb-3">Quick Add</h3>
               <div className="flex gap-2">
                 <button

@@ -7,6 +7,7 @@ import {
 } from "react-router-dom";
 import { AuthProvider, useAuth } from "./contexts/AuthContext.jsx";
 import { ErrorProvider, ErrorBoundary } from "./contexts/ErrorContext.jsx";
+import { ThemeProvider } from "./contexts/ThemeContext.jsx";
 import { getAppInitialization } from "../services/app-initialization.js";
 import Login from "./Login.jsx";
 import Layout from "../Layout.jsx";
@@ -210,9 +211,11 @@ function App() {
     <ErrorBoundary>
       <ErrorProvider>
         <AuthProvider>
-          <Router>
-            <AppRoutes />
-          </Router>
+          <ThemeProvider>
+            <Router>
+              <AppRoutes />
+            </Router>
+          </ThemeProvider>
         </AuthProvider>
       </ErrorProvider>
     </ErrorBoundary>

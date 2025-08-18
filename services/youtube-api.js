@@ -20,35 +20,70 @@ class YouTubeAPIService {
    */
   async makeRequest(endpoint, params = {}, retries = 3) {
     if (!this.apiKeyManager.isReady()) {
-      throw new Error('No YouTube API keys configured. Please add API keys in Settings.');
+      throw new Error('No YouTube API keys configured. Please add valid API keys in Settings.');
+    }
+
+    // Check if any valid keys are available
+    const stats = this.apiKeyManager.getStatistics();
+    if (stats.activeKeys === 0) {
+      throw new Error('No active YouTube API keys available. Please check your API key configuration in Settings.');
     }
 
     let lastError = null;
-    
+
     for (let attempt = 0; attempt < retries; attempt++) {
       try {
         const apiKey = this.apiKeyManager.getCurrentKey();
         const url = new URL(`${this.baseURL}/${endpoint}`);
-        
+
         // Add API key and other parameters
         Object.entries({ ...params, key: apiKey }).forEach(([key, value]) => {
           url.searchParams.append(key, value);
         });
 
-        console.log(`YouTube API Request: ${endpoint}`, params);
-        
+        console.log(`YouTube API Request: ${endpoint} (attempt ${attempt + 1}/${retries})`);
+
         const response = await fetch(url.toString());
-        const data = await response.json();
 
         if (!response.ok) {
-          if (response.status === 403 && data.error?.errors?.[0]?.reason === 'quotaExceeded') {
-            console.warn('Quota exceeded, rotating API key...');
-            this.apiKeyManager.rotateKey();
-            continue; // Retry with next key
+          let errorData;
+          try {
+            errorData = await response.json();
+          } catch (parseError) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
           }
-          throw new Error(data.error?.message || `HTTP ${response.status}: ${response.statusText}`);
+
+          // Handle specific 403 errors
+          if (response.status === 403) {
+            const errorReason = errorData.error?.errors?.[0]?.reason;
+            const errorMessage = errorData.error?.message || 'Forbidden';
+
+            console.error(`YouTube API 403 Error:`, {
+              reason: errorReason,
+              message: errorMessage,
+              details: errorData.error?.errors,
+              endpoint,
+              currentKey: `...${this.apiKeyManager.getCurrentKey().slice(-8)}`
+            });
+
+            if (errorReason === 'quotaExceeded') {
+              console.warn('Daily quota exceeded, rotating to next API key...');
+              this.apiKeyManager.rotateKey();
+              continue; // Retry with next key
+            } else if (errorReason === 'keyInvalid' || errorReason === 'forbidden') {
+              console.warn('Invalid API key detected, rotating to next key...');
+              this.apiKeyManager.rotateKey();
+              continue; // Retry with next key
+            } else {
+              // Other 403 errors (like disabled API, insufficient permissions)
+              throw new Error(`YouTube API access denied: ${errorMessage} (${errorReason || 'unknown'}). Please check your API key configuration and ensure the YouTube Data API v3 is enabled.`);
+            }
+          }
+
+          throw new Error(errorData.error?.message || `HTTP ${response.status}: ${response.statusText}`);
         }
 
+        const data = await response.json();
         return data;
       } catch (error) {
         lastError = error;
@@ -353,6 +388,38 @@ class YouTubeAPIService {
    */
   getUsageStatistics() {
     return this.apiKeyManager.getStatistics();
+  }
+
+  /**
+   * Check if the YouTube API service is properly configured
+   */
+  isServiceReady() {
+    if (!this.apiKeyManager.isReady()) {
+      return { ready: false, reason: 'API key manager not initialized' };
+    }
+
+    const stats = this.apiKeyManager.getStatistics();
+    if (stats.totalKeys === 0) {
+      return { ready: false, reason: 'No API keys configured' };
+    }
+
+    if (stats.activeKeys === 0) {
+      return { ready: false, reason: 'No valid/active API keys available' };
+    }
+
+    const availableQuota = this.apiKeyManager.getAvailableQuota();
+    if (availableQuota === 0) {
+      return { ready: false, reason: 'All API keys have exceeded their daily quota' };
+    }
+
+    return {
+      ready: true,
+      stats: {
+        totalKeys: stats.totalKeys,
+        activeKeys: stats.activeKeys,
+        availableQuota: availableQuota
+      }
+    };
   }
 }
 
