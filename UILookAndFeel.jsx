@@ -158,8 +158,12 @@ export default function UILookAndFeel() {
   ];
 
   const handleThemeChange = (key, value) => {
-    setLocalTheme((prev) => ({ ...prev, [key]: value }));
+    const updatedTheme = { ...localTheme, [key]: value };
+    setLocalTheme(updatedTheme);
     setUnsavedChanges(true);
+
+    // Apply theme immediately for live preview
+    setTheme(updatedTheme);
   };
 
   const handleSaveTheme = () => {
