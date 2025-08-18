@@ -281,9 +281,6 @@ class AppInitializationService {
       // Load user playlists
       const playlists = await apiService.getPlaylists();
 
-      // Load Spotify playlists if available
-      const spotifyPlaylists = await apiService.getSpotifyPlaylists();
-
       // Load system status
       const systemStatus = await apiService.getSystemStatus();
 
@@ -291,7 +288,6 @@ class AppInitializationService {
         status: "ready",
         musicLibrary: musicLibrary.success ? musicLibrary.data : null,
         playlists: playlists.success ? playlists.data : [],
-        spotifyPlaylists: spotifyPlaylists.success ? spotifyPlaylists.data : [],
         systemStatus: systemStatus.success ? systemStatus.data : null,
       };
 
