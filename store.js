@@ -40,10 +40,10 @@ export const useAudioStore = create(
       audioInstance: null,
 
       // Actions
-      setCurrentTrack: (track) => {
-        set({ currentTrack: track });
+      setCurrentVideo: (video) => {
+        set({ currentVideo: video });
         // Add to playback history
-        persistenceService.addToPlaybackHistory(track);
+        persistenceService.addToPlaybackHistory(video);
       },
 
       play: () => {
