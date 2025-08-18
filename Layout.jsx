@@ -387,7 +387,7 @@ export default function Layout({ children, currentPageName }) {
                   <h2 className="text-lg font-semibold text-white truncate">
                     {currentVideo?.title || 'No video selected'}
                   </h2>
-                  <p className="text-sm text-gray-200 truncate">
+                  <p className="text-sm themed-text-secondary truncate">
                     {currentVideo?.channelTitle || 'Unknown channel'}
                   </p>
                 </div>
