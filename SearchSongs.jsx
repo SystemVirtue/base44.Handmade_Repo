@@ -79,6 +79,7 @@ export default function SearchSongs() {
   const [showAnalytics, setShowAnalytics] = useState(false);
   const [totalResults, setTotalResults] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
+  const [nextPageToken, setNextPageToken] = useState(null);
   const [recentSearches, setRecentSearches] = useState([]);
 
   // Advanced filters
