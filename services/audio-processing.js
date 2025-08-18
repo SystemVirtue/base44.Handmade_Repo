@@ -58,6 +58,18 @@ class AudioProcessor {
    */
   async initialize(audioElement) {
     try {
+      // Check if already initialized with the same audio element
+      if (this.isInitialized && this.currentAudioElement === audioElement) {
+        console.log("Audio processing already initialized for this element");
+        return true;
+      }
+
+      // If initialized with a different element, cleanup first
+      if (this.isInitialized && this.currentAudioElement !== audioElement) {
+        console.log("Cleaning up previous audio processing initialization");
+        this.cleanup();
+      }
+
       // Create audio context
       this.audioContext = new (window.AudioContext ||
         window.webkitAudioContext)();
@@ -67,9 +79,33 @@ class AudioProcessor {
         await this.audioContext.resume();
       }
 
-      // Create audio source from HTML5 audio element
-      this.sourceNode =
-        this.audioContext.createMediaElementSource(audioElement);
+      // Store reference to current audio element
+      this.currentAudioElement = audioElement;
+
+      // Check if this audio element already has a source node
+      if (audioElement._djammsSourceNode) {
+        console.log("Audio element already has a source node, reusing it");
+        this.sourceNode = audioElement._djammsSourceNode;
+      } else {
+        // Create audio source from HTML5 audio element
+        try {
+          this.sourceNode = this.audioContext.createMediaElementSource(audioElement);
+          // Store reference to prevent duplicate creation
+          audioElement._djammsSourceNode = this.sourceNode;
+        } catch (error) {
+          if (error.name === 'InvalidStateError' && error.message.includes('already connected')) {
+            console.warn("Audio element already connected to a source node, attempting to reuse...");
+            // Try to find existing source node or create a new context
+            this.audioContext.close();
+            this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            if (this.audioContext.state === "suspended") {
+              await this.audioContext.resume();
+            }
+            throw new Error("Audio element already in use. Please refresh the page to reset audio processing.");
+          }
+          throw error;
+        }
+      }
 
       // Create EQ filter chains
       this.createEQFilters();
