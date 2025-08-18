@@ -32,31 +32,8 @@ export const useAudioStore = create(
       votes: {}, // Track ID -> vote count mapping
       userVotes: {}, // Track ID -> boolean (has user voted)
 
-      // Queue state
-      queue: [
-        {
-          id: 1,
-          title: "Bohemian Rhapsody",
-          artist: "Queen",
-          album: "A Night at the Opera",
-          duration: 355,
-          thumbnail:
-            "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=100&h=100&fit=crop",
-          url: null,
-          position: 1,
-        },
-        {
-          id: 2,
-          title: "Hotel California",
-          artist: "Eagles",
-          album: "Hotel California",
-          duration: 390,
-          thumbnail:
-            "https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=100&h=100&fit=crop",
-          url: null,
-          position: 2,
-        },
-      ],
+      // Queue state - YouTube videos
+      queue: [],
       currentQueueIndex: 0,
 
       // Audio instance
