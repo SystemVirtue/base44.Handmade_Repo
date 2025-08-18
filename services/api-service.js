@@ -421,42 +421,16 @@ class APIService {
     ];
   }
 
-  generateMockSpotifyPlaylists() {
-    return [
-      {
-        id: "spotify_001",
-        name: "Today's Top Hits",
-        description: "The biggest songs right now",
-        trackCount: 50,
-        thumbnail: "https://picsum.photos/300/300?random=2001",
-        isStarred: true,
-        external_url:
-          "https://open.spotify.com/playlist/37i9dQZF1DXcBWIGoYBM5M",
-        owner: "Spotify",
-      },
-      {
-        id: "spotify_002",
-        name: "Discover Weekly",
-        description: "Your weekly mixtape of fresh music",
-        trackCount: 30,
-        thumbnail: "https://picsum.photos/300/300?random=2002",
-        isStarred: false,
-        external_url:
-          "https://open.spotify.com/playlist/37i9dQZF1E35qK1HMRi7vQ",
-        owner: "Spotify",
-      },
-      {
-        id: "spotify_003",
-        name: "Release Radar",
-        description: "Catch all the latest music from artists you follow",
-        trackCount: 25,
-        thumbnail: "https://picsum.photos/300/300?random=2003",
-        isStarred: true,
-        external_url:
-          "https://open.spotify.com/playlist/37i9dQZF1E36u7Q3CsLwcg",
-        owner: "Spotify",
-      },
-    ];
+  generateDefaultYouTubePlaylist() {
+    // This will be replaced with real YouTube API data
+    return {
+      id: "PLJ7vMjpVbhBWLWJpweVDki43Wlcqzsqdu",
+      title: "Default Music Mix",
+      description: "Default YouTube music playlist",
+      thumbnail: "https://i.ytimg.com/vi/dQw4w9WgXcQ/mqdefault.jpg",
+      itemCount: 0,
+      videos: []
+    };
   }
 
   async handleMockRequest(endpoint, options = {}) {
