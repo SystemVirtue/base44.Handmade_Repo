@@ -310,24 +310,34 @@ class YtDlpService {
   }
 
   /**
-   * Check if the service is ready (yt-dlp availability)
+   * Check if the service is ready (backend API availability)
    */
   async isServiceReady() {
     try {
-      // Test yt-dlp availability with a simple command
-      const version = await youtubeDl('--version');
-      console.log(`yt-dlp version: ${version}`);
-      return {
-        ready: true,
-        version: version.trim()
-      };
+      console.log('Checking backend API health...');
+      const response = await this.makeApiRequest('/health');
+
+      if (response.status === 'ok') {
+        console.log(`Backend API ready: ${response.version}`);
+        return {
+          ready: true,
+          version: response.version,
+          service: response.service
+        };
+      } else {
+        return {
+          ready: false,
+          reason: 'Backend API reported an error',
+          error: response.error || 'Unknown API error'
+        };
+      }
     } catch (error) {
-      console.warn('yt-dlp not available:', error.message);
+      console.warn('Backend API not available:', error.message);
       return {
         ready: false,
-        reason: 'yt-dlp not available or not properly installed. Please install yt-dlp to enable YouTube video features.',
+        reason: 'Backend yt-dlp API not available. Please ensure the API server is running.',
         error: error.message,
-        installUrl: 'https://github.com/yt-dlp/yt-dlp#installation'
+        apiUrl: this.apiBaseUrl
       };
     }
   }
