@@ -48,6 +48,8 @@ import ArtworkImage from "./components/ui/artwork-image.jsx";
 import TrackOptionsMenu from "./components/ui/track-options-menu.jsx";
 import apiService from "./services/api-service.js";
 import persistenceService from "./services/persistence-service.js";
+import { getYouTubeAPI } from "./services/youtube-api.js";
+import YouTubeVideo from "./entities/YouTubeVideo.js";
 
 // Debounce utility
 function debounce(func, wait) {
@@ -77,6 +79,7 @@ export default function SearchSongs() {
   const [showAnalytics, setShowAnalytics] = useState(false);
   const [totalResults, setTotalResults] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
+  const [nextPageToken, setNextPageToken] = useState(null);
   const [recentSearches, setRecentSearches] = useState([]);
 
   // Advanced filters
@@ -96,10 +99,38 @@ export default function SearchSongs() {
     useAudioStore();
   const { addNotification } = useUIStore();
 
-  // Load recent searches on mount
+  // Load recent searches and check API keys on mount
   useEffect(() => {
     const recent = persistenceService.getRecentSearches();
     setRecentSearches(recent);
+
+    // Check if YouTube API keys are configured
+    const checkApiKeys = async () => {
+      try {
+        const youtubeAPI = getYouTubeAPI();
+        const apiKeyManager = youtubeAPI.apiKeyManager;
+
+        if (!apiKeyManager.isReady()) {
+          // Show helpful initial message if no API keys
+          setSearchResults([{
+            id: 'setup-guide',
+            videoId: 'setup-guide',
+            title: '🚀 Welcome to YouTube Video Search!',
+            channelTitle: 'Setup Required',
+            duration: 0,
+            thumbnail: 'https://via.placeholder.com/320x180/10b981/ffffff?text=Setup+Required',
+            viewCount: 0,
+            description: 'To search and play YouTube videos, please add YouTube Data API v3 keys in Settings → API Keys.',
+            isSystemMessage: true
+          }]);
+          setTotalResults(1);
+        }
+      } catch (error) {
+        console.error('Error checking API keys:', error);
+      }
+    };
+
+    checkApiKeys();
   }, []);
 
   // Enhanced search function
@@ -113,18 +144,47 @@ export default function SearchSongs() {
 
       setIsSearching(true);
       try {
-        const response = await apiService.searchTracks(searchQuery, {
-          ...filters,
-          ...searchFilters,
-          page,
-          limit: 50,
-        });
+        const youtubeAPI = getYouTubeAPI();
 
-        if (response.success) {
-          const results = response.data.tracks || [];
+        // Build search options
+        const searchOptions = {
+          maxResults: 25,
+          order: sortBy === 'relevance' ? 'relevance' :
+                 sortBy === 'viewCount' ? 'viewCount' :
+                 sortBy === 'date' ? 'date' : 'relevance',
+          videoCategoryId: '10', // Music category
+          type: 'video',
+          videoDefinition: filters.quality === 'hd' ? 'high' : 'any',
+          videoDuration: filters.duration === 'short' ? 'short' :
+                        filters.duration === 'medium' ? 'medium' :
+                        filters.duration === 'long' ? 'long' : 'any'
+        };
 
-          // Sort results based on selected criteria
-          const sortedResults = sortResults(results, sortBy);
+        if (nextPageToken && page > 1) {
+          searchOptions.pageToken = nextPageToken;
+        }
+
+        const response = await youtubeAPI.searchVideos(searchQuery, searchOptions);
+
+        if (response && response.videos) {
+          const videos = response.videos.map(video => ({
+            id: video.videoId,
+            videoId: video.videoId,
+            title: video.title,
+            artist: video.channelTitle,
+            channelTitle: video.channelTitle,
+            duration: video.duration,
+            thumbnail: video.thumbnail,
+            viewCount: video.viewCount,
+            publishedAt: video.publishedAt,
+            description: video.description,
+            tags: video.tags || [],
+            year: video.publishedAt ? new Date(video.publishedAt).getFullYear() : null,
+            popularity: video.viewCount || 0
+          }));
+
+          // Sort results
+          const sortedResults = sortResults(videos, sortBy);
 
           if (page === 1) {
             setSearchResults(sortedResults);
@@ -137,21 +197,46 @@ export default function SearchSongs() {
             setSearchResults((prev) => [...prev, ...sortedResults]);
           }
 
-          setTotalResults(response.data.total || results.length);
+          setTotalResults(response.totalResults || videos.length);
           setCurrentPage(page);
+          setNextPageToken(response.nextPageToken);
         }
       } catch (error) {
-        console.error("Search failed:", error);
-        addNotification({
-          type: "error",
-          message: "Search failed. Please try again.",
-          duration: 3000,
-        });
+        console.error("YouTube search failed:", error);
+
+        if (error.message.includes('API keys')) {
+          // Show more helpful guidance for missing API keys
+          addNotification({
+            type: "warning",
+            message: "YouTube API not configured. Please add API keys in Settings to enable video search.",
+            duration: 8000,
+          });
+
+          // Set a helpful message in search results
+          setSearchResults([{
+            id: 'no-api-key',
+            videoId: 'no-api-key',
+            title: '🔑 YouTube API Key Required',
+            channelTitle: 'System Message',
+            duration: 0,
+            thumbnail: 'https://via.placeholder.com/320x180/3b82f6/ffffff?text=YouTube+API+Required',
+            viewCount: 0,
+            description: 'Add YouTube Data API v3 keys in Settings → API Keys to enable video search and playback.',
+            isSystemMessage: true
+          }]);
+          setTotalResults(1);
+        } else {
+          addNotification({
+            type: "error",
+            message: "Search failed. Please try again.",
+            duration: 3000,
+          });
+        }
       } finally {
         setIsSearching(false);
       }
     },
-    [filters, sortBy, addNotification],
+    [filters, sortBy, addNotification, nextPageToken],
   );
 
   // Search suggestions
@@ -234,16 +319,19 @@ export default function SearchSongs() {
       case "title":
         return sorted.sort((a, b) => a.title.localeCompare(b.title));
       case "artist":
-        return sorted.sort((a, b) => a.artist.localeCompare(b.artist));
+      case "channelTitle":
+        return sorted.sort((a, b) => (a.channelTitle || a.artist).localeCompare(b.channelTitle || b.artist));
       case "duration":
         return sorted.sort((a, b) => a.duration - b.duration);
       case "year":
+      case "date":
         return sorted.sort((a, b) => (b.year || 0) - (a.year || 0));
+      case "viewCount":
       case "popularity":
-        return sorted.sort((a, b) => (b.popularity || 0) - (a.popularity || 0));
+        return sorted.sort((a, b) => (b.viewCount || b.popularity || 0) - (a.viewCount || a.popularity || 0));
       case "relevance":
       default:
-        return sorted.sort((a, b) => (b.popularity || 0) - (a.popularity || 0));
+        return sorted; // YouTube API returns results in relevance order by default
     }
   };
 
@@ -698,27 +786,50 @@ export default function SearchSongs() {
                 <div
                   key={track.id}
                   className={`${
-                    viewMode === "grid"
-                      ? "bg-gray-700 rounded-lg p-4 hover:bg-gray-650 transition-colors"
-                      : "flex items-center gap-4 p-3 bg-gray-700 rounded-lg hover:bg-gray-650 transition-colors"
-                  } ${selectedResults.has(track.id) ? "ring-2 ring-blue-500" : ""}`}
+                    track.isSystemMessage
+                      ? "bg-blue-900/20 border border-blue-600/30 rounded-lg p-4"
+                      : viewMode === "grid"
+                        ? "bg-gray-700 rounded-lg p-4 hover:bg-gray-650 transition-colors"
+                        : "flex items-center gap-4 p-3 bg-gray-700 rounded-lg hover:bg-gray-650 transition-colors"
+                  } ${selectedResults.has(track.id) && !track.isSystemMessage ? "ring-2 ring-blue-500" : ""}`}
                 >
-                  <input
-                    type="checkbox"
-                    checked={selectedResults.has(track.id)}
-                    onChange={(e) => {
-                      const newSelection = new Set(selectedResults);
-                      if (e.target.checked) {
-                        newSelection.add(track.id);
-                      } else {
-                        newSelection.delete(track.id);
-                      }
-                      setSelectedResults(newSelection);
-                    }}
-                    className="rounded"
-                  />
+                  {!track.isSystemMessage && (
+                    <input
+                      type="checkbox"
+                      checked={selectedResults.has(track.id)}
+                      onChange={(e) => {
+                        const newSelection = new Set(selectedResults);
+                        if (e.target.checked) {
+                          newSelection.add(track.id);
+                        } else {
+                          newSelection.delete(track.id);
+                        }
+                        setSelectedResults(newSelection);
+                      }}
+                      className="rounded"
+                    />
+                  )}
 
-                  {viewMode === "grid" ? (
+                  {track.isSystemMessage ? (
+                    <div className="text-center">
+                      <div className="w-24 h-24 mx-auto mb-4 bg-blue-600/20 rounded-lg flex items-center justify-center">
+                        <Settings className="w-12 h-12 text-blue-400" />
+                      </div>
+                      <h3 className="font-medium text-blue-400 mb-2">
+                        {track.title}
+                      </h3>
+                      <p className="text-gray-300 text-sm mb-4">
+                        {track.description}
+                      </p>
+                      <button
+                        onClick={() => window.location.href = '/settings'}
+                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded transition-colors text-sm"
+                      >
+                        <Settings className="w-4 h-4 inline mr-2" />
+                        Go to Settings
+                      </button>
+                    </div>
+                  ) : viewMode === "grid" ? (
                     <div className="text-center">
                       <ArtworkImage
                         src={track.thumbnail}

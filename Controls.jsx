@@ -125,7 +125,6 @@ export default function Controls() {
         });
     }
   }, [
-    audioInstance,
     isAudioProcessingInitialized,
     audioProcessing,
     eqSettings,

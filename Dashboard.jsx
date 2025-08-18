@@ -27,7 +27,7 @@ export default function Dashboard() {
 
   // Store state
   const {
-    currentTrack,
+    currentVideo,
     isPlaying,
     currentTime,
     volume,
@@ -150,7 +150,7 @@ export default function Dashboard() {
         0,
         Math.min(1, (e.clientX - rect.left) / rect.width),
       );
-      const newTime = percent * currentTrack.duration;
+      const newTime = percent * (currentVideo.duration || 0);
       setLocalCurrentTime(newTime);
     }
   };
@@ -275,8 +275,8 @@ export default function Dashboard() {
   };
 
   const progress = isDragging
-    ? (localCurrentTime / currentTrack.duration) * 100
-    : (currentTime / currentTrack.duration) * 100;
+    ? (localCurrentTime / (currentVideo.duration || 1)) * 100
+    : (currentTime / (currentVideo.duration || 1)) * 100;
 
   return (
     <div className="flex h-full bg-gray-900 text-white">
@@ -287,63 +287,79 @@ export default function Dashboard() {
       <div className="flex-1 flex flex-col">
         {/* Currently Playing Section */}
         <div className="p-6 border-b border-gray-700">
-          {/* Track Info */}
+          {/* Video Info */}
           <div className="flex items-center gap-6 mb-6">
-            <ArtworkImage
-              track={currentTrack}
-              size="large"
-              className="w-24 h-24 rounded-lg shadow-lg"
-              showLoadingState={true}
-            />
+            <div className="relative w-24 h-24 rounded-lg shadow-lg overflow-hidden bg-gray-800">
+              <img
+                src={currentVideo.thumbnail || 'https://via.placeholder.com/96x96/374151/9ca3af?text=No+Video'}
+                alt={currentVideo.title}
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  e.target.src = 'https://via.placeholder.com/96x96/374151/9ca3af?text=No+Video';
+                }}
+              />
+              <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-30 transition-all duration-200 flex items-center justify-center">
+                <button
+                  onClick={togglePlayPause}
+                  className="opacity-0 hover:opacity-100 transition-opacity p-2 bg-white bg-opacity-20 rounded-full backdrop-blur-sm"
+                >
+                  {isPlaying ? (
+                    <Pause className="w-4 h-4 text-white" />
+                  ) : (
+                    <Play className="w-4 h-4 text-white" />
+                  )}
+                </button>
+              </div>
+            </div>
 
             <div className="flex-1 min-w-0">
               <h1 className="text-2xl font-bold text-white mb-1 truncate">
-                {currentTrack.title}
+                {currentVideo.title || "No video selected"}
               </h1>
               <p className="text-lg text-gray-400 mb-2 truncate">
-                {currentTrack.artist}
+                {currentVideo.channelTitle || "Unknown Channel"}
               </p>
               <p className="text-sm text-gray-500 truncate">
-                {currentTrack.album}
+                {currentVideo.viewCount ? `${(currentVideo.viewCount / 1000000).toFixed(1)}M views` : ''} • {formatTime(currentVideo.duration || 0)}
               </p>
 
-              {/* Track actions */}
+              {/* Video actions */}
               <div className="flex items-center gap-3 mt-3">
                 <button
-                  onClick={() => handleToggleFavorite(currentTrack.id)}
+                  onClick={() => handleToggleFavorite(currentVideo.id)}
                   className={`flex items-center gap-1 transition-colors ${
-                    isFavorite(currentTrack.id)
+                    isFavorite(currentVideo.id)
                       ? "text-red-400 hover:text-red-300"
                       : "text-gray-400 hover:text-red-400"
                   }`}
                 >
                   <Heart
-                    className={`w-4 h-4 ${isFavorite(currentTrack.id) ? "fill-current" : ""}`}
+                    className={`w-4 h-4 ${isFavorite(currentVideo.id) ? "fill-current" : ""}`}
                   />
                   <span className="text-sm">
-                    {isFavorite(currentTrack.id) ? "Liked" : "Like"}
+                    {isFavorite(currentVideo.id) ? "Liked" : "Like"}
                   </span>
                 </button>
                 <button
-                  onClick={() => handleVote(currentTrack.id)}
-                  disabled={hasVoted(currentTrack.id)}
+                  onClick={() => handleVote(currentVideo.id)}
+                  disabled={hasVoted(currentVideo.id)}
                   className={`flex items-center gap-1 transition-colors ${
-                    hasVoted(currentTrack.id)
+                    hasVoted(currentVideo.id)
                       ? "text-green-400 cursor-not-allowed"
                       : "text-gray-400 hover:text-green-400"
                   }`}
                 >
                   <ThumbsUp
-                    className={`w-4 h-4 ${hasVoted(currentTrack.id) ? "fill-current" : ""}`}
+                    className={`w-4 h-4 ${hasVoted(currentVideo.id) ? "fill-current" : ""}`}
                   />
                   <span className="text-sm">
-                    {hasVoted(currentTrack.id) ? "Voted" : "Vote"}
-                    {getVoteCount(currentTrack.id) > 0 &&
-                      ` (${getVoteCount(currentTrack.id)})`}
+                    {hasVoted(currentVideo.id) ? "Voted" : "Vote"}
+                    {getVoteCount(currentVideo.id) > 0 &&
+                      ` (${getVoteCount(currentVideo.id)})`}
                   </span>
                 </button>
                 <TrackOptionsMenu
-                  track={currentTrack}
+                  track={currentVideo}
                   onAddToQueue={handleAddToQueue}
                   onAddToPlaylist={handleAddToPlaylist}
                   onShare={handleShareTrack}
@@ -361,7 +377,7 @@ export default function Dashboard() {
               <span>
                 {formatTime(isDragging ? localCurrentTime : currentTime)}
               </span>
-              <span>{formatTime(currentTrack.duration)}</span>
+              <span>{formatTime(currentVideo.duration || 0)}</span>
             </div>
 
             <div
@@ -468,7 +484,7 @@ export default function Dashboard() {
                 ) : (
                   queue.map((song, index) => (
                     <div
-                      key={song.id}
+                      key={`queue-${song.id}-${index}`}
                       className={`flex items-center gap-4 p-3 rounded-lg transition-colors ${
                         index === currentQueueIndex
                           ? "bg-blue-600/20 border border-blue-500/30"
@@ -488,21 +504,25 @@ export default function Dashboard() {
                         )}
                       </div>
 
-                      {/* Track thumbnail */}
-                      <ArtworkImage
-                        track={song}
-                        size="small"
-                        className="w-12 h-12 rounded"
-                        showLoadingState={false}
-                      />
+                      {/* Video thumbnail */}
+                      <div className="w-12 h-12 rounded overflow-hidden bg-gray-800 flex-shrink-0">
+                        <img
+                          src={song.thumbnail || 'https://via.placeholder.com/48x48/374151/9ca3af?text=?'}
+                          alt={song.title}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            e.target.src = 'https://via.placeholder.com/48x48/374151/9ca3af?text=?';
+                          }}
+                        />
+                      </div>
 
-                      {/* Track info */}
+                      {/* Video info */}
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-white truncate">
                           {song.title}
                         </p>
                         <p className="text-gray-400 text-sm truncate">
-                          {song.artist}
+                          {song.channelTitle || song.artist}
                         </p>
                       </div>
 
@@ -556,26 +576,19 @@ export default function Dashboard() {
               <h3 className="font-semibold mb-3">Quick Add</h3>
               <div className="flex gap-2">
                 <button
-                  onClick={() =>
-                    handleAddToQueue({
-                      id: Date.now(),
-                      title: "Sample Song",
-                      artist: "Sample Artist",
-                      album: "Sample Album",
-                      duration: 180,
-                      thumbnail:
-                        "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=100&h=100&fit=crop",
-                    })
-                  }
+                  onClick={handleOpenLibraryBrowser}
                   className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded text-sm transition-colors"
                 >
-                  Add Sample Song
+                  Search YouTube Videos
                 </button>
                 <button
-                  onClick={handleOpenLibraryBrowser}
+                  onClick={() => {
+                    // Navigate to search page
+                    window.location.href = '/search-songs';
+                  }}
                   className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded text-sm transition-colors"
                 >
-                  Browse Library
+                  Advanced Search
                 </button>
               </div>
             </div>

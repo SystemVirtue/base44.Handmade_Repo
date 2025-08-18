@@ -32,10 +32,10 @@ class APIService {
         delete: "/playlists/:id",
         tracks: "/playlists/:id/tracks",
       },
-      spotify: {
-        auth: "/integrations/spotify/auth",
-        playlists: "/integrations/spotify/playlists",
-        tracks: "/integrations/spotify/tracks",
+      youtube: {
+        search: "/integrations/youtube/search",
+        playlists: "/integrations/youtube/playlists",
+        videos: "/integrations/youtube/videos",
       },
       system: {
         status: "/system/status",
@@ -202,8 +202,18 @@ class APIService {
     return this.request(this.endpoints.spotify.auth);
   }
 
-  async getSpotifyPlaylists() {
-    return this.request(this.endpoints.spotify.playlists);
+  async getYouTubePlaylist(playlistId) {
+    return this.request(`${this.endpoints.youtube.playlists}/${playlistId}`);
+  }
+
+  async searchYouTubeVideos(query, options = {}) {
+    const params = new URLSearchParams({
+      q: query,
+      type: 'video',
+      videoCategoryId: '10', // Music category
+      ...options
+    });
+    return this.request(`${this.endpoints.youtube.search}?${params}`);
   }
 
   async getSpotifyPlaylistTracks(playlistId) {
@@ -305,8 +315,8 @@ class APIService {
         },
       },
       tracks: this.generateMockTracks(500),
-      playlists: this.generateMockPlaylists(),
-      spotifyPlaylists: this.generateMockSpotifyPlaylists(),
+      playlists: this.generateEmptyPlaylists(),
+      youtubePlaylist: this.generateDefaultYouTubePlaylist(),
       schedules: [],
       systemStatus: {
         cpu: { usage: 25, cores: 8 },
@@ -373,80 +383,21 @@ class APIService {
     }));
   }
 
-  generateMockPlaylists() {
-    return [
-      {
-        id: "playlist_001",
-        name: "Rock Classics",
-        description: "Best rock songs of all time",
-        trackCount: 45,
-        duration: 10800, // 3 hours
-        thumbnail: "https://picsum.photos/300/300?random=1001",
-        isStarred: true,
-        createdAt: "2024-01-15T10:00:00Z",
-        updatedAt: "2024-01-20T15:30:00Z",
-      },
-      {
-        id: "playlist_002",
-        name: "Chill Vibes",
-        description: "Relaxing music for any time",
-        trackCount: 32,
-        duration: 7200, // 2 hours
-        thumbnail: "https://picsum.photos/300/300?random=1002",
-        isStarred: false,
-        createdAt: "2024-01-10T14:20:00Z",
-        updatedAt: "2024-01-18T09:45:00Z",
-      },
-      {
-        id: "playlist_003",
-        name: "Party Mix",
-        description: "High energy dance tracks",
-        trackCount: 67,
-        duration: 14400, // 4 hours
-        thumbnail: "https://picsum.photos/300/300?random=1003",
-        isStarred: true,
-        createdAt: "2024-01-05T20:15:00Z",
-        updatedAt: "2024-01-22T11:20:00Z",
-      },
-    ];
+  generateEmptyPlaylists() {
+    // No default playlists - will be loaded from YouTube
+    return [];
   }
 
-  generateMockSpotifyPlaylists() {
-    return [
-      {
-        id: "spotify_001",
-        name: "Today's Top Hits",
-        description: "The biggest songs right now",
-        trackCount: 50,
-        thumbnail: "https://picsum.photos/300/300?random=2001",
-        isStarred: true,
-        external_url:
-          "https://open.spotify.com/playlist/37i9dQZF1DXcBWIGoYBM5M",
-        owner: "Spotify",
-      },
-      {
-        id: "spotify_002",
-        name: "Discover Weekly",
-        description: "Your weekly mixtape of fresh music",
-        trackCount: 30,
-        thumbnail: "https://picsum.photos/300/300?random=2002",
-        isStarred: false,
-        external_url:
-          "https://open.spotify.com/playlist/37i9dQZF1E35qK1HMRi7vQ",
-        owner: "Spotify",
-      },
-      {
-        id: "spotify_003",
-        name: "Release Radar",
-        description: "Catch all the latest music from artists you follow",
-        trackCount: 25,
-        thumbnail: "https://picsum.photos/300/300?random=2003",
-        isStarred: true,
-        external_url:
-          "https://open.spotify.com/playlist/37i9dQZF1E36u7Q3CsLwcg",
-        owner: "Spotify",
-      },
-    ];
+  generateDefaultYouTubePlaylist() {
+    // This will be replaced with real YouTube API data
+    return {
+      id: "PLJ7vMjpVbhBWLWJpweVDki43Wlcqzsqdu",
+      title: "Default Music Mix",
+      description: "Default YouTube music playlist",
+      thumbnail: "https://i.ytimg.com/vi/dQw4w9WgXcQ/mqdefault.jpg",
+      itemCount: 0,
+      videos: []
+    };
   }
 
   async handleMockRequest(endpoint, options = {}) {
@@ -465,8 +416,8 @@ class APIService {
         return this.handleMockMusicLibrary(endpoint, options);
       } else if (endpoint.includes("/playlists")) {
         return this.handleMockPlaylists(endpoint, options);
-      } else if (endpoint.includes("/spotify")) {
-        return this.handleMockSpotify(endpoint, options);
+      } else if (endpoint.includes("/youtube")) {
+        return this.handleMockYouTube(endpoint, options);
       } else if (endpoint.includes("/system")) {
         return this.handleMockSystem(endpoint, options);
       } else if (endpoint.includes("/settings")) {
@@ -560,11 +511,21 @@ class APIService {
     return { success: true, data: null };
   }
 
-  handleMockSpotify(endpoint, options) {
+  handleMockYouTube(endpoint, options) {
     if (endpoint.includes("/playlists")) {
       return {
         success: true,
-        data: this.mockData.spotifyPlaylists,
+        data: this.mockData.youtubePlaylist,
+      };
+    } else if (endpoint.includes("/search")) {
+      // Mock YouTube search results for now
+      return {
+        success: true,
+        data: {
+          items: [],
+          nextPageToken: null,
+          totalResults: 0
+        }
       };
     }
 

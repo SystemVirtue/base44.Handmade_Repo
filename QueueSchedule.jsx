@@ -59,7 +59,7 @@ export default function QueueSchedule() {
     addToQueue,
     removeFromQueue,
     clearQueue,
-    currentTrack,
+    currentVideo,
     isPlaying,
     togglePlayPause,
     nextTrack,
@@ -77,7 +77,7 @@ export default function QueueSchedule() {
   const [activeTab, setActiveTab] = useState("active");
   const [viewMode, setViewMode] = useState("grid");
   const [searchQuery, setSearchQuery] = useState("");
-  const [spotifyPlaylists, setSpotifyPlaylists] = useState([]);
+  const [youtubePlaylists, setYoutubePlaylists] = useState([]);
   const [allPlaylists, setAllPlaylists] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -114,15 +114,15 @@ export default function QueueSchedule() {
       // Load local playlists
       const localResponse = await apiService.getPlaylists();
 
-      // Load Spotify playlists
-      const spotifyResponse = await apiService.getSpotifyPlaylists();
+      // Load YouTube playlist
+      const youtubeResponse = await apiService.getYouTubePlaylist("PLJ7vMjpVbhBWLWJpweVDki43Wlcqzsqdu");
 
       if (localResponse.success) {
         setAllPlaylists(localResponse.data || []);
       }
 
-      if (spotifyResponse.success) {
-        setSpotifyPlaylists(spotifyResponse.data || []);
+      if (youtubeResponse.success) {
+        setYoutubePlaylists([youtubeResponse.data] || []);
       }
     } catch (error) {
       console.error("Failed to load playlists:", error);
@@ -169,15 +169,34 @@ export default function QueueSchedule() {
 
   // Get combined playlists for display
   const getCombinedPlaylists = useCallback(() => {
-    const combined = [
-      ...allPlaylists.map((p) => ({ ...p, source: "local" })),
-      ...spotifyPlaylists.map((p) => ({ ...p, source: "spotify" })),
-    ];
+    // Create unique IDs with more context and deduplicate
+    const localPlaylists = allPlaylists.map((p, index) => ({
+      ...p,
+      source: "local",
+      uniqueId: `local_${p.id}_${index}`
+    }));
+
+    const youtubePlaylistsWithIds = youtubePlaylists.map((p, index) => ({
+      ...p,
+      source: "youtube",
+      uniqueId: `youtube_${p.id}_${index}`
+    }));
+
+    // Remove any potential duplicates by uniqueId
+    const combined = [...localPlaylists, ...youtubePlaylistsWithIds];
+    const seenIds = new Set();
+    const deduplicated = combined.filter((playlist) => {
+      if (seenIds.has(playlist.uniqueId)) {
+        return false;
+      }
+      seenIds.add(playlist.uniqueId);
+      return true;
+    });
 
     // Filter based on active tab
-    let filtered = combined;
+    let filtered = deduplicated;
     if (activeTab === "active") {
-      filtered = combined.filter((p) => starredPlaylists.has(p.id));
+      filtered = deduplicated.filter((p) => starredPlaylists.has(p.id));
     }
 
     // Apply search filter
@@ -221,7 +240,7 @@ export default function QueueSchedule() {
     return filtered;
   }, [
     allPlaylists,
-    spotifyPlaylists,
+    youtubePlaylists,
     activeTab,
     starredPlaylists,
     searchQuery,
@@ -294,7 +313,7 @@ export default function QueueSchedule() {
     if (selectedPlaylists.size === playlists.length) {
       setSelectedPlaylists(new Set());
     } else {
-      setSelectedPlaylists(new Set(playlists.map((p) => p.id)));
+      setSelectedPlaylists(new Set(playlists.map((p) => p.uniqueId)));
     }
   }, [getCombinedPlaylists, selectedPlaylists.size]);
 
@@ -410,7 +429,7 @@ export default function QueueSchedule() {
               All Playlists
               {activeTab === "all" && (
                 <span className="bg-gray-500 text-xs px-2 py-1 rounded-full">
-                  {allPlaylists.length + spotifyPlaylists.length}
+                  {allPlaylists.length + youtubePlaylists.length}
                 </span>
               )}
             </div>
@@ -600,18 +619,18 @@ export default function QueueSchedule() {
               </div>
             ) : (
               <div className="space-y-2">
-                {queue.map((track, index) => (
+                {queue.filter(track => track && track.id).map((track, index) => (
                   <div
                     key={track.id}
                     className={`flex items-center gap-4 p-3 rounded-lg transition-colors ${
-                      currentTrack.id === track.id
+                      currentVideo?.id === track.id
                         ? "bg-green-900/30 border border-green-600"
                         : "bg-gray-700 hover:bg-gray-650"
                     }`}
                   >
                     <div className="flex items-center gap-2 text-sm text-gray-400 w-12">
                       #{index + 1}
-                      {currentTrack.id === track.id && (
+                      {currentVideo?.id === track.id && (
                         <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
                       )}
                     </div>
@@ -725,24 +744,24 @@ export default function QueueSchedule() {
                     : "space-y-2"
                 }
               >
-                {displayedPlaylists.map((playlist) => (
+                {displayedPlaylists.filter(playlist => playlist && playlist.uniqueId).map((playlist) => (
                   <div
-                    key={playlist.id}
+                    key={playlist.uniqueId}
                     className={`${
                       viewMode === "grid"
                         ? "bg-gray-700 rounded-lg p-4 hover:bg-gray-650 transition-colors cursor-pointer"
                         : "flex items-center gap-4 p-3 bg-gray-700 rounded-lg hover:bg-gray-650 transition-colors"
-                    } ${selectedPlaylists.has(playlist.id) ? "ring-2 ring-blue-500" : ""}`}
+                    } ${selectedPlaylists.has(playlist.uniqueId) ? "ring-2 ring-blue-500" : ""}`}
                   >
                     <input
                       type="checkbox"
-                      checked={selectedPlaylists.has(playlist.id)}
+                      checked={selectedPlaylists.has(playlist.uniqueId)}
                       onChange={(e) => {
                         const newSelection = new Set(selectedPlaylists);
                         if (e.target.checked) {
-                          newSelection.add(playlist.id);
+                          newSelection.add(playlist.uniqueId);
                         } else {
-                          newSelection.delete(playlist.id);
+                          newSelection.delete(playlist.uniqueId);
                         }
                         setSelectedPlaylists(newSelection);
                       }}
@@ -790,15 +809,15 @@ export default function QueueSchedule() {
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              togglePlaylistStar(playlist.id);
+                              playlist.id && togglePlaylistStar(playlist.id);
                             }}
                             className={`p-2 rounded-full transition-colors ${
-                              starredPlaylists.has(playlist.id)
+                              playlist.id && starredPlaylists.has(playlist.id)
                                 ? "bg-yellow-600 text-white"
                                 : "bg-gray-600 hover:bg-gray-500"
                             }`}
                             title={
-                              starredPlaylists.has(playlist.id)
+                              playlist.id && starredPlaylists.has(playlist.id)
                                 ? "Unstar"
                                 : "Star"
                             }
@@ -863,14 +882,14 @@ export default function QueueSchedule() {
 
                         <div className="flex items-center gap-2">
                           <button
-                            onClick={() => togglePlaylistStar(playlist.id)}
+                            onClick={() => playlist.id && togglePlaylistStar(playlist.id)}
                             className={`p-2 rounded-full transition-colors ${
-                              starredPlaylists.has(playlist.id)
+                              playlist.id && starredPlaylists.has(playlist.id)
                                 ? "bg-yellow-600 text-white"
                                 : "bg-gray-600 hover:bg-gray-500"
                             }`}
                             title={
-                              starredPlaylists.has(playlist.id)
+                              playlist.id && starredPlaylists.has(playlist.id)
                                 ? "Unstar"
                                 : "Star"
                             }

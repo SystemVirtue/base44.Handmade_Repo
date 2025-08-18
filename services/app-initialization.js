@@ -5,6 +5,8 @@
 
 import apiService from "./api-service.js";
 import persistenceService from "./persistence-service.js";
+import { getYouTubeAPI } from "./youtube-api.js";
+import { getAPIKeyManager } from "./api-key-manager.js";
 import { initializeStores } from "../store.js";
 
 class AppInitializationService {
@@ -13,6 +15,7 @@ class AppInitializationService {
     this.initializationPromise = null;
     this.services = {};
     this.healthCheckInterval = null;
+    this.defaultPlaylistId = "PLJ7vMjpVbhBWLWJpweVDki43Wlcqzsqdu";
   }
 
   /**
@@ -37,17 +40,23 @@ class AppInitializationService {
       // Step 2: Initialize API service
       await this._initializeAPI();
 
-      // Step 3: Initialize Zustand stores
+      // Step 3: Initialize YouTube services
+      await this._initializeYouTubeServices();
+
+      // Step 4: Initialize Zustand stores
       await this._initializeStores();
 
-      // Step 4: Initialize UI services
+      // Step 5: Initialize UI services
       await this._initializeUI();
 
-      // Step 5: Setup application monitoring
+      // Step 6: Setup application monitoring
       await this._setupMonitoring();
 
-      // Step 6: Load initial data
+      // Step 7: Load initial data
       await this._loadInitialData();
+
+      // Step 8: Load default YouTube playlist
+      await this._loadDefaultPlaylist();
 
       // Step 7: Setup event listeners
       await this._setupEventListeners();
@@ -127,6 +136,39 @@ class AppInitializationService {
       this.services.api = {
         status: "degraded",
         error: error.message,
+      };
+    }
+  }
+
+  /**
+   * Initialize YouTube services
+   */
+  async _initializeYouTubeServices() {
+    console.log("🎥 Initializing YouTube services...");
+
+    try {
+      // Initialize API key manager
+      const apiKeyManager = getAPIKeyManager();
+      await apiKeyManager.initialize();
+
+      // Initialize YouTube API service
+      const youtubeAPI = getYouTubeAPI();
+
+      this.services.youtube = {
+        status: "ready",
+        apiKeyManager,
+        youtubeAPI,
+        hasKeys: apiKeyManager.isReady(),
+      };
+
+      console.log("✅ YouTube services initialized");
+    } catch (error) {
+      console.error("❌ YouTube services initialization failed:", error);
+      // Don't throw - app can run without YouTube initially
+      this.services.youtube = {
+        status: "error",
+        error: error.message,
+        hasKeys: false,
       };
     }
   }
@@ -239,9 +281,6 @@ class AppInitializationService {
       // Load user playlists
       const playlists = await apiService.getPlaylists();
 
-      // Load Spotify playlists if available
-      const spotifyPlaylists = await apiService.getSpotifyPlaylists();
-
       // Load system status
       const systemStatus = await apiService.getSystemStatus();
 
@@ -249,7 +288,6 @@ class AppInitializationService {
         status: "ready",
         musicLibrary: musicLibrary.success ? musicLibrary.data : null,
         playlists: playlists.success ? playlists.data : [],
-        spotifyPlaylists: spotifyPlaylists.success ? spotifyPlaylists.data : [],
         systemStatus: systemStatus.success ? systemStatus.data : null,
       };
 
@@ -260,6 +298,71 @@ class AppInitializationService {
       this.services.initialData = {
         status: "degraded",
         error: error.message,
+      };
+    }
+  }
+
+  /**
+   * Load default YouTube playlist
+   */
+  async _loadDefaultPlaylist() {
+    console.log("🎵 Loading default YouTube playlist...");
+
+    try {
+      if (!this.services.youtube?.hasKeys) {
+        console.warn("⚠️ No YouTube API keys available, skipping playlist load");
+        return;
+      }
+
+      const youtubeAPI = this.services.youtube.youtubeAPI;
+
+      // Load the default playlist
+      const playlist = await youtubeAPI.getCompletePlaylist(this.defaultPlaylistId, {
+        maxResults: 50 // Load first 50 videos
+      });
+
+      if (playlist && playlist.videos.length > 0) {
+        // Get the audio store and add videos to queue
+        const { useAudioStore } = await import("../store.js");
+        const store = useAudioStore.getState();
+
+        // Clear existing queue and add new videos
+        store.clearQueue();
+
+        // Add videos to queue
+        playlist.videos.forEach((video, index) => {
+          store.addToQueue({
+            id: video.videoId,
+            videoId: video.videoId,
+            title: video.title,
+            channelTitle: video.channelTitle,
+            duration: video.duration,
+            thumbnail: video.thumbnail,
+            viewCount: video.viewCount,
+            position: index
+          });
+        });
+
+        // Set the first video as current if queue was empty
+        if (playlist.videos.length > 0 && !store.currentVideo?.videoId) {
+          store.setCurrentVideo(playlist.videos[0]);
+        }
+
+        console.log(`✅ Loaded ${playlist.videos.length} videos from default playlist`);
+
+        this.services.defaultPlaylist = {
+          status: "loaded",
+          playlistId: this.defaultPlaylistId,
+          videoCount: playlist.videos.length,
+          title: playlist.title
+        };
+      }
+    } catch (error) {
+      console.error("❌ Failed to load default playlist:", error);
+      this.services.defaultPlaylist = {
+        status: "error",
+        error: error.message,
+        playlistId: this.defaultPlaylistId
       };
     }
   }
@@ -531,20 +634,15 @@ class AppInitializationService {
   }
 }
 
-// Create singleton instance
-const appInitialization = new AppInitializationService();
+// Singleton instance
+let appInitializationInstance = null;
 
-export default appInitialization;
-
-// Auto-initialize when module is imported
-if (typeof window !== "undefined") {
-  // Initialize when DOM is ready
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", () => {
-      appInitialization.initialize();
-    });
-  } else {
-    // DOM is already ready
-    appInitialization.initialize();
+export function getAppInitialization() {
+  if (!appInitializationInstance) {
+    appInitializationInstance = new AppInitializationService();
   }
+  return appInitializationInstance;
 }
+
+// Legacy export
+export default getAppInitialization;

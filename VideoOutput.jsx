@@ -12,8 +12,11 @@ import {
   Save,
   Upload,
   Download,
+  ExternalLink,
+  X,
 } from "lucide-react";
 import { useAudioStore, useUIStore, formatTime } from "./store.js";
+import YouTubePlayer from "./components/YouTubePlayer.jsx";
 
 export default function VideoOutput() {
   const canvasRef = useRef(null);
@@ -47,8 +50,17 @@ export default function VideoOutput() {
 
   const [previewMode, setPreviewMode] = useState("live"); // 'live', 'test', 'offline'
 
+  // Video window state
+  const [videoWindow, setVideoWindow] = useState(null);
+  const [videoWindowSettings, setVideoWindowSettings] = useState({
+    width: 800,
+    height: 600,
+    alwaysOnTop: false,
+    position: { x: 100, y: 100 }
+  });
+
   // Audio store integration
-  const { currentTrack, isPlaying, currentTime } = useAudioStore();
+  const { currentVideo, isPlaying, currentTime, volume, isMuted, togglePlayPause, setVolume, toggleMute } = useAudioStore();
   const { setLoading } = useUIStore();
 
   // Recording timer
@@ -65,6 +77,66 @@ export default function VideoOutput() {
       if (interval) clearInterval(interval);
     };
   }, [isRecording]);
+
+  // Video window management
+  const openVideoWindow = () => {
+    if (videoWindow && !videoWindow.closed) {
+      videoWindow.focus();
+      return;
+    }
+
+    const features = `
+      width=${videoWindowSettings.width},
+      height=${videoWindowSettings.height + 50},
+      left=${videoWindowSettings.position.x},
+      top=${videoWindowSettings.position.y},
+      resizable=yes,
+      scrollbars=no,
+      status=no,
+      menubar=no,
+      toolbar=no,
+      location=no
+    `.replace(/\s+/g, '');
+
+    const newWindow = window.open('', 'djamms-video-player', features);
+
+    if (newWindow) {
+      newWindow.document.title = 'DJAMMS Video Player';
+      newWindow.document.body.innerHTML = `
+        <div id="video-player-container" style="width: 100%; height: calc(100vh - 50px); background: black;"></div>
+        <div style="height: 50px; background: #1f2937; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; color: white;">
+          <span id="video-title">${currentVideo?.title || 'No video playing'}</span>
+          <button onclick="window.close()" style="background: #ef4444; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">Close</button>
+        </div>
+      `;
+
+      // Add styles
+      const style = newWindow.document.createElement('style');
+      style.textContent = `
+        body { margin: 0; font-family: system-ui, sans-serif; }
+        #video-player-container { position: relative; }
+      `;
+      newWindow.document.head.appendChild(style);
+
+      setVideoWindow(newWindow);
+
+      // Handle window close
+      newWindow.addEventListener('beforeunload', () => {
+        setVideoWindow(null);
+      });
+    }
+  };
+
+  const closeVideoWindow = () => {
+    if (videoWindow && !videoWindow.closed) {
+      videoWindow.close();
+    }
+    setVideoWindow(null);
+  };
+
+  const updateVideoWindowSettings = (newSettings) => {
+    setVideoWindowSettings(prev => ({ ...prev, ...newSettings }));
+  };
 
   // Canvas animation for live preview
   useEffect(() => {
@@ -164,7 +236,7 @@ export default function VideoOutput() {
     };
   }, [
     isPlaying,
-    currentTrack,
+    currentVideo,
     currentTime,
     outputState,
     isRecording,
@@ -259,6 +331,29 @@ export default function VideoOutput() {
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-3xl font-bold">Video Output</h1>
         <div className="flex items-center gap-2">
+          {/* Video Window Controls */}
+          <button
+            onClick={videoWindow && !videoWindow.closed ? closeVideoWindow : openVideoWindow}
+            className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
+              videoWindow && !videoWindow.closed
+                ? "bg-blue-600 text-white hover:bg-blue-700"
+                : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+            }`}
+            title={videoWindow && !videoWindow.closed ? "Close Video Window" : "Open Video Window"}
+          >
+            {videoWindow && !videoWindow.closed ? (
+              <>
+                <X className="w-4 h-4 inline mr-1" />
+                Close Window
+              </>
+            ) : (
+              <>
+                <ExternalLink className="w-4 h-4 inline mr-1" />
+                Open Window
+              </>
+            )}
+          </button>
+
           <div
             className={`px-3 py-1 rounded-full text-sm font-medium ${
               outputState.isLive
@@ -305,24 +400,57 @@ export default function VideoOutput() {
             </div>
 
             <div className="relative aspect-video bg-gray-900 rounded-lg overflow-hidden">
-              <canvas
-                ref={canvasRef}
-                width={1920}
-                height={1080}
-                className="w-full h-full object-contain"
-                style={{
-                  filter: `brightness(${displaySettings.brightness}%) contrast(${displaySettings.contrast}%) saturate(${displaySettings.saturation}%) hue-rotate(${displaySettings.hue}deg)`,
-                  transform: `scale(${displaySettings.zoom / 100}) rotate(${displaySettings.rotation}deg)`,
-                }}
-              />
+              {currentVideo?.videoId && previewMode === "live" ? (
+                <YouTubePlayer
+                  key={currentVideo.videoId} // Force remount on video change
+                  videoId={currentVideo.videoId}
+                  autoplay={isPlaying}
+                  controls={true}
+                  width="100%"
+                  height="100%"
+                  onReady={() => console.log('YouTube player ready')}
+                  onStateChange={(event) => {
+                    // Handle player state changes
+                    const playerState = event.data;
+                    // You can sync with the main audio store here
+                  }}
+                  onError={(event) => {
+                    console.error('YouTube player error:', event);
+                  }}
+                  className="rounded-lg"
+                />
+              ) : (
+                <>
+                  <canvas
+                    ref={canvasRef}
+                    width={1920}
+                    height={1080}
+                    className="w-full h-full object-contain"
+                    style={{
+                      filter: `brightness(${displaySettings.brightness}%) contrast(${displaySettings.contrast}%) saturate(${displaySettings.saturation}%) hue-rotate(${displaySettings.hue}deg)`,
+                      transform: `scale(${displaySettings.zoom / 100}) rotate(${displaySettings.rotation}deg)`,
+                    }}
+                  />
 
-              {previewMode === "offline" && (
-                <div className="absolute inset-0 bg-gray-900 flex items-center justify-center">
-                  <div className="text-center">
-                    <Monitor className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-                    <p className="text-gray-400">Output Offline</p>
-                  </div>
-                </div>
+                  {previewMode === "offline" && (
+                    <div className="absolute inset-0 bg-gray-900 flex items-center justify-center">
+                      <div className="text-center">
+                        <Monitor className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+                        <p className="text-gray-400">Output Offline</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {!currentVideo?.videoId && previewMode === "live" && (
+                    <div className="absolute inset-0 bg-gray-900 flex items-center justify-center">
+                      <div className="text-center">
+                        <Play className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+                        <p className="text-gray-400">No video selected</p>
+                        <p className="text-sm text-gray-500 mt-2">Add videos to the queue to start playback</p>
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </div>

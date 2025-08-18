@@ -7,16 +7,17 @@ import persistenceService from "./services/persistence-service.js";
 export const useAudioStore = create(
   persist(
     (set, get) => ({
-      // Current track state
-      currentTrack: {
+      // Current video state
+      currentVideo: {
         id: null,
-        title: "Deep Cover (Explicit)",
-        artist: "FAT JOE",
-        album: "Unknown Album",
-        duration: 235, // seconds
-        thumbnail:
-          "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=100&h=100&fit=crop",
-        url: null,
+        title: "No video selected",
+        channelTitle: "",
+        description: "",
+        duration: 0, // seconds
+        thumbnail: "",
+        videoId: null,
+        publishedAt: null,
+        viewCount: 0,
       },
 
       // Playback state
@@ -31,56 +32,30 @@ export const useAudioStore = create(
       votes: {}, // Track ID -> vote count mapping
       userVotes: {}, // Track ID -> boolean (has user voted)
 
-      // Queue state
-      queue: [
-        {
-          id: 1,
-          title: "Bohemian Rhapsody",
-          artist: "Queen",
-          album: "A Night at the Opera",
-          duration: 355,
-          thumbnail:
-            "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=100&h=100&fit=crop",
-          url: null,
-          position: 1,
-        },
-        {
-          id: 2,
-          title: "Hotel California",
-          artist: "Eagles",
-          album: "Hotel California",
-          duration: 390,
-          thumbnail:
-            "https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=100&h=100&fit=crop",
-          url: null,
-          position: 2,
-        },
-      ],
+      // Queue state - YouTube videos
+      queue: [],
       currentQueueIndex: 0,
 
       // Audio instance
       audioInstance: null,
 
       // Actions
-      setCurrentTrack: (track) => {
-        set({ currentTrack: track });
+      setCurrentVideo: (video) => {
+        set({ currentVideo: video });
         // Add to playback history
-        persistenceService.addToPlaybackHistory(track);
+        persistenceService.addToPlaybackHistory(video);
       },
 
       play: () => {
-        const { audioInstance, currentTrack } = get();
-        if (audioInstance && currentTrack.url) {
-          audioInstance.play().catch(console.error);
+        const { currentVideo } = get();
+        if (currentVideo && currentVideo.videoId) {
+          // YouTube player will handle play
         }
         set({ isPlaying: true });
       },
 
       pause: () => {
-        const { audioInstance } = get();
-        if (audioInstance) {
-          audioInstance.pause();
-        }
+        // YouTube player will handle pause
         set({ isPlaying: false });
       },
 
@@ -229,7 +204,7 @@ export const useAudioStore = create(
     {
       name: "djamms-audio-store",
       partialize: (state) => ({
-        currentTrack: state.currentTrack,
+        currentVideo: state.currentVideo,
         volume: state.volume,
         isMuted: state.isMuted,
         queue: state.queue,
@@ -492,8 +467,8 @@ export const useUIStore = create(
 // Zone Management Store (simplified for single-zone focus)
 export const useZoneStore = create((set, get) => ({
   currentZone: {
-    id: "main",
-    name: "Main Zone",
+    id: 1,
+    name: "Main Floor - Restaurant",
     status: "active",
     deviceCount: 3,
     lastActive: new Date().toISOString(),
@@ -501,8 +476,8 @@ export const useZoneStore = create((set, get) => ({
 
   zones: [
     {
-      id: "main",
-      name: "Main Zone",
+      id: 1,
+      name: "Main Floor - Restaurant",
       status: "active",
       deviceCount: 3,
       lastActive: new Date().toISOString(),
