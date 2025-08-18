@@ -20,22 +20,28 @@ class YouTubeAPIService {
    */
   async makeRequest(endpoint, params = {}, retries = 3) {
     if (!this.apiKeyManager.isReady()) {
-      throw new Error('No YouTube API keys configured. Please add API keys in Settings.');
+      throw new Error('No YouTube API keys configured. Please add valid API keys in Settings.');
+    }
+
+    // Check if any valid keys are available
+    const stats = this.apiKeyManager.getStatistics();
+    if (stats.activeKeys === 0) {
+      throw new Error('No active YouTube API keys available. Please check your API key configuration in Settings.');
     }
 
     let lastError = null;
-    
+
     for (let attempt = 0; attempt < retries; attempt++) {
       try {
         const apiKey = this.apiKeyManager.getCurrentKey();
         const url = new URL(`${this.baseURL}/${endpoint}`);
-        
+
         // Add API key and other parameters
         Object.entries({ ...params, key: apiKey }).forEach(([key, value]) => {
           url.searchParams.append(key, value);
         });
 
-        console.log(`YouTube API Request: ${endpoint}`, params);
+        console.log(`YouTube API Request: ${endpoint} (attempt ${attempt + 1}/${retries})`);
 
         const response = await fetch(url.toString());
 
