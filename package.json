@@ -18,7 +18,11 @@
 
     "preview": "vite preview",
 
-    "lint": "eslint ."
+    "lint": "eslint .",
+
+    "server": "cd server && npm run dev",
+
+    "server:start": "cd server && npm start"
 
   },
 
