@@ -316,7 +316,7 @@ class APIService {
       },
       tracks: this.generateMockTracks(500),
       playlists: this.generateMockPlaylists(),
-      spotifyPlaylists: this.generateMockSpotifyPlaylists(),
+      youtubePlaylist: this.generateDefaultYouTubePlaylist(),
       schedules: [],
       systemStatus: {
         cpu: { usage: 25, cores: 8 },
