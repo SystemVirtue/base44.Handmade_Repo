@@ -2,9 +2,10 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App.jsx";
 import "./index.css";
-import appInitialization from "../services/app-initialization.js";
+import { getAppInitialization } from "../services/app-initialization.js";
 
 // Initialize application services
+const appInitialization = getAppInitialization();
 appInitialization
   .initialize()
   .then((result) => {
