@@ -16,6 +16,19 @@ class YtDlpService {
 
     // Backend API configuration
     this.apiBaseUrl = import.meta.env.VITE_YT_DLP_API_URL || 'http://localhost:3001';
+
+    // Circuit breaker pattern for service availability
+    this.serviceStatus = {
+      available: null, // null = unknown, true = available, false = unavailable
+      lastCheck: 0,
+      failureCount: 0,
+      checkInterval: 30000, // 30 seconds
+      maxFailures: 3,
+      backoffTime: 5 * 60 * 1000, // 5 minutes after max failures
+    };
+
+    // Check if backend is completely disabled
+    this.backendDisabled = import.meta.env.VITE_DISABLE_BACKEND === 'true';
   }
 
   /**
