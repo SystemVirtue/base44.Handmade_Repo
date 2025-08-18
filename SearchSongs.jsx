@@ -269,16 +269,19 @@ export default function SearchSongs() {
       case "title":
         return sorted.sort((a, b) => a.title.localeCompare(b.title));
       case "artist":
-        return sorted.sort((a, b) => a.artist.localeCompare(b.artist));
+      case "channelTitle":
+        return sorted.sort((a, b) => (a.channelTitle || a.artist).localeCompare(b.channelTitle || b.artist));
       case "duration":
         return sorted.sort((a, b) => a.duration - b.duration);
       case "year":
+      case "date":
         return sorted.sort((a, b) => (b.year || 0) - (a.year || 0));
+      case "viewCount":
       case "popularity":
-        return sorted.sort((a, b) => (b.popularity || 0) - (a.popularity || 0));
+        return sorted.sort((a, b) => (b.viewCount || b.popularity || 0) - (a.viewCount || a.popularity || 0));
       case "relevance":
       default:
-        return sorted.sort((a, b) => (b.popularity || 0) - (a.popularity || 0));
+        return sorted; // YouTube API returns results in relevance order by default
     }
   };
 
