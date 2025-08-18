@@ -207,6 +207,11 @@ export default function UILookAndFeel() {
     };
     setLocalTheme(defaultTheme);
     setUnsavedChanges(true);
+
+    // Apply reset theme immediately
+    setTheme(defaultTheme);
+
+    console.log('Theme reset to default and applied globally');
   };
 
   const handleExportTheme = () => {
