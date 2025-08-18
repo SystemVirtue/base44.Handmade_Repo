@@ -36,13 +36,7 @@ export default function Settings() {
   const [unsavedChanges, setUnsavedChanges] = useState(false);
   const [showResetModal, setShowResetModal] = useState(false);
 
-  // API Keys state
-  const [apiKeys, setApiKeys] = useState([]);
-  const [showAddKey, setShowAddKey] = useState(false);
-  const [newApiKey, setNewApiKey] = useState({ key: '', description: '' });
-  const [showApiKeys, setShowApiKeys] = useState({});
-  const [isValidatingKey, setIsValidatingKey] = useState(false);
-  const [keyStats, setKeyStats] = useState(null);
+  // API Keys removed - now using yt-dlp service
 
   // Store integration
   const { theme, setTheme } = useUIStore();
