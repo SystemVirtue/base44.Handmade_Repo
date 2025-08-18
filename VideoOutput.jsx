@@ -417,21 +417,22 @@ export default function VideoOutput() {
       }
 
       // Draw track info overlay
-      if (outputState.showOverlay) {
+      if (outputState.showOverlay && currentVideo) {
         ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
         ctx.fillRect(20, height - 120, width - 40, 80);
 
         ctx.fillStyle = "#ffffff";
         ctx.font = "bold 24px Arial";
-        ctx.fillText(currentTrack.title, 40, height - 80);
+        ctx.fillText(currentVideo.title || 'Unknown Title', 40, height - 80);
 
         ctx.font = "18px Arial";
         ctx.fillStyle = "#cccccc";
-        ctx.fillText(currentTrack.artist, 40, height - 55);
+        ctx.fillText(currentVideo.channelTitle || 'Unknown Artist', 40, height - 55);
 
         // Progress bar
         const progressWidth = 200;
-        const progress = currentTime / currentTrack.duration;
+        const duration = currentVideo.duration || 0;
+        const progress = duration > 0 ? currentTime / duration : 0;
         ctx.fillStyle = "#374151";
         ctx.fillRect(width - progressWidth - 40, height - 80, progressWidth, 4);
         ctx.fillStyle = "#3b82f6";
