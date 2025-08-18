@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Settings as SettingsIcon,
   Save,
@@ -19,8 +19,17 @@ import {
   Globe,
   Lock,
   AlertTriangle,
+  Key,
+  Eye,
+  EyeOff,
+  Plus,
+  Trash2,
+  CheckCircle,
+  XCircle,
+  RefreshCw,
 } from "lucide-react";
 import { useUIStore, useAudioStore, useZoneStore } from "./store.js";
+import { getAPIKeyManager } from "./services/api-key-manager.js";
 
 export default function Settings() {
   const [activeTab, setActiveTab] = useState("general");
