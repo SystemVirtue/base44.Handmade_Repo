@@ -477,8 +477,26 @@ export function getAudioProcessor() {
  * Initialize audio processing for an audio element
  */
 export async function initializeAudioProcessing(audioElement) {
+  if (!audioElement) {
+    console.error("No audio element provided for audio processing initialization");
+    return false;
+  }
+
   const processor = getAudioProcessor();
-  return await processor.initialize(audioElement);
+
+  try {
+    return await processor.initialize(audioElement);
+  } catch (error) {
+    console.error("Failed to initialize audio processing:", error);
+
+    // If the error is about the audio element already being connected,
+    // try to clean up and provide guidance
+    if (error.message.includes("already connected") || error.message.includes("already in use")) {
+      console.warn("Audio element is already in use. Consider refreshing the page or using a different audio element.");
+    }
+
+    return false;
+  }
 }
 
 /**
