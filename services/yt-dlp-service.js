@@ -1,10 +1,9 @@
 /**
  * YouTube yt-dlp Service
- * Handles YouTube video information and extraction using yt-dlp
+ * Handles YouTube video information and extraction using backend yt-dlp API
  * Replaces the YouTube Data API v3 dependency
  */
 
-import youtubeDl from 'youtube-dl-exec';
 import YouTubeVideo from '../entities/YouTubeVideo.js';
 import YouTubePlaylist from '../entities/YouTubePlaylist.js';
 
