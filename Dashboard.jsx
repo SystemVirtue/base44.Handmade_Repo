@@ -344,22 +344,22 @@ export default function Dashboard() {
                   onClick={() => handleVote(currentVideo.id)}
                   disabled={hasVoted(currentVideo.id)}
                   className={`flex items-center gap-1 transition-colors ${
-                    hasVoted(currentTrack.id)
+                    hasVoted(currentVideo.id)
                       ? "text-green-400 cursor-not-allowed"
                       : "text-gray-400 hover:text-green-400"
                   }`}
                 >
                   <ThumbsUp
-                    className={`w-4 h-4 ${hasVoted(currentTrack.id) ? "fill-current" : ""}`}
+                    className={`w-4 h-4 ${hasVoted(currentVideo.id) ? "fill-current" : ""}`}
                   />
                   <span className="text-sm">
-                    {hasVoted(currentTrack.id) ? "Voted" : "Vote"}
-                    {getVoteCount(currentTrack.id) > 0 &&
-                      ` (${getVoteCount(currentTrack.id)})`}
+                    {hasVoted(currentVideo.id) ? "Voted" : "Vote"}
+                    {getVoteCount(currentVideo.id) > 0 &&
+                      ` (${getVoteCount(currentVideo.id)})`}
                   </span>
                 </button>
                 <TrackOptionsMenu
-                  track={currentTrack}
+                  track={currentVideo}
                   onAddToQueue={handleAddToQueue}
                   onAddToPlaylist={handleAddToPlaylist}
                   onShare={handleShareTrack}
