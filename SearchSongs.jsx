@@ -115,18 +115,47 @@ export default function SearchSongs() {
 
       setIsSearching(true);
       try {
-        const response = await apiService.searchTracks(searchQuery, {
-          ...filters,
-          ...searchFilters,
-          page,
-          limit: 50,
-        });
+        const youtubeAPI = getYouTubeAPI();
 
-        if (response.success) {
-          const results = response.data.tracks || [];
+        // Build search options
+        const searchOptions = {
+          maxResults: 25,
+          order: sortBy === 'relevance' ? 'relevance' :
+                 sortBy === 'viewCount' ? 'viewCount' :
+                 sortBy === 'date' ? 'date' : 'relevance',
+          videoCategoryId: '10', // Music category
+          type: 'video',
+          videoDefinition: filters.quality === 'hd' ? 'high' : 'any',
+          videoDuration: filters.duration === 'short' ? 'short' :
+                        filters.duration === 'medium' ? 'medium' :
+                        filters.duration === 'long' ? 'long' : 'any'
+        };
 
-          // Sort results based on selected criteria
-          const sortedResults = sortResults(results, sortBy);
+        if (nextPageToken && page > 1) {
+          searchOptions.pageToken = nextPageToken;
+        }
+
+        const response = await youtubeAPI.searchVideos(searchQuery, searchOptions);
+
+        if (response && response.videos) {
+          const videos = response.videos.map(video => ({
+            id: video.videoId,
+            videoId: video.videoId,
+            title: video.title,
+            artist: video.channelTitle,
+            channelTitle: video.channelTitle,
+            duration: video.duration,
+            thumbnail: video.thumbnail,
+            viewCount: video.viewCount,
+            publishedAt: video.publishedAt,
+            description: video.description,
+            tags: video.tags || [],
+            year: video.publishedAt ? new Date(video.publishedAt).getFullYear() : null,
+            popularity: video.viewCount || 0
+          }));
+
+          // Sort results
+          const sortedResults = sortResults(videos, sortBy);
 
           if (page === 1) {
             setSearchResults(sortedResults);
@@ -139,21 +168,24 @@ export default function SearchSongs() {
             setSearchResults((prev) => [...prev, ...sortedResults]);
           }
 
-          setTotalResults(response.data.total || results.length);
+          setTotalResults(response.totalResults || videos.length);
           setCurrentPage(page);
+          setNextPageToken(response.nextPageToken);
         }
       } catch (error) {
-        console.error("Search failed:", error);
+        console.error("YouTube search failed:", error);
         addNotification({
           type: "error",
-          message: "Search failed. Please try again.",
-          duration: 3000,
+          message: error.message.includes('API keys')
+            ? "YouTube API not configured. Please add API keys in Settings."
+            : "Search failed. Please try again.",
+          duration: 5000,
         });
       } finally {
         setIsSearching(false);
       }
     },
-    [filters, sortBy, addNotification],
+    [filters, sortBy, addNotification, nextPageToken],
   );
 
   // Search suggestions
