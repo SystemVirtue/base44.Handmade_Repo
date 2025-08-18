@@ -383,42 +383,9 @@ class APIService {
     }));
   }
 
-  generateMockPlaylists() {
-    return [
-      {
-        id: "playlist_001",
-        name: "Rock Classics",
-        description: "Best rock songs of all time",
-        trackCount: 45,
-        duration: 10800, // 3 hours
-        thumbnail: "https://picsum.photos/300/300?random=1001",
-        isStarred: true,
-        createdAt: "2024-01-15T10:00:00Z",
-        updatedAt: "2024-01-20T15:30:00Z",
-      },
-      {
-        id: "playlist_002",
-        name: "Chill Vibes",
-        description: "Relaxing music for any time",
-        trackCount: 32,
-        duration: 7200, // 2 hours
-        thumbnail: "https://picsum.photos/300/300?random=1002",
-        isStarred: false,
-        createdAt: "2024-01-10T14:20:00Z",
-        updatedAt: "2024-01-18T09:45:00Z",
-      },
-      {
-        id: "playlist_003",
-        name: "Party Mix",
-        description: "High energy dance tracks",
-        trackCount: 67,
-        duration: 14400, // 4 hours
-        thumbnail: "https://picsum.photos/300/300?random=1003",
-        isStarred: true,
-        createdAt: "2024-01-05T20:15:00Z",
-        updatedAt: "2024-01-22T11:20:00Z",
-      },
-    ];
+  generateEmptyPlaylists() {
+    // No default playlists - will be loaded from YouTube
+    return [];
   }
 
   generateDefaultYouTubePlaylist() {
