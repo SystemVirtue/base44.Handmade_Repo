@@ -158,12 +158,12 @@ export default function SearchSongs() {
 
       setIsSearching(true);
       try {
-        const youtubeAPI = getYouTubeAPI();
+        const ytDlpService = getYtDlpService();
 
-        // Check if API service is ready before making requests
-        const serviceStatus = youtubeAPI.isServiceReady();
+        // Check if service is ready before making requests
+        const serviceStatus = await ytDlpService.isServiceReady();
         if (!serviceStatus.ready) {
-          throw new Error(`YouTube API not ready: ${serviceStatus.reason}`);
+          throw new Error(`yt-dlp service not ready: ${serviceStatus.reason}`);
         }
 
         // Build search options
@@ -172,19 +172,12 @@ export default function SearchSongs() {
           order: sortBy === 'relevance' ? 'relevance' :
                  sortBy === 'viewCount' ? 'viewCount' :
                  sortBy === 'date' ? 'date' : 'relevance',
-          videoCategoryId: '10', // Music category
-          type: 'video',
-          videoDefinition: filters.quality === 'hd' ? 'high' : 'any',
-          videoDuration: filters.duration === 'short' ? 'short' :
-                        filters.duration === 'medium' ? 'medium' :
-                        filters.duration === 'long' ? 'long' : 'any'
         };
 
-        if (nextPageToken && page > 1) {
-          searchOptions.pageToken = nextPageToken;
-        }
+        // Note: yt-dlp doesn't support pagination like YouTube API
+        // So we ignore nextPageToken and page parameters
 
-        const response = await youtubeAPI.searchVideos(searchQuery, searchOptions);
+        const response = await ytDlpService.searchVideos(searchQuery, searchOptions);
 
         if (response && response.videos) {
           const videos = response.videos.map(video => ({
