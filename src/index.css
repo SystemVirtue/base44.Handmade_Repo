@@ -2,6 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Import DJAMMS Theme System */
+@import './theme.css';
+
 body {
   margin: 0;
   font-family:
