@@ -114,15 +114,15 @@ export default function QueueSchedule() {
       // Load local playlists
       const localResponse = await apiService.getPlaylists();
 
-      // Load Spotify playlists
-      const spotifyResponse = await apiService.getSpotifyPlaylists();
+      // Load YouTube playlist
+      const youtubeResponse = await apiService.getYouTubePlaylist("PLJ7vMjpVbhBWLWJpweVDki43Wlcqzsqdu");
 
       if (localResponse.success) {
         setAllPlaylists(localResponse.data || []);
       }
 
-      if (spotifyResponse.success) {
-        setSpotifyPlaylists(spotifyResponse.data || []);
+      if (youtubeResponse.success) {
+        setYoutubePlaylists([youtubeResponse.data] || []);
       }
     } catch (error) {
       console.error("Failed to load playlists:", error);
