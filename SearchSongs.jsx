@@ -257,7 +257,7 @@ export default function SearchSongs() {
             title = '🚫 YouTube API Access Denied';
             description = 'Invalid API keys detected. Please update your YouTube Data API v3 keys in Settings → API Configuration.';
             message = "YouTube API keys are invalid or have no permissions. Please check your API key configuration in Settings.";
-          } else if (error.message.includes('quota')) {
+          } else if (errorMessage.includes('quota')) {
             title = '⏱️ YouTube API Quota Exceeded';
             description = 'Daily API quota limit reached. Try again tomorrow or add more API keys in Settings.';
             message = "YouTube API daily quota exceeded. Please try again tomorrow or add more API keys.";
