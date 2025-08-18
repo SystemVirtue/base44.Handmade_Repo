@@ -385,6 +385,14 @@ export const useUIStore = create(
       setTheme: (theme) => {
         set({ theme });
         persistenceService.updateUserPreferences({ theme });
+
+        // Dispatch custom event for theme changes
+        const event = new CustomEvent('djamms-theme-changed', {
+          detail: { theme }
+        });
+        window.dispatchEvent(event);
+
+        console.log('Theme updated and persisted:', theme);
       },
 
       setFont: (fontFamily, fontSize) => {
