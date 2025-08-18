@@ -43,10 +43,26 @@ class APIKeyManager {
       const storedUsage = localStorage.getItem('djamms_quota_usage');
 
       if (storedKeys) {
-        this.apiKeys = JSON.parse(storedKeys);
+        const parsedKeys = JSON.parse(storedKeys);
+
+        // Check if stored keys need revalidation (older than 24 hours)
+        const shouldRevalidate = parsedKeys.some(key => {
+          if (!key.lastValidated) return true;
+          const lastValidated = new Date(key.lastValidated);
+          const now = new Date();
+          return (now - lastValidated) > (24 * 60 * 60 * 1000); // 24 hours
+        });
+
+        if (shouldRevalidate) {
+          console.log('🔄 Stored API keys need revalidation, loading fresh from environment...');
+          await this.loadEnvironmentKeys();
+        } else {
+          this.apiKeys = parsedKeys;
+          console.log(`Loaded ${this.apiKeys.length} API keys from storage`);
+        }
       } else {
         // Load default keys from environment variables
-        this.loadEnvironmentKeys();
+        await this.loadEnvironmentKeys();
       }
 
       if (storedUsage) {
@@ -59,7 +75,11 @@ class APIKeyManager {
       this.apiKeys = [];
       this.quotaUsage = new Map();
       // Try to load environment keys as fallback
-      this.loadEnvironmentKeys();
+      try {
+        await this.loadEnvironmentKeys();
+      } catch (envError) {
+        console.error('Failed to load environment keys as fallback:', envError);
+      }
     }
   }
 
