@@ -49,6 +49,24 @@ export default function Settings() {
   const { volume, setVolume } = useAudioStore();
   const { currentZone } = useZoneStore();
 
+  // Load API keys on component mount
+  useEffect(() => {
+    loadApiKeys();
+  }, []);
+
+  const loadApiKeys = async () => {
+    try {
+      const apiKeyManager = getAPIKeyManager();
+      const quotaStatus = apiKeyManager.getQuotaStatus();
+      const statistics = apiKeyManager.getStatistics();
+
+      setApiKeys(quotaStatus);
+      setKeyStats(statistics);
+    } catch (error) {
+      console.error('Failed to load API keys:', error);
+    }
+  };
+
   // Settings state
   const [settings, setSettings] = useState({
     general: {
