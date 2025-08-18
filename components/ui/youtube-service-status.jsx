@@ -92,9 +92,9 @@ export default function YouTubeServiceStatus({ compact = false }) {
               {getStatusText()}
             </h4>
             
-            {serviceStatus.ready && serviceStatus.stats && (
+            {serviceStatus.ready && (
               <div className="text-sm text-gray-400 mt-1">
-                Available quota: {serviceStatus.stats.availableQuota.toLocaleString()} units
+                yt-dlp service available - no API quotas required
               </div>
             )}
             
