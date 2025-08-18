@@ -87,6 +87,13 @@ class YtDlpService {
    * Make API request to backend
    */
   async makeApiRequest(endpoint, options = {}) {
+    // Check if we should attempt connection
+    if (!this.shouldAttemptConnection()) {
+      const error = new Error('Backend API is temporarily unavailable (circuit breaker open)');
+      error.isCircuitBreakerOpen = true;
+      throw error;
+    }
+
     const url = `${this.apiBaseUrl}${endpoint}`;
 
     try {
@@ -101,18 +108,31 @@ class YtDlpService {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
+        this.recordFailure();
         throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
       }
 
-      return await response.json();
+      const data = await response.json();
+      this.recordSuccess();
+      return data;
     } catch (error) {
-      // Handle specific network errors
+      this.recordFailure();
+
+      // Handle specific network errors with less verbose logging
       if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
-        console.warn(`Backend API not available at ${this.apiBaseUrl}: Connection failed`);
-        throw new Error('Backend API server is not available. Please ensure the yt-dlp API server is running.');
+        // Only log once when service becomes unavailable
+        if (this.serviceStatus.failureCount === 1) {
+          console.warn(`Backend API not available at ${this.apiBaseUrl}: Connection failed`);
+        }
+        const serviceError = new Error('Backend API server is not available');
+        serviceError.isNetworkError = true;
+        throw serviceError;
       }
 
-      console.error(`API request failed: ${endpoint}`, error);
+      // Only log API errors if they're not repeated failures
+      if (this.serviceStatus.failureCount <= 2) {
+        console.error(`API request failed: ${endpoint}`, error.message);
+      }
       throw error;
     }
   }
