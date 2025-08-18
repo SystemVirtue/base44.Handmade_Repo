@@ -307,6 +307,71 @@ class AppInitializationService {
   }
 
   /**
+   * Load default YouTube playlist
+   */
+  async _loadDefaultPlaylist() {
+    console.log("🎵 Loading default YouTube playlist...");
+
+    try {
+      if (!this.services.youtube?.hasKeys) {
+        console.warn("⚠️ No YouTube API keys available, skipping playlist load");
+        return;
+      }
+
+      const youtubeAPI = this.services.youtube.youtubeAPI;
+
+      // Load the default playlist
+      const playlist = await youtubeAPI.getCompletePlaylist(this.defaultPlaylistId, {
+        maxResults: 50 // Load first 50 videos
+      });
+
+      if (playlist && playlist.videos.length > 0) {
+        // Get the audio store and add videos to queue
+        const { useAudioStore } = await import("../store.js");
+        const store = useAudioStore.getState();
+
+        // Clear existing queue and add new videos
+        store.clearQueue();
+
+        // Add videos to queue
+        playlist.videos.forEach((video, index) => {
+          store.addToQueue({
+            id: video.videoId,
+            videoId: video.videoId,
+            title: video.title,
+            channelTitle: video.channelTitle,
+            duration: video.duration,
+            thumbnail: video.thumbnail,
+            viewCount: video.viewCount,
+            position: index
+          });
+        });
+
+        // Set the first video as current if queue was empty
+        if (playlist.videos.length > 0 && !store.currentVideo?.videoId) {
+          store.setCurrentVideo(playlist.videos[0]);
+        }
+
+        console.log(`✅ Loaded ${playlist.videos.length} videos from default playlist`);
+
+        this.services.defaultPlaylist = {
+          status: "loaded",
+          playlistId: this.defaultPlaylistId,
+          videoCount: playlist.videos.length,
+          title: playlist.title
+        };
+      }
+    } catch (error) {
+      console.error("❌ Failed to load default playlist:", error);
+      this.services.defaultPlaylist = {
+        status: "error",
+        error: error.message,
+        playlistId: this.defaultPlaylistId
+      };
+    }
+  }
+
+  /**
    * Setup application event listeners
    */
   async _setupEventListeners() {
