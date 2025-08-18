@@ -177,8 +177,8 @@ export default function UILookAndFeel() {
     const event = new CustomEvent('djamms-notification', {
       detail: {
         type: 'success',
-        title: 'Theme Saved',
-        message: `${localTheme.colorPalette.charAt(0).toUpperCase() + localTheme.colorPalette.slice(1)} theme applied to all pages`,
+        title: 'Theme Applied',
+        message: `${localTheme.colorPalette.charAt(0).toUpperCase() + localTheme.colorPalette.slice(1)} theme has been applied to all pages and frames`,
         duration: 3000
       }
     });
