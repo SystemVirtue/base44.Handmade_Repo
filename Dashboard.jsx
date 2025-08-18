@@ -150,7 +150,7 @@ export default function Dashboard() {
         0,
         Math.min(1, (e.clientX - rect.left) / rect.width),
       );
-      const newTime = percent * currentTrack.duration;
+      const newTime = percent * (currentVideo.duration || 0);
       setLocalCurrentTime(newTime);
     }
   };
