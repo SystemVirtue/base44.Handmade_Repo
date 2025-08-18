@@ -449,8 +449,8 @@ class APIService {
         return this.handleMockMusicLibrary(endpoint, options);
       } else if (endpoint.includes("/playlists")) {
         return this.handleMockPlaylists(endpoint, options);
-      } else if (endpoint.includes("/spotify")) {
-        return this.handleMockSpotify(endpoint, options);
+      } else if (endpoint.includes("/youtube")) {
+        return this.handleMockYouTube(endpoint, options);
       } else if (endpoint.includes("/system")) {
         return this.handleMockSystem(endpoint, options);
       } else if (endpoint.includes("/settings")) {
