@@ -400,24 +400,53 @@ export default function VideoOutput() {
             </div>
 
             <div className="relative aspect-video bg-gray-900 rounded-lg overflow-hidden">
-              <canvas
-                ref={canvasRef}
-                width={1920}
-                height={1080}
-                className="w-full h-full object-contain"
-                style={{
-                  filter: `brightness(${displaySettings.brightness}%) contrast(${displaySettings.contrast}%) saturate(${displaySettings.saturation}%) hue-rotate(${displaySettings.hue}deg)`,
-                  transform: `scale(${displaySettings.zoom / 100}) rotate(${displaySettings.rotation}deg)`,
-                }}
-              />
+              {currentVideo?.videoId && previewMode === "live" ? (
+                <YouTubePlayer
+                  videoId={currentVideo.videoId}
+                  autoplay={isPlaying}
+                  controls={true}
+                  width="100%"
+                  height="100%"
+                  onReady={() => console.log('YouTube player ready')}
+                  onStateChange={(event) => {
+                    // Handle player state changes
+                    const playerState = event.data;
+                    // You can sync with the main audio store here
+                  }}
+                  className="rounded-lg"
+                />
+              ) : (
+                <>
+                  <canvas
+                    ref={canvasRef}
+                    width={1920}
+                    height={1080}
+                    className="w-full h-full object-contain"
+                    style={{
+                      filter: `brightness(${displaySettings.brightness}%) contrast(${displaySettings.contrast}%) saturate(${displaySettings.saturation}%) hue-rotate(${displaySettings.hue}deg)`,
+                      transform: `scale(${displaySettings.zoom / 100}) rotate(${displaySettings.rotation}deg)`,
+                    }}
+                  />
 
-              {previewMode === "offline" && (
-                <div className="absolute inset-0 bg-gray-900 flex items-center justify-center">
-                  <div className="text-center">
-                    <Monitor className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-                    <p className="text-gray-400">Output Offline</p>
-                  </div>
-                </div>
+                  {previewMode === "offline" && (
+                    <div className="absolute inset-0 bg-gray-900 flex items-center justify-center">
+                      <div className="text-center">
+                        <Monitor className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+                        <p className="text-gray-400">Output Offline</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {!currentVideo?.videoId && previewMode === "live" && (
+                    <div className="absolute inset-0 bg-gray-900 flex items-center justify-center">
+                      <div className="text-center">
+                        <Play className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+                        <p className="text-gray-400">No video selected</p>
+                        <p className="text-sm text-gray-500 mt-2">Add videos to the queue to start playback</p>
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </div>
