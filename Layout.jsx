@@ -317,14 +317,14 @@ export default function Layout({ children, currentPageName }) {
                     </span>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-white truncate">
+                    <p className="text-sm font-medium themed-text-primary truncate">
                       {user?.name || user?.email || "User"}
                     </p>
-                    <p className="text-xs text-gray-400">Logged in</p>
+                    <p className="text-xs themed-text-muted">Logged in</p>
                   </div>
                   <button
                     onClick={handleLogout}
-                    className="p-1 text-gray-400 hover:text-white transition-colors"
+                    className="p-1 themed-text-muted hover:themed-text-primary transition-colors"
                     title="Logout"
                   >
                     <LogOut className="w-4 h-4" />
