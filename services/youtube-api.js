@@ -389,6 +389,38 @@ class YouTubeAPIService {
   getUsageStatistics() {
     return this.apiKeyManager.getStatistics();
   }
+
+  /**
+   * Check if the YouTube API service is properly configured
+   */
+  isServiceReady() {
+    if (!this.apiKeyManager.isReady()) {
+      return { ready: false, reason: 'API key manager not initialized' };
+    }
+
+    const stats = this.apiKeyManager.getStatistics();
+    if (stats.totalKeys === 0) {
+      return { ready: false, reason: 'No API keys configured' };
+    }
+
+    if (stats.activeKeys === 0) {
+      return { ready: false, reason: 'No valid/active API keys available' };
+    }
+
+    const availableQuota = this.apiKeyManager.getAvailableQuota();
+    if (availableQuota === 0) {
+      return { ready: false, reason: 'All API keys have exceeded their daily quota' };
+    }
+
+    return {
+      ready: true,
+      stats: {
+        totalKeys: stats.totalKeys,
+        activeKeys: stats.activeKeys,
+        availableQuota: availableQuota
+      }
+    };
+  }
 }
 
 // Singleton instance
