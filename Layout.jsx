@@ -179,7 +179,7 @@ export default function Layout({ children, currentPageName }) {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
+    <div className="min-h-screen themed-text-primary" style={{backgroundColor: 'var(--color-background)'}}>
       {/* Mobile menu backdrop */}
       {isMobileMenuOpen && (
         <div
