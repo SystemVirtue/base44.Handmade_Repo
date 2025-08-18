@@ -252,7 +252,7 @@ export default function Controls() {
   };
 
   return (
-    <div className="p-8 text-white bg-gray-900 h-full overflow-y-auto">
+    <div className="p-8 themed-text-primary h-full overflow-y-auto" style={{backgroundColor: 'var(--color-background)'}}>
       <div className="max-w-4xl mx-auto space-y-6">
         <h1 className="text-3xl font-bold text-center mb-8">System Controls</h1>
 
