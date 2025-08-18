@@ -48,7 +48,7 @@ import ArtworkImage from "./components/ui/artwork-image.jsx";
 import TrackOptionsMenu from "./components/ui/track-options-menu.jsx";
 import apiService from "./services/api-service.js";
 import persistenceService from "./services/persistence-service.js";
-import { getYouTubeAPI } from "./services/youtube-api.js";
+import { getYtDlpService } from "./services/yt-dlp-service.js";
 import YouTubeVideo from "./entities/YouTubeVideo.js";
 
 // Debounce utility
