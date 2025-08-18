@@ -373,7 +373,7 @@ export default function Layout({ children, currentPageName }) {
 
               {/* Current video info */}
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-gray-800 rounded-lg overflow-hidden">
+                <div className="w-12 h-12 themed-surface rounded-lg overflow-hidden">
                   <img
                     src={currentVideo?.thumbnail || 'https://via.placeholder.com/48x48/374151/9ca3af?text=No+Video'}
                     alt={currentVideo?.title || 'No video'}
