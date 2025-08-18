@@ -204,24 +204,51 @@ export default function SearchSongs() {
       } catch (error) {
         console.error("YouTube search failed:", error);
 
-        if (error.message.includes('API keys')) {
-          // Show more helpful guidance for missing API keys
+        // Check for specific API key related errors
+        if (error.message.includes('API keys') ||
+            error.message.includes('HTTP 403') ||
+            error.message.includes('quota') ||
+            error.message.includes('forbidden')) {
+
+          let title, description, message;
+
+          if (error.message.includes('HTTP 403')) {
+            title = '🚫 YouTube API Access Denied';
+            description = 'Invalid API keys detected. Please update your YouTube Data API v3 keys in Settings → API Configuration.';
+            message = "YouTube API keys are invalid or have no permissions. Please check your API key configuration in Settings.";
+          } else if (error.message.includes('quota')) {
+            title = '⏱️ YouTube API Quota Exceeded';
+            description = 'Daily API quota limit reached. Try again tomorrow or add more API keys in Settings.';
+            message = "YouTube API daily quota exceeded. Please try again tomorrow or add more API keys.";
+          } else {
+            title = '🔑 YouTube API Key Required';
+            description = 'Add YouTube Data API v3 keys in Settings → API Keys to enable video search and playback.';
+            message = "YouTube API not configured. Please add API keys in Settings to enable video search.";
+          }
+
+          // Show user-friendly notification
           addNotification({
             type: "warning",
-            message: "YouTube API not configured. Please add API keys in Settings to enable video search.",
-            duration: 8000,
+            title: "YouTube Search Unavailable",
+            message: message,
+            duration: 10000,
+            persistent: true,
+            action: {
+              text: "Configure API Keys",
+              url: "/settings"
+            }
           });
 
           // Set a helpful message in search results
           setSearchResults([{
-            id: 'no-api-key',
-            videoId: 'no-api-key',
-            title: '🔑 YouTube API Key Required',
+            id: 'api-issue',
+            videoId: 'api-issue',
+            title: title,
             channelTitle: 'System Message',
             duration: 0,
-            thumbnail: 'https://via.placeholder.com/320x180/3b82f6/ffffff?text=YouTube+API+Required',
+            thumbnail: 'https://via.placeholder.com/320x180/f59e0b/ffffff?text=API+Configuration+Required',
             viewCount: 0,
-            description: 'Add YouTube Data API v3 keys in Settings → API Keys to enable video search and playback.',
+            description: description,
             isSystemMessage: true
           }]);
           setTotalResults(1);
