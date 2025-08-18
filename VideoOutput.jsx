@@ -63,6 +63,78 @@ export default function VideoOutput() {
   const { currentVideo, isPlaying, currentTime, volume, isMuted, togglePlayPause, setVolume, toggleMute } = useAudioStore();
   const { setLoading } = useUIStore();
 
+  // Sync video changes with popup window
+  useEffect(() => {
+    if (videoWindow && !videoWindow.closed && currentVideo?.videoId) {
+      // Update video title in popup
+      const titleElement = videoWindow.document.getElementById('video-title');
+      if (titleElement) {
+        titleElement.textContent = currentVideo.title || 'No video playing';
+      }
+
+      // Update video in popup player
+      if (videoWindow.popupPlayer && typeof videoWindow.popupPlayer.loadVideoById === 'function') {
+        try {
+          videoWindow.popupPlayer.loadVideoById(currentVideo.videoId);
+
+          // Sync playback state after a short delay to allow video to load
+          setTimeout(() => {
+            if (videoWindow.popupPlayer) {
+              if (isMuted) {
+                videoWindow.popupPlayer.mute();
+              } else {
+                videoWindow.popupPlayer.setVolume(volume);
+              }
+
+              if (currentTime > 0) {
+                videoWindow.popupPlayer.seekTo(currentTime, true);
+              }
+
+              if (isPlaying) {
+                videoWindow.popupPlayer.playVideo();
+              } else {
+                videoWindow.popupPlayer.pauseVideo();
+              }
+            }
+          }, 1000);
+        } catch (error) {
+          console.error('Error updating video in popup:', error);
+        }
+      }
+    }
+  }, [currentVideo?.videoId, videoWindow]);
+
+  // Sync playback state changes with popup window
+  useEffect(() => {
+    if (videoWindow && !videoWindow.closed && videoWindow.popupPlayer) {
+      try {
+        if (isPlaying) {
+          videoWindow.popupPlayer.playVideo();
+        } else {
+          videoWindow.popupPlayer.pauseVideo();
+        }
+      } catch (error) {
+        console.error('Error syncing playback state with popup:', error);
+      }
+    }
+  }, [isPlaying, videoWindow]);
+
+  // Sync volume changes with popup window
+  useEffect(() => {
+    if (videoWindow && !videoWindow.closed && videoWindow.popupPlayer) {
+      try {
+        if (isMuted) {
+          videoWindow.popupPlayer.mute();
+        } else {
+          videoWindow.popupPlayer.unMute();
+          videoWindow.popupPlayer.setVolume(volume);
+        }
+      } catch (error) {
+        console.error('Error syncing volume with popup:', error);
+      }
+    }
+  }, [volume, isMuted, videoWindow]);
+
   // Recording timer
   useEffect(() => {
     let interval = null;
