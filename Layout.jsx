@@ -233,7 +233,25 @@ export default function Layout({ children, currentPageName }) {
                   key={item.title}
                   to={item.url}
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${getActiveClassForItem(item)}`}
+                  className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                    location.pathname === item.url
+                      ? "text-white shadow-lg"
+                      : "themed-text-secondary hover:themed-text-primary"
+                  }`}
+                  style={location.pathname === item.url
+                    ? { backgroundColor: 'var(--color-accent)' }
+                    : {}
+                  }
+                  onMouseEnter={(e) => {
+                    if (location.pathname !== item.url) {
+                      e.target.style.backgroundColor = 'var(--color-surface)';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (location.pathname !== item.url) {
+                      e.target.style.backgroundColor = 'transparent';
+                    }
+                  }}
                   title={sidebarCollapsed ? item.title : ""}
                 >
                   <item.icon className="w-4 h-4 flex-shrink-0" />
