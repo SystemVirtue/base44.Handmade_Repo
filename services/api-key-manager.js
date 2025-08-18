@@ -66,7 +66,7 @@ class APIKeyManager {
   /**
    * Load API keys from environment variables
    */
-  loadEnvironmentKeys() {
+  async loadEnvironmentKeys() {
     const envKeys = [
       { key: import.meta.env.VITE_YOUTUBE_API_KEY_1, name: "Key 1 (Primary)" },
       { key: import.meta.env.VITE_YOUTUBE_API_KEY_2, name: "Key 2" },
@@ -79,23 +79,48 @@ class APIKeyManager {
       { key: import.meta.env.VITE_YOUTUBE_API_KEY_9, name: "Key 9" }
     ];
 
-    envKeys.forEach(({ key, name }) => {
+    let validKeyCount = 0;
+
+    for (const { key, name } of envKeys) {
       if (key && key.trim() !== '') {
+        const trimmedKey = key.trim();
+        console.log(`Testing API key: ${name} (...${trimmedKey.slice(-8)})`);
+
+        // Validate each key before adding
+        const isValid = await this.validateKey(trimmedKey);
+
         const keyData = {
-          key: key.trim(),
+          key: trimmedKey,
           description: name,
           addedAt: new Date().toISOString(),
-          isActive: true,
+          isActive: isValid,
           lastUsed: null,
-          totalRequests: 0
+          totalRequests: 0,
+          validationStatus: isValid ? 'valid' : 'invalid',
+          lastValidated: new Date().toISOString()
         };
+
         this.apiKeys.push(keyData);
-        this.quotaUsage.set(key.trim(), 0);
+        this.quotaUsage.set(trimmedKey, 0);
+
+        if (isValid) {
+          validKeyCount++;
+          console.log(`✅ ${name} is valid and active`);
+        } else {
+          console.warn(`❌ ${name} is invalid and will be disabled`);
+        }
       }
-    });
+    }
+
+    console.log(`Loaded ${this.apiKeys.length} API keys from environment (${validKeyCount} valid)`);
+
+    if (validKeyCount === 0) {
+      console.error('❌ No valid YouTube API keys found!');
+      console.error('💡 Please check your API key configuration in .env file');
+      console.error('💡 Ensure YouTube Data API v3 is enabled for your keys');
+    }
 
     if (this.apiKeys.length > 0) {
-      console.log(`Loaded ${this.apiKeys.length} API keys from environment variables`);
       this.saveKeys(); // Save to localStorage for future use
     }
   }
