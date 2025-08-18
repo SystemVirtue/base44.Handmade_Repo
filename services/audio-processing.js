@@ -500,6 +500,17 @@ export async function initializeAudioProcessing(audioElement) {
 }
 
 /**
+ * Reset audio processing (cleanup and recreate processor)
+ */
+export function resetAudioProcessing() {
+  if (audioProcessor) {
+    audioProcessor.destroy();
+    audioProcessor = null;
+  }
+  console.log("Audio processing reset");
+}
+
+/**
  * Audio processing hook for React components
  */
 export function useAudioProcessing() {
@@ -519,6 +530,8 @@ export function useAudioProcessing() {
     getEQPresets: processor.getEQPresets.bind(processor),
     exportSettings: processor.exportSettings.bind(processor),
     importSettings: processor.importSettings.bind(processor),
+    cleanup: processor.cleanup.bind(processor),
+    reset: resetAudioProcessing,
   };
 }
 
