@@ -213,70 +213,42 @@ class YtDlpService {
   }
 
   /**
-   * Convert yt-dlp data to our YouTubeVideo format
+   * Convert API data to our YouTubeVideo format
    */
-  createVideoFromYtDlpData(data) {
+  createVideoFromApiData(data) {
     if (!data || !data.id) return null;
 
     try {
-      // Parse duration (yt-dlp returns seconds)
-      const duration = data.duration || 0;
-      
-      // Parse upload date
-      let publishedAt = null;
-      if (data.upload_date) {
-        // yt-dlp returns YYYYMMDD format
-        const dateStr = data.upload_date.toString();
-        if (dateStr.length === 8) {
-          const year = dateStr.substring(0, 4);
-          const month = dateStr.substring(4, 6);
-          const day = dateStr.substring(6, 8);
-          publishedAt = `${year}-${month}-${day}T00:00:00Z`;
-        }
-      }
-
-      // Get best thumbnail
-      let thumbnail = data.thumbnail || '';
-      if (data.thumbnails && Array.isArray(data.thumbnails)) {
-        // Find the best quality thumbnail
-        const bestThumb = data.thumbnails
-          .filter(t => t.url)
-          .sort((a, b) => (b.width || 0) - (a.width || 0))[0];
-        if (bestThumb) {
-          thumbnail = bestThumb.url;
-        }
-      }
-
       return new YouTubeVideo({
         id: data.id,
-        videoId: data.id,
+        videoId: data.videoId || data.id,
         snippet: {
           title: data.title || 'Unknown Title',
           description: data.description || '',
-          channelTitle: data.uploader || data.channel || 'Unknown Channel',
-          publishedAt: publishedAt,
+          channelTitle: data.channelTitle || 'Unknown Channel',
+          publishedAt: data.publishedAt,
           thumbnails: {
-            default: { url: thumbnail },
-            medium: { url: thumbnail },
-            high: { url: thumbnail }
+            default: { url: data.thumbnail || '' },
+            medium: { url: data.thumbnail || '' },
+            high: { url: data.thumbnail || '' }
           },
           tags: data.tags || []
         },
         contentDetails: {
-          duration: `PT${duration}S`,
+          duration: `PT${data.duration || 0}S`,
           definition: 'hd' // Assume HD for simplicity
         },
         statistics: {
-          viewCount: data.view_count || 0,
-          likeCount: data.like_count || 0,
-          commentCount: data.comment_count || 0
+          viewCount: data.viewCount || 0,
+          likeCount: data.likeCount || 0,
+          commentCount: data.commentCount || 0
         },
-        // Additional yt-dlp specific data
-        streamingUrl: data.url || null,
+        // Additional data
+        streamingUrl: data.streamingUrl || null,
         formats: data.formats || []
       });
     } catch (error) {
-      console.error('Error creating video from yt-dlp data:', error);
+      console.error('Error creating video from API data:', error);
       return null;
     }
   }
