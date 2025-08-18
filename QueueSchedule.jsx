@@ -882,14 +882,14 @@ export default function QueueSchedule() {
 
                         <div className="flex items-center gap-2">
                           <button
-                            onClick={() => togglePlaylistStar(playlist.id)}
+                            onClick={() => playlist.id && togglePlaylistStar(playlist.id)}
                             className={`p-2 rounded-full transition-colors ${
-                              starredPlaylists.has(playlist.id)
+                              playlist.id && starredPlaylists.has(playlist.id)
                                 ? "bg-yellow-600 text-white"
                                 : "bg-gray-600 hover:bg-gray-500"
                             }`}
                             title={
-                              starredPlaylists.has(playlist.id)
+                              playlist.id && starredPlaylists.has(playlist.id)
                                 ? "Unstar"
                                 : "Star"
                             }
