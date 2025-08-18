@@ -150,6 +150,22 @@ export default function VideoOutput() {
     };
   }, [isRecording]);
 
+  // Cleanup on component unmount
+  useEffect(() => {
+    return () => {
+      if (videoWindow && !videoWindow.closed) {
+        if (videoWindow.popupPlayer && typeof videoWindow.popupPlayer.destroy === 'function') {
+          try {
+            videoWindow.popupPlayer.destroy();
+          } catch (error) {
+            console.error('Error destroying popup player on unmount:', error);
+          }
+        }
+        videoWindow.close();
+      }
+    };
+  }, []);
+
   // Video window management
   const openVideoWindow = () => {
     if (videoWindow && !videoWindow.closed) {
