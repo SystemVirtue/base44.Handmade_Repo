@@ -50,6 +50,15 @@ export default function VideoOutput() {
 
   const [previewMode, setPreviewMode] = useState("live"); // 'live', 'test', 'offline'
 
+  // Video window state
+  const [videoWindow, setVideoWindow] = useState(null);
+  const [videoWindowSettings, setVideoWindowSettings] = useState({
+    width: 800,
+    height: 600,
+    alwaysOnTop: false,
+    position: { x: 100, y: 100 }
+  });
+
   // Audio store integration
   const { currentTrack, isPlaying, currentTime } = useAudioStore();
   const { setLoading } = useUIStore();
