@@ -132,47 +132,35 @@ class YtDlpService {
     if (cached) return cached;
 
     try {
-      // Handle both playlist IDs and full URLs
-      const playlistUrl = playlistId.startsWith('http')
-        ? playlistId
-        : `https://www.youtube.com/playlist?list=${playlistId}`;
+      console.log(`Getting playlist info via API: ${playlistId}`);
 
-      console.log(`Getting playlist info with yt-dlp: ${playlistId}`);
-
-      const playlistData = await youtubeDl(playlistUrl, {
-        dumpSingleJson: true,
-        skipDownload: true,
-        extractFlat: false, // Get full video info
-        yesPlaylist: true,
-        format: 'best[height<=720]',
-      });
+      const response = await this.makeApiRequest(`/api/playlist/${encodeURIComponent(playlistId)}`);
 
       // Create playlist object
       const playlist = new YouTubePlaylist({
-        id: playlistData.id || playlistId,
+        id: response.id || playlistId,
         snippet: {
-          title: playlistData.title || playlistData.playlist_title || 'Unknown Playlist',
-          description: playlistData.description || '',
-          channelTitle: playlistData.uploader || playlistData.channel || 'Unknown Channel',
-          publishedAt: playlistData.upload_date || null,
+          title: response.title || 'Unknown Playlist',
+          description: response.description || '',
+          channelTitle: response.channelTitle || 'Unknown Channel',
+          publishedAt: response.publishedAt || null,
           thumbnails: {
-            default: { url: playlistData.thumbnail || '' },
-            medium: { url: playlistData.thumbnail || '' },
-            high: { url: playlistData.thumbnail || '' }
+            default: { url: response.thumbnail || '' },
+            medium: { url: response.thumbnail || '' },
+            high: { url: response.thumbnail || '' }
           }
         },
         contentDetails: {
-          itemCount: playlistData.entries ? playlistData.entries.length : 0
+          itemCount: response.itemCount || 0
         }
       });
 
       // Process videos if available
-      if (playlistData.entries) {
-        const videos = playlistData.entries
-          .filter(entry => entry && entry.id && entry.title)
-          .map(entry => this.createVideoFromYtDlpData(entry))
+      if (response.videos) {
+        const videos = response.videos
+          .map(videoData => this.createVideoFromApiData(videoData))
           .filter(video => video !== null);
-        
+
         playlist.videos = videos;
         playlist.itemCount = videos.length;
       }
