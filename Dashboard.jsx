@@ -468,7 +468,7 @@ export default function Dashboard() {
                 ) : (
                   queue.map((song, index) => (
                     <div
-                      key={song.id}
+                      key={`queue-${song.id}-${index}`}
                       className={`flex items-center gap-4 p-3 rounded-lg transition-colors ${
                         index === currentQueueIndex
                           ? "bg-blue-600/20 border border-blue-500/30"
