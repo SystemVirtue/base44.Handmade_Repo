@@ -106,6 +106,7 @@ export const useAudioStore = create(
           const nextIndex = currentQueueIndex + 1;
           const nextTrack = queue[nextIndex];
           set({
+            currentVideo: nextTrack,
             currentTrack: nextTrack,
             currentQueueIndex: nextIndex,
           });
@@ -119,6 +120,7 @@ export const useAudioStore = create(
           const prevIndex = currentQueueIndex - 1;
           const prevTrack = queue[prevIndex];
           set({
+            currentVideo: prevTrack,
             currentTrack: prevTrack,
             currentQueueIndex: prevIndex,
           });
