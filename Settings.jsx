@@ -1399,6 +1399,8 @@ export default function Settings() {
         return renderAudioSettings();
       case "network":
         return renderNetworkSettings();
+      case "apikeys":
+        return renderApiKeysSettings();
       case "security":
         return renderSecuritySettings();
       case "notifications":
