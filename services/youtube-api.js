@@ -36,19 +36,26 @@ class YouTubeAPIService {
         });
 
         console.log(`YouTube API Request: ${endpoint}`, params);
-        
+
         const response = await fetch(url.toString());
-        const data = await response.json();
 
         if (!response.ok) {
-          if (response.status === 403 && data.error?.errors?.[0]?.reason === 'quotaExceeded') {
+          let errorData;
+          try {
+            errorData = await response.json();
+          } catch (parseError) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          }
+
+          if (response.status === 403 && errorData.error?.errors?.[0]?.reason === 'quotaExceeded') {
             console.warn('Quota exceeded, rotating API key...');
             this.apiKeyManager.rotateKey();
             continue; // Retry with next key
           }
-          throw new Error(data.error?.message || `HTTP ${response.status}: ${response.statusText}`);
+          throw new Error(errorData.error?.message || `HTTP ${response.status}: ${response.statusText}`);
         }
 
+        const data = await response.json();
         return data;
       } catch (error) {
         lastError = error;
