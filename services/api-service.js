@@ -544,11 +544,21 @@ class APIService {
     return { success: true, data: null };
   }
 
-  handleMockSpotify(endpoint, options) {
+  handleMockYouTube(endpoint, options) {
     if (endpoint.includes("/playlists")) {
       return {
         success: true,
-        data: this.mockData.spotifyPlaylists,
+        data: this.mockData.youtubePlaylist,
+      };
+    } else if (endpoint.includes("/search")) {
+      // Mock YouTube search results for now
+      return {
+        success: true,
+        data: {
+          items: [],
+          nextPageToken: null,
+          totalResults: 0
+        }
       };
     }
 
