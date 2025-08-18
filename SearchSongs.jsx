@@ -242,13 +242,14 @@ export default function SearchSongs() {
           setNextPageToken(response.nextPageToken);
         }
       } catch (error) {
-        console.error("YouTube search failed:", error);
+        console.error("YouTube search failed:", error.message || error);
 
         // Check for specific API key related errors
-        if (error.message.includes('API keys') ||
-            error.message.includes('HTTP 403') ||
-            error.message.includes('quota') ||
-            error.message.includes('forbidden')) {
+        const errorMessage = error.message || String(error);
+        if (errorMessage.includes('API keys') ||
+            errorMessage.includes('HTTP 403') ||
+            errorMessage.includes('quota') ||
+            errorMessage.includes('forbidden')) {
 
           let title, description, message;
 
