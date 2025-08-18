@@ -60,7 +60,7 @@ export default function VideoOutput() {
   });
 
   // Audio store integration
-  const { currentTrack, isPlaying, currentTime } = useAudioStore();
+  const { currentVideo, isPlaying, currentTime, volume, isMuted, togglePlayPause, setVolume, toggleMute } = useAudioStore();
   const { setLoading } = useUIStore();
 
   // Recording timer
