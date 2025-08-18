@@ -176,10 +176,10 @@ export default function QueueSchedule() {
       uniqueId: `local_${p.id}_${index}`
     }));
 
-    const spotifyPlaylistsWithIds = spotifyPlaylists.map((p, index) => ({
+    const youtubePlaylistsWithIds = youtubePlaylists.map((p, index) => ({
       ...p,
-      source: "spotify",
-      uniqueId: `spotify_${p.id}_${index}`
+      source: "youtube",
+      uniqueId: `youtube_${p.id}_${index}`
     }));
 
     // Remove any potential duplicates by uniqueId
