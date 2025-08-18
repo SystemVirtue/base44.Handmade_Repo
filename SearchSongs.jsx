@@ -144,7 +144,7 @@ export default function SearchSongs() {
       }
     };
 
-    checkApiKeys();
+    checkService();
   }, []);
 
   // Enhanced search function
