@@ -47,9 +47,9 @@ export const useAudioStore = create(
       },
 
       play: () => {
-        const { audioInstance, currentTrack } = get();
-        if (audioInstance && currentTrack.url) {
-          audioInstance.play().catch(console.error);
+        const { currentVideo } = get();
+        if (currentVideo && currentVideo.videoId) {
+          // YouTube player will handle play
         }
         set({ isPlaying: true });
       },
