@@ -199,18 +199,18 @@ export default function Layout({ children, currentPageName }) {
           style={{backgroundColor: 'var(--color-primary)'}}
         >
           {/* Header */}
-          <div className="p-4 border-b border-gray-700">
+          <div className="p-4 themed-border" style={{borderBottomWidth: '1px', borderBottomColor: 'var(--color-border)'}}>
             <div className="flex items-center justify-between">
               <div
                 className={`flex items-center gap-3 ${sidebarCollapsed ? "justify-center" : ""}`}
               >
-                <div className="w-10 h-10 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 flex items-center justify-center flex-shrink-0">
+                <div className="w-10 h-10 rounded-full themed-accent-bg flex items-center justify-center flex-shrink-0">
                   <Music className="w-5 h-5 text-white" />
                 </div>
                 {!sidebarCollapsed && (
                   <div>
-                    <h1 className="text-lg font-bold text-white">DJAMMS</h1>
-                    <p className="text-xs text-gray-400">Music Management</p>
+                    <h1 className="text-lg font-bold themed-text-primary">DJAMMS</h1>
+                    <p className="text-xs themed-text-muted">Music Management</p>
                   </div>
                 )}
               </div>
@@ -218,7 +218,7 @@ export default function Layout({ children, currentPageName }) {
               {/* Mobile close button */}
               <button
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="lg:hidden p-1 text-gray-400 hover:text-white"
+                className="lg:hidden p-1 themed-text-muted hover:themed-text-primary"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -287,7 +287,7 @@ export default function Layout({ children, currentPageName }) {
               <>
                 {/* Spotify Integration */}
                 <button className="w-full bg-green-600 hover:bg-green-700 text-white font-medium rounded-full py-2 px-4 transition-colors mb-3 text-sm">
-                  <span className="mr-2">●</span>
+                  <span className="mr-2">���</span>
                   SPOTIFY LOG IN
                 </button>
 
