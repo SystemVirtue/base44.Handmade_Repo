@@ -289,7 +289,7 @@ export default function Dashboard() {
         <div className="p-6 border-b border-gray-700">
           {/* Video Info */}
           <div className="flex items-center gap-6 mb-6">
-            <div className="relative w-24 h-24 rounded-lg shadow-lg overflow-hidden bg-gray-800">
+            <div className="relative w-24 h-24 rounded-lg shadow-lg overflow-hidden themed-surface">
               <img
                 src={currentVideo.thumbnail || 'https://via.placeholder.com/96x96/374151/9ca3af?text=No+Video'}
                 alt={currentVideo.title}
