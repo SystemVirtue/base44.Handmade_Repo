@@ -170,8 +170,8 @@ export default function QueueSchedule() {
   // Get combined playlists for display
   const getCombinedPlaylists = useCallback(() => {
     const combined = [
-      ...allPlaylists.map((p) => ({ ...p, source: "local" })),
-      ...spotifyPlaylists.map((p) => ({ ...p, source: "spotify" })),
+      ...allPlaylists.map((p) => ({ ...p, source: "local", uniqueId: `local_${p.id}` })),
+      ...spotifyPlaylists.map((p) => ({ ...p, source: "spotify", uniqueId: `spotify_${p.id}` })),
     ];
 
     // Filter based on active tab
