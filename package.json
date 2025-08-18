@@ -36,8 +36,6 @@
 
     "react-router-dom": "^6.8.0",
 
-    "youtube-dl-exec": "^3.0.24",
-
     "zustand": "^4.4.1"
 
   },
