@@ -77,7 +77,7 @@ const YouTubePlayer = ({
 
   // Initialize YouTube player
   const initializePlayer = useCallback(() => {
-    if (!videoId || !containerRef.current) return;
+    if (!videoId || !containerRef.current || !window.YT || !window.YT.Player) return;
 
     try {
       const newPlayer = new window.YT.Player(containerRef.current, {
@@ -115,8 +115,12 @@ const YouTubePlayer = ({
 
   // Update video when videoId changes
   useEffect(() => {
-    if (player && videoId) {
-      player.loadVideoById(videoId);
+    if (player && videoId && typeof player.loadVideoById === 'function') {
+      try {
+        player.loadVideoById(videoId);
+      } catch (error) {
+        console.error('Error loading video:', error);
+      }
     }
   }, [player, videoId]);
 
