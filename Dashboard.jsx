@@ -287,24 +287,40 @@ export default function Dashboard() {
       <div className="flex-1 flex flex-col">
         {/* Currently Playing Section */}
         <div className="p-6 border-b border-gray-700">
-          {/* Track Info */}
+          {/* Video Info */}
           <div className="flex items-center gap-6 mb-6">
-            <ArtworkImage
-              track={currentTrack}
-              size="large"
-              className="w-24 h-24 rounded-lg shadow-lg"
-              showLoadingState={true}
-            />
+            <div className="relative w-24 h-24 rounded-lg shadow-lg overflow-hidden bg-gray-800">
+              <img
+                src={currentVideo.thumbnail || 'https://via.placeholder.com/96x96/374151/9ca3af?text=No+Video'}
+                alt={currentVideo.title}
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  e.target.src = 'https://via.placeholder.com/96x96/374151/9ca3af?text=No+Video';
+                }}
+              />
+              <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-30 transition-all duration-200 flex items-center justify-center">
+                <button
+                  onClick={togglePlayPause}
+                  className="opacity-0 hover:opacity-100 transition-opacity p-2 bg-white bg-opacity-20 rounded-full backdrop-blur-sm"
+                >
+                  {isPlaying ? (
+                    <Pause className="w-4 h-4 text-white" />
+                  ) : (
+                    <Play className="w-4 h-4 text-white" />
+                  )}
+                </button>
+              </div>
+            </div>
 
             <div className="flex-1 min-w-0">
               <h1 className="text-2xl font-bold text-white mb-1 truncate">
-                {currentTrack.title}
+                {currentVideo.title || "No video selected"}
               </h1>
               <p className="text-lg text-gray-400 mb-2 truncate">
-                {currentTrack.artist}
+                {currentVideo.channelTitle || "Unknown Channel"}
               </p>
               <p className="text-sm text-gray-500 truncate">
-                {currentTrack.album}
+                {currentVideo.viewCount ? `${(currentVideo.viewCount / 1000000).toFixed(1)}M views` : ''} • {formatTime(currentVideo.duration || 0)}
               </p>
 
               {/* Track actions */}
