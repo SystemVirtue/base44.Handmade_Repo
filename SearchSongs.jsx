@@ -146,6 +146,12 @@ export default function SearchSongs() {
       try {
         const youtubeAPI = getYouTubeAPI();
 
+        // Check if API service is ready before making requests
+        const serviceStatus = youtubeAPI.isServiceReady();
+        if (!serviceStatus.ready) {
+          throw new Error(`YouTube API not ready: ${serviceStatus.reason}`);
+        }
+
         // Build search options
         const searchOptions = {
           maxResults: 25,
