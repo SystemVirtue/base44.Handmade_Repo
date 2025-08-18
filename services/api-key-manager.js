@@ -1,0 +1,321 @@
+/**
+ * YouTube API Key Management System
+ * Handles multiple API keys with automatic rotation and quota management
+ */
+
+class APIKeyManager {
+  constructor() {
+    this.apiKeys = [];
+    this.currentKeyIndex = 0;
+    this.quotaUsage = new Map();
+    this.lastResetTime = new Date().toDateString();
+    this.initialized = false;
+    
+    // Quota limits (YouTube API v3 default: 10,000 units per day)
+    this.DAILY_QUOTA_LIMIT = 10000;
+    this.SEARCH_COST = 100; // Search operation cost
+    this.PLAYLIST_ITEMS_COST = 1; // PlaylistItems operation cost
+    this.VIDEO_DETAILS_COST = 1; // Videos operation cost
+    
+    this.initialize();
+  }
+
+  /**
+   * Initialize the API key manager
+   */
+  async initialize() {
+    try {
+      await this.loadStoredKeys();
+      this.checkDailyReset();
+      this.initialized = true;
+      console.log('API Key Manager initialized with', this.apiKeys.length, 'keys');
+    } catch (error) {
+      console.error('Failed to initialize API Key Manager:', error);
+    }
+  }
+
+  /**
+   * Load API keys from secure storage
+   */
+  async loadStoredKeys() {
+    try {
+      const storedKeys = localStorage.getItem('djamms_youtube_api_keys');
+      const storedUsage = localStorage.getItem('djamms_quota_usage');
+      
+      if (storedKeys) {
+        this.apiKeys = JSON.parse(storedKeys);
+      }
+      
+      if (storedUsage) {
+        const usage = JSON.parse(storedUsage);
+        this.quotaUsage = new Map(usage.data || []);
+        this.lastResetTime = usage.lastReset || new Date().toDateString();
+      }
+    } catch (error) {
+      console.error('Error loading stored API keys:', error);
+      this.apiKeys = [];
+      this.quotaUsage = new Map();
+    }
+  }
+
+  /**
+   * Save API keys to secure storage
+   */
+  async saveKeys() {
+    try {
+      localStorage.setItem('djamms_youtube_api_keys', JSON.stringify(this.apiKeys));
+      localStorage.setItem('djamms_quota_usage', JSON.stringify({
+        data: Array.from(this.quotaUsage.entries()),
+        lastReset: this.lastResetTime
+      }));
+    } catch (error) {
+      console.error('Error saving API keys:', error);
+    }
+  }
+
+  /**
+   * Check if daily quota should be reset
+   */
+  checkDailyReset() {
+    const today = new Date().toDateString();
+    if (this.lastResetTime !== today) {
+      this.resetDailyQuota();
+      this.lastResetTime = today;
+    }
+  }
+
+  /**
+   * Reset daily quota for all keys
+   */
+  resetDailyQuota() {
+    this.quotaUsage.clear();
+    console.log('Daily quota reset for all API keys');
+  }
+
+  /**
+   * Add a new API key
+   */
+  async addKey(apiKey, description = '') {
+    if (!apiKey || typeof apiKey !== 'string') {
+      throw new Error('Invalid API key provided');
+    }
+
+    // Validate the key by making a test request
+    const isValid = await this.validateKey(apiKey);
+    if (!isValid) {
+      throw new Error('API key validation failed');
+    }
+
+    const keyData = {
+      key: apiKey,
+      description: description || `Key ${this.apiKeys.length + 1}`,
+      addedAt: new Date().toISOString(),
+      isActive: true,
+      lastUsed: null,
+      totalRequests: 0
+    };
+
+    this.apiKeys.push(keyData);
+    this.quotaUsage.set(apiKey, 0);
+    await this.saveKeys();
+    
+    console.log('API key added successfully:', description);
+    return true;
+  }
+
+  /**
+   * Remove an API key
+   */
+  async removeKey(index) {
+    if (index < 0 || index >= this.apiKeys.length) {
+      throw new Error('Invalid key index');
+    }
+
+    const removedKey = this.apiKeys.splice(index, 1)[0];
+    this.quotaUsage.delete(removedKey.key);
+    
+    // Adjust current index if necessary
+    if (this.currentKeyIndex >= this.apiKeys.length) {
+      this.currentKeyIndex = Math.max(0, this.apiKeys.length - 1);
+    }
+
+    await this.saveKeys();
+    console.log('API key removed:', removedKey.description);
+  }
+
+  /**
+   * Validate an API key by making a test request
+   */
+  async validateKey(apiKey) {
+    try {
+      const testUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=1&q=test&type=video&key=${apiKey}`;
+      const response = await fetch(testUrl);
+      return response.ok;
+    } catch (error) {
+      console.error('API key validation error:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Get current active API key
+   */
+  getCurrentKey() {
+    if (this.apiKeys.length === 0) {
+      throw new Error('No API keys available');
+    }
+
+    this.checkDailyReset();
+    
+    // Find a key with available quota
+    let attempts = 0;
+    while (attempts < this.apiKeys.length) {
+      const currentKey = this.apiKeys[this.currentKeyIndex];
+      const usage = this.quotaUsage.get(currentKey.key) || 0;
+      
+      if (currentKey.isActive && usage < this.DAILY_QUOTA_LIMIT) {
+        return currentKey.key;
+      }
+      
+      // Move to next key
+      this.rotateKey();
+      attempts++;
+    }
+    
+    throw new Error('All API keys have exceeded their daily quota');
+  }
+
+  /**
+   * Rotate to the next API key
+   */
+  rotateKey() {
+    this.currentKeyIndex = (this.currentKeyIndex + 1) % this.apiKeys.length;
+    console.log(`Rotated to API key ${this.currentKeyIndex + 1}`);
+  }
+
+  /**
+   * Record API usage for quota tracking
+   */
+  recordUsage(operationType, requestCount = 1) {
+    if (this.apiKeys.length === 0) return;
+
+    let cost = 0;
+    switch (operationType) {
+      case 'search':
+        cost = this.SEARCH_COST * requestCount;
+        break;
+      case 'playlistItems':
+        cost = this.PLAYLIST_ITEMS_COST * requestCount;
+        break;
+      case 'videos':
+        cost = this.VIDEO_DETAILS_COST * requestCount;
+        break;
+      default:
+        cost = 1 * requestCount;
+    }
+
+    const currentKey = this.apiKeys[this.currentKeyIndex];
+    if (currentKey) {
+      const currentUsage = this.quotaUsage.get(currentKey.key) || 0;
+      this.quotaUsage.set(currentKey.key, currentUsage + cost);
+      
+      currentKey.lastUsed = new Date().toISOString();
+      currentKey.totalRequests += requestCount;
+      
+      console.log(`API usage recorded: ${cost} units for ${operationType}`);
+      this.saveKeys();
+    }
+  }
+
+  /**
+   * Get quota status for all keys
+   */
+  getQuotaStatus() {
+    return this.apiKeys.map((keyData, index) => {
+      const usage = this.quotaUsage.get(keyData.key) || 0;
+      const remaining = Math.max(0, this.DAILY_QUOTA_LIMIT - usage);
+      const percentUsed = (usage / this.DAILY_QUOTA_LIMIT) * 100;
+      
+      return {
+        index,
+        description: keyData.description,
+        isActive: keyData.isActive,
+        isCurrent: index === this.currentKeyIndex,
+        usage,
+        remaining,
+        percentUsed: Math.round(percentUsed),
+        lastUsed: keyData.lastUsed,
+        totalRequests: keyData.totalRequests
+      };
+    });
+  }
+
+  /**
+   * Get overall statistics
+   */
+  getStatistics() {
+    const totalKeys = this.apiKeys.length;
+    const activeKeys = this.apiKeys.filter(key => key.isActive).length;
+    const totalUsage = Array.from(this.quotaUsage.values()).reduce((sum, usage) => sum + usage, 0);
+    const totalRemaining = activeKeys * this.DAILY_QUOTA_LIMIT - totalUsage;
+    
+    return {
+      totalKeys,
+      activeKeys,
+      totalUsage,
+      totalRemaining,
+      totalQuota: activeKeys * this.DAILY_QUOTA_LIMIT,
+      lastResetTime: this.lastResetTime,
+      currentKeyIndex: this.currentKeyIndex
+    };
+  }
+
+  /**
+   * Toggle key active status
+   */
+  async toggleKeyStatus(index) {
+    if (index < 0 || index >= this.apiKeys.length) {
+      throw new Error('Invalid key index');
+    }
+
+    this.apiKeys[index].isActive = !this.apiKeys[index].isActive;
+    await this.saveKeys();
+    
+    console.log(`API key ${index + 1} ${this.apiKeys[index].isActive ? 'activated' : 'deactivated'}`);
+  }
+
+  /**
+   * Check if service is ready
+   */
+  isReady() {
+    return this.initialized && this.apiKeys.length > 0;
+  }
+
+  /**
+   * Get available quota estimate
+   */
+  getAvailableQuota() {
+    const activeKeys = this.apiKeys.filter(key => key.isActive);
+    let totalAvailable = 0;
+    
+    activeKeys.forEach(keyData => {
+      const usage = this.quotaUsage.get(keyData.key) || 0;
+      const remaining = Math.max(0, this.DAILY_QUOTA_LIMIT - usage);
+      totalAvailable += remaining;
+    });
+    
+    return totalAvailable;
+  }
+}
+
+// Singleton instance
+let apiKeyManager = null;
+
+export function getAPIKeyManager() {
+  if (!apiKeyManager) {
+    apiKeyManager = new APIKeyManager();
+  }
+  return apiKeyManager;
+}
+
+export default APIKeyManager;
