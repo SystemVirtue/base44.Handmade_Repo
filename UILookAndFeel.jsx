@@ -169,8 +169,20 @@ export default function UILookAndFeel() {
   const handleSaveTheme = () => {
     setTheme(localTheme);
     setUnsavedChanges(false);
-    // Show success message
-    alert("Theme saved successfully!");
+
+    // Show success message with more details
+    console.log('Theme saved and applied globally:', localTheme);
+
+    // Optional: Add a toast notification instead of alert
+    const event = new CustomEvent('djamms-notification', {
+      detail: {
+        type: 'success',
+        title: 'Theme Saved',
+        message: `${localTheme.colorPalette.charAt(0).toUpperCase() + localTheme.colorPalette.slice(1)} theme applied to all pages`,
+        duration: 3000
+      }
+    });
+    window.dispatchEvent(event);
   };
 
   const handleResetTheme = () => {
