@@ -83,17 +83,8 @@ app.post('/api/search', async (req, res) => {
     
     const searchResults = await youtubeDl(searchUrl, {
       dumpSingleJson: true,
-      noPlaylist: false,
-      extractFlat: false,
       skipDownload: true,
       format: 'best[height<=720]',
-      getTitle: true,
-      getDescription: true,
-      getThumbnail: true,
-      getDuration: true,
-      getUploader: true,
-      getViewCount: true,
-      getUploadDate: true,
       writeInfoJson: false,
       writeDescription: false,
       writeThumbnail: false,
@@ -388,7 +379,7 @@ app.use((req, res) => {
 // Start server
 app.listen(PORT, () => {
   console.log(`🎥 yt-dlp API server running on port ${PORT}`);
-  console.log(`📡 Health check: http://localhost:${PORT}/health`);
+  console.log(`���� Health check: http://localhost:${PORT}/health`);
 });
 
 export default app;
