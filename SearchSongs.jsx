@@ -217,62 +217,42 @@ export default function SearchSongs() {
       } catch (error) {
         console.error("YouTube search failed:", error.message || error);
 
-        // Check for specific API key related errors
+        // Handle yt-dlp service errors
         const errorMessage = error.message || String(error);
-        if (errorMessage.includes('API keys') ||
-            errorMessage.includes('HTTP 403') ||
-            errorMessage.includes('quota') ||
-            errorMessage.includes('forbidden')) {
 
-          let title, description, message;
+        let title, description, message;
 
-          if (errorMessage.includes('HTTP 403')) {
-            title = '🚫 YouTube API Access Denied';
-            description = 'Invalid API keys detected. Please update your YouTube Data API v3 keys in Settings → API Configuration.';
-            message = "YouTube API keys are invalid or have no permissions. Please check your API key configuration in Settings.";
-          } else if (errorMessage.includes('quota')) {
-            title = '⏱️ YouTube API Quota Exceeded';
-            description = 'Daily API quota limit reached. Try again tomorrow or add more API keys in Settings.';
-            message = "YouTube API daily quota exceeded. Please try again tomorrow or add more API keys.";
-          } else {
-            title = '🔑 YouTube API Key Required';
-            description = 'Add YouTube Data API v3 keys in Settings → API Keys to enable video search and playback.';
-            message = "YouTube API not configured. Please add API keys in Settings to enable video search.";
-          }
-
-          // Show user-friendly notification
-          addNotification({
-            type: "warning",
-            title: "YouTube Search Unavailable",
-            message: message,
-            duration: 10000,
-            persistent: true,
-            action: {
-              text: "Configure API Keys",
-              url: "/settings"
-            }
-          });
-
-          // Set a helpful message in search results
-          setSearchResults([{
-            id: 'api-issue',
-            videoId: 'api-issue',
-            title: title,
-            channelTitle: 'System Message',
-            duration: 0,
-            thumbnail: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIwIiBoZWlnaHQ9IjE4MCIgdmlld0JveD0iMCAwIDMyMCAxODAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIzMjAiIGhlaWdodD0iMTgwIiBmaWxsPSIjZjU5ZTBiIi8+Cjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBkb21pbmFudC1iYXNlbGluZT0iY2VudHJhbCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE0IiBmaWxsPSIjZmZmZmZmIj5BUEkgQ29uZmlndXJhdGlvbiBSZXF1aXJlZDwvdGV4dD4KPHN2Zz4K',
-            viewCount: 0,
-            description: description,
-            isSystemMessage: true
-          }]);
-          setTotalResults(1);
+        if (errorMessage.includes('not ready') || errorMessage.includes('not available')) {
+          title = '⚠️ YouTube Service Unavailable';
+          description = 'yt-dlp service is not available. Please ensure it is properly installed and configured.';
+          message = "YouTube search service is unavailable. Please check the system configuration.";
         } else {
-          addNotification({
-            type: "error",
-            message: "Search failed. Please try again.",
-            duration: 3000,
-          });
+          title = '❌ Search Failed';
+          description = `Search encountered an error: ${errorMessage}`;
+          message = "Search failed. Please try again or check your search terms.";
         }
+
+        // Show user-friendly notification
+        addNotification({
+          type: "error",
+          title: "Search Error",
+          message: message,
+          duration: 5000,
+        });
+
+        // Set a helpful message in search results
+        setSearchResults([{
+          id: 'search-error',
+          videoId: 'search-error',
+          title: title,
+          channelTitle: 'System Message',
+          duration: 0,
+          thumbnail: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIwIiBoZWlnaHQ9IjE4MCIgdmlld0JveD0iMCAwIDMyMCAxODAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIzMjAiIGhlaWdodD0iMTgwIiBmaWxsPSIjZWY0NDQ0Ii8+Cjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBkb21pbmFudC1iYXNlbGluZT0iY2VudHJhbCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE2IiBmaWxsPSIjZmZmZmZmIj5TZWFyY2ggRXJyb3I8L3RleHQ+Cjwvc3ZnPgo=',
+          viewCount: 0,
+          description: description,
+          isSystemMessage: true
+        }]);
+        setTotalResults(1);
       } finally {
         setIsSearching(false);
       }
