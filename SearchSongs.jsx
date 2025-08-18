@@ -37,6 +37,7 @@ import {
   BookmarkPlus,
   SortAsc,
   SortDesc,
+  Settings,
 } from "lucide-react";
 import {
   useSearchStore,
