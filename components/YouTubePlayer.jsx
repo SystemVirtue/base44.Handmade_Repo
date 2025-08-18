@@ -126,15 +126,22 @@ const YouTubePlayer = ({
 
   // Player event handlers
   const handlePlayerReady = useCallback((event) => {
-    setIsLoading(false);
-    setDuration(event.target.getDuration());
-    setAvailableQualities(event.target.getAvailableQualityLevels());
-    setCurrentQuality(event.target.getPlaybackQuality());
-    setVolume(event.target.getVolume());
-    setIsMuted(event.target.isMuted());
-    
-    if (onReady) {
-      onReady(event);
+    try {
+      setIsLoading(false);
+      if (event.target && typeof event.target.getDuration === 'function') {
+        setDuration(event.target.getDuration());
+        setAvailableQualities(event.target.getAvailableQualityLevels());
+        setCurrentQuality(event.target.getPlaybackQuality());
+        setVolume(event.target.getVolume());
+        setIsMuted(event.target.isMuted());
+      }
+
+      if (onReady) {
+        onReady(event);
+      }
+    } catch (error) {
+      console.error('Error in player ready handler:', error);
+      setIsLoading(false);
     }
   }, [onReady]);
 
