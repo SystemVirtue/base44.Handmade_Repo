@@ -332,19 +332,34 @@ class AppInitializationService {
         return;
       }
 
-      if (!this.services.youtube.hasKeys) {
-        console.warn("⚠️ No YouTube API keys available, skipping playlist load");
-        this._setDefaultPlaylistFallback('No YouTube API keys configured');
+      // Check service status
+      if (this.services.youtube.status === 'error') {
+        console.warn(`⚠️ YouTube services in error state: ${this.services.youtube.error}`);
+        this._setDefaultPlaylistFallback(`YouTube services error: ${this.services.youtube.error}`);
         return;
       }
 
-      if (this.services.youtube.status === 'error') {
-        console.warn("⚠️ YouTube services in error state, skipping playlist load");
-        this._setDefaultPlaylistFallback('YouTube services initialization failed');
+      if (this.services.youtube.status === 'degraded') {
+        console.warn(`⚠️ YouTube services degraded: ${this.services.youtube.warning}`);
+        this._setDefaultPlaylistFallback(`YouTube services degraded: ${this.services.youtube.warning}`);
+        return;
+      }
+
+      if (!this.services.youtube.hasKeys) {
+        console.warn("⚠️ No valid YouTube API keys available, skipping playlist load");
+        this._setDefaultPlaylistFallback('No valid YouTube API keys configured');
         return;
       }
 
       const youtubeAPI = this.services.youtube.youtubeAPI;
+
+      // Double-check service readiness before making API calls
+      const healthCheck = youtubeAPI.isServiceReady();
+      if (!healthCheck.ready) {
+        console.warn(`⚠️ YouTube API not ready: ${healthCheck.reason}`);
+        this._setDefaultPlaylistFallback(`YouTube API not ready: ${healthCheck.reason}`);
+        return;
+      }
 
       // Load the default playlist
       const playlist = await youtubeAPI.getCompletePlaylist(this.defaultPlaylistId, {
