@@ -20,9 +20,15 @@ class YtDlpService {
    * Search for YouTube videos using yt-dlp
    */
   async searchVideos(query, options = {}) {
+    // Check if service is ready first
+    const serviceStatus = await this.isServiceReady();
+    if (!serviceStatus.ready) {
+      throw new Error(`yt-dlp service not ready: ${serviceStatus.reason}`);
+    }
+
     const maxResults = options.maxResults || 25;
     const order = options.order || 'relevance';
-    
+
     // Create cache key
     const cacheKey = `search_${query}_${maxResults}_${order}`;
     const cached = this.getCachedData(cacheKey, this.searchCacheTimeout);
@@ -35,7 +41,7 @@ class YtDlpService {
 
       // Use yt-dlp to search YouTube
       const searchUrl = `ytsearch${maxResults}:${query}`;
-      
+
       const searchResults = await youtubeDl(searchUrl, {
         dumpSingleJson: true,
         noPlaylist: false,
