@@ -28,6 +28,7 @@ import { EmergencyActions } from "./utils/emergency-system.js";
 import {
   useAudioProcessing,
   initializeAudioProcessing,
+  resetAudioProcessing,
 } from "./services/audio-processing.js";
 
 export default function Controls() {
