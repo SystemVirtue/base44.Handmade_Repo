@@ -786,25 +786,29 @@ export default function SearchSongs() {
                 <div
                   key={track.id}
                   className={`${
-                    viewMode === "grid"
-                      ? "bg-gray-700 rounded-lg p-4 hover:bg-gray-650 transition-colors"
-                      : "flex items-center gap-4 p-3 bg-gray-700 rounded-lg hover:bg-gray-650 transition-colors"
-                  } ${selectedResults.has(track.id) ? "ring-2 ring-blue-500" : ""}`}
+                    track.isSystemMessage
+                      ? "bg-blue-900/20 border border-blue-600/30 rounded-lg p-4"
+                      : viewMode === "grid"
+                        ? "bg-gray-700 rounded-lg p-4 hover:bg-gray-650 transition-colors"
+                        : "flex items-center gap-4 p-3 bg-gray-700 rounded-lg hover:bg-gray-650 transition-colors"
+                  } ${selectedResults.has(track.id) && !track.isSystemMessage ? "ring-2 ring-blue-500" : ""}`}
                 >
-                  <input
-                    type="checkbox"
-                    checked={selectedResults.has(track.id)}
-                    onChange={(e) => {
-                      const newSelection = new Set(selectedResults);
-                      if (e.target.checked) {
-                        newSelection.add(track.id);
-                      } else {
-                        newSelection.delete(track.id);
-                      }
-                      setSelectedResults(newSelection);
-                    }}
-                    className="rounded"
-                  />
+                  {!track.isSystemMessage && (
+                    <input
+                      type="checkbox"
+                      checked={selectedResults.has(track.id)}
+                      onChange={(e) => {
+                        const newSelection = new Set(selectedResults);
+                        if (e.target.checked) {
+                          newSelection.add(track.id);
+                        } else {
+                          newSelection.delete(track.id);
+                        }
+                        setSelectedResults(newSelection);
+                      }}
+                      className="rounded"
+                    />
+                  )}
 
                   {viewMode === "grid" ? (
                     <div className="text-center">
