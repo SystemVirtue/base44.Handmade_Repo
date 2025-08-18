@@ -402,6 +402,7 @@ export default function VideoOutput() {
             <div className="relative aspect-video bg-gray-900 rounded-lg overflow-hidden">
               {currentVideo?.videoId && previewMode === "live" ? (
                 <YouTubePlayer
+                  key={currentVideo.videoId} // Force remount on video change
                   videoId={currentVideo.videoId}
                   autoplay={isPlaying}
                   controls={true}
@@ -412,6 +413,9 @@ export default function VideoOutput() {
                     // Handle player state changes
                     const playerState = event.data;
                     // You can sync with the main audio store here
+                  }}
+                  onError={(event) => {
+                    console.error('YouTube player error:', event);
                   }}
                   className="rounded-lg"
                 />
