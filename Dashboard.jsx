@@ -573,7 +573,7 @@ export default function Dashboard() {
             )}
 
             {/* Quick add section */}
-            <div className="mt-8 p-4 bg-gray-800 rounded-lg">
+            <div className="mt-8 p-4 themed-surface rounded-lg">
               <h3 className="font-semibold mb-3">Quick Add</h3>
               <div className="flex gap-2">
                 <button
