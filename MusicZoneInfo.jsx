@@ -77,7 +77,7 @@ export default function MusicZoneInfo() {
     };
   }, [currentZone, zoneManager]);
 
-  if (!currentZone || !realTimeData) {
+  if (!currentZone || !realTimeData || !realTimeData.zone) {
     return (
       <div className="h-full bg-gray-900 text-white flex items-center justify-center">
         <div className="text-center">
