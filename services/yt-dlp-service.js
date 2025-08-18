@@ -312,11 +312,33 @@ class YtDlpService {
       }
     } catch (error) {
       console.warn('Backend API not available:', error.message);
+
+      // Check if this is a development vs production environment
+      const isDevelopment = this.apiBaseUrl.includes('localhost');
+      const isProduction = window.location.hostname !== 'localhost';
+
+      let reason = 'Backend yt-dlp API not available.';
+      let suggestion = '';
+
+      if (isDevelopment && isProduction) {
+        reason = 'Development API URL configured in production environment.';
+        suggestion = 'Backend API server needs to be deployed and configured for production.';
+      } else if (isDevelopment) {
+        reason = 'Backend API server not running locally.';
+        suggestion = 'Please start the backend server with: npm run server';
+      } else {
+        reason = 'Backend API server not available.';
+        suggestion = 'Please ensure the yt-dlp API server is deployed and running.';
+      }
+
       return {
         ready: false,
-        reason: 'Backend yt-dlp API not available. Please ensure the API server is running.',
+        reason: reason,
+        suggestion: suggestion,
         error: error.message,
-        apiUrl: this.apiBaseUrl
+        apiUrl: this.apiBaseUrl,
+        isDevelopment,
+        isProduction
       };
     }
   }
