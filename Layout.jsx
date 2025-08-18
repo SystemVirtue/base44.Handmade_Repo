@@ -518,7 +518,7 @@ export default function Layout({ children, currentPageName }) {
           </div>
 
           {/* Page Content */}
-          <div className="flex-1 overflow-auto bg-gray-900">{children}</div>
+          <div className="flex-1 overflow-auto" style={{backgroundColor: 'var(--color-background)'}}>{children}</div>
         </div>
       </div>
 
