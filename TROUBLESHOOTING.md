@@ -44,6 +44,14 @@
    curl https://your-backend-url.com/health
    ```
 
+#### Circuit Breaker Active
+If you see "Service Temporarily Unavailable" with circuit breaker:
+
+1. **Wait for automatic retry:** Circuit breaker will retry after 5 minutes
+2. **Fix underlying issue:** Ensure backend is running and accessible
+3. **Manual reset:** Refresh the page to reset circuit breaker
+4. **Disable backend:** Set `VITE_DISABLE_BACKEND=true` to disable YouTube features
+
 ### "yt-dlp not available" - Binary Missing
 
 **Error:** Backend responds with yt-dlp not found
