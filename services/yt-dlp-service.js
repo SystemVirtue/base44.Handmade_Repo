@@ -30,6 +30,7 @@ class YtDlpService {
           'Content-Type': 'application/json',
           ...options.headers
         },
+        timeout: 5000, // 5 second timeout
         ...options
       });
 
@@ -40,6 +41,12 @@ class YtDlpService {
 
       return await response.json();
     } catch (error) {
+      // Handle specific network errors
+      if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+        console.warn(`Backend API not available at ${this.apiBaseUrl}: Connection failed`);
+        throw new Error('Backend API server is not available. Please ensure the yt-dlp API server is running.');
+      }
+
       console.error(`API request failed: ${endpoint}`, error);
       throw error;
     }
