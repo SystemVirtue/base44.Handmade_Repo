@@ -144,6 +144,20 @@ export default function Controls() {
     eqSettings,
   ]);
 
+  // Cleanup on component unmount
+  useEffect(() => {
+    return () => {
+      if (isAudioProcessingInitialized) {
+        console.log("Controls component unmounting, cleaning up audio processing");
+        try {
+          audioProcessing.cleanup();
+        } catch (error) {
+          console.warn("Error during audio processing cleanup:", error);
+        }
+      }
+    };
+  }, [isAudioProcessingInitialized, audioProcessing]);
+
   const handleVolumeChange = (newVolume) => {
     setVolume(newVolume);
 
