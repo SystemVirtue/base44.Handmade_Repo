@@ -279,7 +279,7 @@ export default function Dashboard() {
     : (currentTime / (currentVideo.duration || 1)) * 100;
 
   return (
-    <div className="flex h-full bg-gray-900 text-white">
+    <div className="flex h-full themed-text-primary" style={{backgroundColor: 'var(--color-background)'}}>
       {/* Hidden audio element */}
       <audio ref={audioRef} preload="metadata" />
 
