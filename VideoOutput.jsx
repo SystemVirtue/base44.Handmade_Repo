@@ -236,7 +236,7 @@ export default function VideoOutput() {
     };
   }, [
     isPlaying,
-    currentTrack,
+    currentVideo,
     currentTime,
     outputState,
     isRecording,
