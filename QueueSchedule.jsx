@@ -77,7 +77,7 @@ export default function QueueSchedule() {
   const [activeTab, setActiveTab] = useState("active");
   const [viewMode, setViewMode] = useState("grid");
   const [searchQuery, setSearchQuery] = useState("");
-  const [spotifyPlaylists, setSpotifyPlaylists] = useState([]);
+  const [youtubePlaylists, setYoutubePlaylists] = useState([]);
   const [allPlaylists, setAllPlaylists] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
