@@ -174,8 +174,8 @@ export default function Layout({ children, currentPageName }) {
 
   const getActiveClassForItem = (item) => {
     return location.pathname === item.url
-      ? "bg-blue-600 text-white shadow-lg"
-      : "text-gray-300 hover:text-white hover:bg-gray-700";
+      ? "themed-accent-bg text-white shadow-lg"
+      : "themed-text-secondary hover:themed-text-primary" + " hover:themed-surface";
   };
 
   return (
