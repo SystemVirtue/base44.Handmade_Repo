@@ -43,23 +43,7 @@ export default function Settings() {
   const { volume, setVolume } = useAudioStore();
   const { currentZone } = useZoneStore();
 
-  // Load API keys on component mount
-  useEffect(() => {
-    loadApiKeys();
-  }, []);
-
-  const loadApiKeys = async () => {
-    try {
-      const apiKeyManager = getAPIKeyManager();
-      const quotaStatus = apiKeyManager.getQuotaStatus();
-      const statistics = apiKeyManager.getStatistics();
-
-      setApiKeys(quotaStatus);
-      setKeyStats(statistics);
-    } catch (error) {
-      console.error('Failed to load API keys:', error);
-    }
-  };
+  // API key loading removed - now using yt-dlp service
 
   // Settings state
   const [settings, setSettings] = useState({
