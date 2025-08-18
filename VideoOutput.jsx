@@ -102,27 +102,161 @@ export default function VideoOutput() {
 
     if (newWindow) {
       newWindow.document.title = 'DJAMMS Video Player';
+
+      // Create the popup window HTML structure
+      newWindow.document.head.innerHTML = `
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>DJAMMS Video Player</title>
+        <script src="https://www.youtube.com/iframe_api"></script>
+        <style>
+          body {
+            margin: 0;
+            font-family: system-ui, sans-serif;
+            background: black;
+            overflow: hidden;
+          }
+          #video-player-container {
+            position: relative;
+            width: 100%;
+            height: calc(100vh - 50px);
+            background: black;
+          }
+          #youtube-player-popup {
+            width: 100%;
+            height: 100%;
+          }
+          .controls-bar {
+            height: 50px;
+            background: #1f2937;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 16px;
+            color: white;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+          }
+          .close-btn {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+          }
+          .close-btn:hover {
+            background: #dc2626;
+          }
+          .video-title {
+            flex: 1;
+            margin-right: 16px;
+            font-size: 14px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+          }
+        </style>
+      `;
+
       newWindow.document.body.innerHTML = `
-        <div id="video-player-container" style="width: 100%; height: calc(100vh - 50px); background: black;"></div>
-        <div style="height: 50px; background: #1f2937; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; color: white;">
-          <span id="video-title">${currentVideo?.title || 'No video playing'}</span>
-          <button onclick="window.close()" style="background: #ef4444; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">Close</button>
+        <div id="video-player-container">
+          <div id="youtube-player-popup"></div>
+        </div>
+        <div class="controls-bar">
+          <span class="video-title" id="video-title">${currentVideo?.title || 'No video playing'}</span>
+          <button class="close-btn" onclick="window.close()">Close Window</button>
         </div>
       `;
 
-      // Add styles
-      const style = newWindow.document.createElement('style');
-      style.textContent = `
-        body { margin: 0; font-family: system-ui, sans-serif; }
-        #video-player-container { position: relative; }
-      `;
-      newWindow.document.head.appendChild(style);
-
       setVideoWindow(newWindow);
+
+      // Initialize YouTube player in the popup window
+      if (currentVideo?.videoId) {
+        // Wait for YouTube API to load in the popup window
+        const initializePopupPlayer = () => {
+          if (newWindow.YT && newWindow.YT.Player) {
+            const popupPlayer = new newWindow.YT.Player('youtube-player-popup', {
+              width: '100%',
+              height: '100%',
+              videoId: currentVideo.videoId,
+              playerVars: {
+                autoplay: isPlaying ? 1 : 0,
+                controls: 1,
+                modestbranding: 1,
+                rel: 0,
+                showinfo: 0,
+                fs: 1,
+                cc_load_policy: 0,
+                iv_load_policy: 3,
+                autohide: 1,
+                playsinline: 1,
+                origin: window.location.origin
+              },
+              events: {
+                onReady: (event) => {
+                  // Sync volume and mute state
+                  if (isMuted) {
+                    event.target.mute();
+                  } else {
+                    event.target.setVolume(volume);
+                  }
+
+                  // Sync playback position
+                  if (currentTime > 0) {
+                    event.target.seekTo(currentTime, true);
+                  }
+
+                  // Start playing if main player was playing
+                  if (isPlaying) {
+                    event.target.playVideo();
+                  }
+                },
+                onStateChange: (event) => {
+                  // Update the video title in the popup
+                  const titleElement = newWindow.document.getElementById('video-title');
+                  if (titleElement && currentVideo?.title) {
+                    titleElement.textContent = currentVideo.title;
+                  }
+                },
+                onError: (event) => {
+                  console.error('YouTube player error in popup:', event.data);
+                }
+              }
+            });
+
+            // Store reference to popup player for potential cleanup
+            newWindow.popupPlayer = popupPlayer;
+          } else {
+            // Retry after a short delay
+            setTimeout(initializePopupPlayer, 100);
+          }
+        };
+
+        // Set up YouTube API ready callback for the popup window
+        newWindow.onYouTubeIframeAPIReady = initializePopupPlayer;
+
+        // If API is already loaded, initialize immediately
+        if (newWindow.YT && newWindow.YT.Player) {
+          initializePopupPlayer();
+        }
+      }
 
       // Handle window close
       newWindow.addEventListener('beforeunload', () => {
         setVideoWindow(null);
+      });
+
+      // Handle window resize to maintain aspect ratio
+      newWindow.addEventListener('resize', () => {
+        const container = newWindow.document.getElementById('video-player-container');
+        if (container) {
+          container.style.height = `${newWindow.innerHeight - 50}px`;
+        }
       });
     }
   };
