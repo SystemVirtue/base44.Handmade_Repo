@@ -191,55 +191,7 @@ export default function Settings() {
     }
   };
 
-  // API Key Management Functions
-  const handleAddApiKey = async () => {
-    if (!newApiKey.key.trim()) return;
-
-    setIsValidatingKey(true);
-    try {
-      const apiKeyManager = getAPIKeyManager();
-      await apiKeyManager.addKey(newApiKey.key.trim(), newApiKey.description.trim());
-
-      setNewApiKey({ key: '', description: '' });
-      setShowAddKey(false);
-      await loadApiKeys();
-      alert('API key added successfully!');
-    } catch (error) {
-      alert(`Failed to add API key: ${error.message}`);
-    } finally {
-      setIsValidatingKey(false);
-    }
-  };
-
-  const handleRemoveApiKey = async (index) => {
-    if (confirm('Are you sure you want to remove this API key?')) {
-      try {
-        const apiKeyManager = getAPIKeyManager();
-        await apiKeyManager.removeKey(index);
-        await loadApiKeys();
-        alert('API key removed successfully!');
-      } catch (error) {
-        alert(`Failed to remove API key: ${error.message}`);
-      }
-    }
-  };
-
-  const handleToggleKeyStatus = async (index) => {
-    try {
-      const apiKeyManager = getAPIKeyManager();
-      await apiKeyManager.toggleKeyStatus(index);
-      await loadApiKeys();
-    } catch (error) {
-      alert(`Failed to toggle key status: ${error.message}`);
-    }
-  };
-
-  const toggleKeyVisibility = (index) => {
-    setShowApiKeys(prev => ({
-      ...prev,
-      [index]: !prev[index]
-    }));
-  };
+  // API Key Management Functions removed - now using yt-dlp
 
   const renderApiKeysSettings = () => (
     <div className="space-y-6">
