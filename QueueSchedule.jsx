@@ -59,7 +59,7 @@ export default function QueueSchedule() {
     addToQueue,
     removeFromQueue,
     clearQueue,
-    currentTrack,
+    currentVideo,
     isPlaying,
     togglePlayPause,
     nextTrack,
@@ -619,18 +619,18 @@ export default function QueueSchedule() {
               </div>
             ) : (
               <div className="space-y-2">
-                {queue.map((track, index) => (
+                {queue.filter(track => track && track.id).map((track, index) => (
                   <div
                     key={track.id}
                     className={`flex items-center gap-4 p-3 rounded-lg transition-colors ${
-                      currentTrack.id === track.id
+                      currentVideo?.id === track.id
                         ? "bg-green-900/30 border border-green-600"
                         : "bg-gray-700 hover:bg-gray-650"
                     }`}
                   >
                     <div className="flex items-center gap-2 text-sm text-gray-400 w-12">
                       #{index + 1}
-                      {currentTrack.id === track.id && (
+                      {currentVideo?.id === track.id && (
                         <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
                       )}
                     </div>
@@ -744,7 +744,7 @@ export default function QueueSchedule() {
                     : "space-y-2"
                 }
               >
-                {displayedPlaylists.map((playlist) => (
+                {displayedPlaylists.filter(playlist => playlist && playlist.uniqueId).map((playlist) => (
                   <div
                     key={playlist.uniqueId}
                     className={`${
