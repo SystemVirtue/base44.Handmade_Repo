@@ -351,7 +351,7 @@ export default function Layout({ children, currentPageName }) {
         {/* Main Content */}
         <div className="flex-1 flex flex-col min-w-0">
           {/* Top Bar */}
-          <div className="h-16 bg-gradient-to-r from-purple-500 to-blue-500 flex items-center justify-between px-6 shadow-lg relative">
+          <div className="h-16 flex items-center justify-between px-6 shadow-lg relative" style={{background: `linear-gradient(to right, var(--color-accent), var(--color-accent))`}}>
             {/* Left side - Mobile menu + Track info */}
             <div className="flex items-center gap-4">
               {/* Mobile menu button */}
