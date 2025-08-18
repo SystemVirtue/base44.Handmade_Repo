@@ -393,7 +393,7 @@ export default function Controls() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Playback Controls */}
-          <div className="bg-gray-800 rounded-lg p-6">
+          <div className="themed-card p-6">
             <h2 className="text-xl font-semibold mb-4">Playback Controls</h2>
 
             {/* Current Track Display */}
