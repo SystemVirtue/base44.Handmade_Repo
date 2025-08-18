@@ -292,7 +292,7 @@ export default function Layout({ children, currentPageName }) {
                 <p className="text-sm font-medium themed-text-primary truncate">
                   {currentZone.name}
                 </p>
-                <p className="text-xs text-gray-400 truncate">
+                <p className="text-xs themed-text-muted truncate">
                   {currentZone.location}
                 </p>
               </div>
