@@ -29,7 +29,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { useUIStore, useAudioStore, useZoneStore } from "./store.js";
-import { getAPIKeyManager } from "./services/api-key-manager.js";
+// Removed API key manager - now using yt-dlp
 
 export default function Settings() {
   const [activeTab, setActiveTab] = useState("general");
