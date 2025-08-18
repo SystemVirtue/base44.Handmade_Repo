@@ -8,8 +8,9 @@
 
 **Symptoms:**
 - YouTube search shows "Backend API Unavailable"
-- Console errors about API requests failing
+- Console errors about API requests failing (initially)
 - Service status shows connection errors
+- After repeated failures: "Service Temporarily Unavailable" (circuit breaker active)
 
 **Solutions:**
 
