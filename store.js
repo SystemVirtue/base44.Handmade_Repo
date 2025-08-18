@@ -20,6 +20,9 @@ export const useAudioStore = create(
         viewCount: 0,
       },
 
+      // Current track (alias for currentVideo for compatibility)
+      currentTrack: null,
+
       // Playback state
       isPlaying: false,
       currentTime: 0,
