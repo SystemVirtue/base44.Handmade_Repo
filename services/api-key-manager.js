@@ -192,9 +192,29 @@ class APIKeyManager {
     try {
       const testUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=1&q=test&type=video&key=${apiKey}`;
       const response = await fetch(testUrl);
-      return response.ok;
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        const reason = errorData?.error?.errors?.[0]?.reason || 'unknown';
+        const message = errorData?.error?.message || response.statusText;
+
+        console.error(`API key validation failed for ...${apiKey.slice(-8)}:`, {
+          status: response.status,
+          reason,
+          message
+        });
+
+        if (response.status === 403 && reason === 'forbidden') {
+          console.error('API key appears to be invalid or YouTube Data API v3 is not enabled');
+        }
+
+        return false;
+      }
+
+      console.log(`API key validation successful for ...${apiKey.slice(-8)}`);
+      return true;
     } catch (error) {
-      console.error('API key validation error:', error);
+      console.error(`API key validation error for ...${apiKey.slice(-8)}:`, error);
       return false;
     }
   }
