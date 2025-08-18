@@ -505,7 +505,7 @@ export default function Controls() {
           </div>
 
           {/* Volume Controls */}
-          <div className="bg-gray-800 rounded-lg p-6">
+          <div className="themed-card p-6">
             <h2 className="text-xl font-semibold mb-4">Volume Controls</h2>
 
             {/* Master Volume */}
