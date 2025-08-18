@@ -116,19 +116,19 @@ export default function SearchSongs() {
           if (serviceStatus.reason.includes('No API keys')) {
             title = '🚀 Welcome to YouTube Video Search!';
             description = 'To search and play YouTube videos, please add YouTube Data API v3 keys in Settings → API Keys.';
-            thumbnail = 'https://via.placeholder.com/320x180/10b981/ffffff?text=Setup+Required';
+            thumbnail = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIwIiBoZWlnaHQ9IjE4MCIgdmlld0JveD0iMCAwIDMyMCAxODAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIzMjAiIGhlaWdodD0iMTgwIiBmaWxsPSIjMTBiOTgxIi8+Cjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBkb21pbmFudC1iYXNlbGluZT0iY2VudHJhbCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE2IiBmaWxsPSIjZmZmZmZmIj5TZXR1cCBSZXF1aXJlZDwvdGV4dD4KPHN2Zz4K';
           } else if (serviceStatus.reason.includes('quota')) {
             title = '⏱️ YouTube API Quota Exceeded';
             description = 'Daily API quota limit reached. Try again tomorrow or add more API keys in Settings.';
-            thumbnail = 'https://via.placeholder.com/320x180/f59e0b/ffffff?text=Quota+Exceeded';
+            thumbnail = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIwIiBoZWlnaHQ9IjE4MCIgdmlld0JveD0iMCAwIDMyMCAxODAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIzMjAiIGhlaWdodD0iMTgwIiBmaWxsPSIjZjU5ZTBiIi8+Cjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBkb21pbmFudC1iYXNlbGluZT0iY2VudHJhbCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE2IiBmaWxsPSIjZmZmZmZmIj5RdW90YSBFeGNlZWRlZDwvdGV4dD4KPHN2Zz4K';
           } else if (serviceStatus.reason.includes('valid')) {
             title = '🔑 Invalid YouTube API Keys';
             description = 'Current API keys are invalid. Please update your YouTube Data API v3 keys in Settings → API Configuration.';
-            thumbnail = 'https://via.placeholder.com/320x180/ef4444/ffffff?text=Invalid+Keys';
+            thumbnail = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIwIiBoZWlnaHQ9IjE4MCIgdmlld0JveD0iMCAwIDMyMCAxODAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIzMjAiIGhlaWdodD0iMTgwIiBmaWxsPSIjZWY0NDQ0Ii8+Cjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBkb21pbmFudC1iYXNlbGluZT0iY2VudHJhbCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE2IiBmaWxsPSIjZmZmZmZmIj5JbnZhbGlkIEtleXM8L3RleHQ+Cjwvc3ZnPgo=';
           } else {
             title = '⚠️ YouTube Service Unavailable';
             description = `YouTube API service is not ready: ${serviceStatus.reason}`;
-            thumbnail = 'https://via.placeholder.com/320x180/6b7280/ffffff?text=Service+Unavailable';
+            thumbnail = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIwIiBoZWlnaHQ9IjE4MCIgdmlld0JveD0iMCAwIDMyMCAxODAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIzMjAiIGhlaWdodD0iMTgwIiBmaWxsPSIjNmI3MjgwIi8+Cjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBkb21pbmFudC1iYXNlbGluZT0iY2VudHJhbCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE2IiBmaWxsPSIjZmZmZmZmIj5TZXJ2aWNlIFVuYXZhaWxhYmxlPC90ZXh0Pgo8L3N2Zz4K';
           }
 
           // Show helpful initial message based on specific issue
@@ -287,7 +287,7 @@ export default function SearchSongs() {
             title: title,
             channelTitle: 'System Message',
             duration: 0,
-            thumbnail: 'https://via.placeholder.com/320x180/f59e0b/ffffff?text=API+Configuration+Required',
+            thumbnail: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIwIiBoZWlnaHQ9IjE4MCIgdmlld0JveD0iMCAwIDMyMCAxODAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIzMjAiIGhlaWdodD0iMTgwIiBmaWxsPSIjZjU5ZTBiIi8+Cjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBkb21pbmFudC1iYXNlbGluZT0iY2VudHJhbCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE0IiBmaWxsPSIjZmZmZmZmIj5BUEkgQ29uZmlndXJhdGlvbiBSZXF1aXJlZDwvdGV4dD4KPHN2Zz4K',
             viewCount: 0,
             description: description,
             isSystemMessage: true
