@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { CheckCircle, AlertTriangle, XCircle, Settings, RefreshCw } from 'lucide-react';
-import { getYouTubeAPI } from '../../services/youtube-api.js';
+import { getYtDlpService } from '../../services/yt-dlp-service.js';
 
 export default function YouTubeServiceStatus({ compact = false }) {
   const [serviceStatus, setServiceStatus] = useState(null);
@@ -8,10 +8,10 @@ export default function YouTubeServiceStatus({ compact = false }) {
 
   const checkServiceStatus = async () => {
     try {
-      const youtubeAPI = getYouTubeAPI();
-      const status = youtubeAPI.isServiceReady();
-      const usage = youtubeAPI.getUsageStatistics();
-      
+      const ytDlpService = getYtDlpService();
+      const status = await ytDlpService.isServiceReady();
+      const usage = ytDlpService.getUsageStatistics();
+
       setServiceStatus({
         ...status,
         usage: usage
