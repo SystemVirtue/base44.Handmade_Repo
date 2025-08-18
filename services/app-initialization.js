@@ -638,20 +638,15 @@ class AppInitializationService {
   }
 }
 
-// Create singleton instance
-const appInitialization = new AppInitializationService();
+// Singleton instance
+let appInitializationInstance = null;
 
-export default appInitialization;
-
-// Auto-initialize when module is imported
-if (typeof window !== "undefined") {
-  // Initialize when DOM is ready
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", () => {
-      appInitialization.initialize();
-    });
-  } else {
-    // DOM is already ready
-    appInitialization.initialize();
+export function getAppInitialization() {
+  if (!appInitializationInstance) {
+    appInitializationInstance = new AppInitializationService();
   }
+  return appInitializationInstance;
 }
+
+// Legacy export
+export default getAppInitialization;
