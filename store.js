@@ -55,10 +55,7 @@ export const useAudioStore = create(
       },
 
       pause: () => {
-        const { audioInstance } = get();
-        if (audioInstance) {
-          audioInstance.pause();
-        }
+        // YouTube player will handle pause
         set({ isPlaying: false });
       },
 
