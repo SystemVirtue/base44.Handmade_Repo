@@ -202,17 +202,10 @@ class YtDlpService {
    */
   async getStreamingUrl(videoId) {
     try {
-      const videoUrl = videoId.startsWith('http') 
-        ? videoId 
-        : `https://www.youtube.com/watch?v=${videoId}`;
+      console.log(`Getting streaming URL via API: ${videoId}`);
 
-      const result = await youtubeDl(videoUrl, {
-        getUrl: true,
-        format: 'best[height<=720]/best', // Prefer 720p, fallback to best available
-        skipDownload: true,
-      });
-
-      return result.url || result;
+      const response = await this.makeApiRequest(`/api/stream/${encodeURIComponent(videoId)}`);
+      return response.streamingUrl;
     } catch (error) {
       console.error(`Failed to get streaming URL for ${videoId}:`, error);
       throw error;
