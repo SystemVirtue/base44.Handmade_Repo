@@ -27,7 +27,7 @@ export default function Dashboard() {
 
   // Store state
   const {
-    currentTrack,
+    currentVideo,
     isPlaying,
     currentTime,
     volume,
