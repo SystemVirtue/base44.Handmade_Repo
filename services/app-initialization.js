@@ -309,8 +309,22 @@ class AppInitializationService {
     console.log("🎵 Loading default YouTube playlist...");
 
     try {
-      if (!this.services.youtube?.hasKeys) {
+      // Check if YouTube services are available
+      if (!this.services.youtube) {
+        console.warn("⚠️ YouTube services not initialized, skipping playlist load");
+        this._setDefaultPlaylistFallback('YouTube services not available');
+        return;
+      }
+
+      if (!this.services.youtube.hasKeys) {
         console.warn("⚠️ No YouTube API keys available, skipping playlist load");
+        this._setDefaultPlaylistFallback('No YouTube API keys configured');
+        return;
+      }
+
+      if (this.services.youtube.status === 'error') {
+        console.warn("⚠️ YouTube services in error state, skipping playlist load");
+        this._setDefaultPlaylistFallback('YouTube services initialization failed');
         return;
       }
 
@@ -356,15 +370,47 @@ class AppInitializationService {
           videoCount: playlist.videos.length,
           title: playlist.title
         };
+      } else {
+        console.warn("⚠️ Default playlist returned no videos");
+        this._setDefaultPlaylistFallback('Default playlist is empty or inaccessible');
       }
     } catch (error) {
       console.error("❌ Failed to load default playlist:", error);
+
+      // Check if it's an API key related error
+      if (error.message.includes('YouTube API') || error.message.includes('403') || error.message.includes('quota')) {
+        console.error("💡 Tip: Check your YouTube API key configuration in Settings");
+      }
+
       this.services.defaultPlaylist = {
         status: "error",
         error: error.message,
         playlistId: this.defaultPlaylistId
       };
     }
+  }
+
+  /**
+   * Set fallback state when YouTube playlist cannot be loaded
+   */
+  _setDefaultPlaylistFallback(reason) {
+    this.services.defaultPlaylist = {
+      status: "unavailable",
+      reason: reason,
+      playlistId: this.defaultPlaylistId,
+      videoCount: 0
+    };
+
+    // Initialize empty queue state
+    import("../store.js").then(({ useAudioStore }) => {
+      const store = useAudioStore.getState();
+      // Don't clear existing queue, just ensure we have proper fallback
+      if (!store.currentVideo?.videoId) {
+        console.log("📱 App ready without default playlist - users can search and add videos manually");
+      }
+    }).catch(error => {
+      console.error("Failed to access audio store:", error);
+    });
   }
 
   /**
