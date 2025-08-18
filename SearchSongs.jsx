@@ -111,8 +111,27 @@ export default function SearchSongs() {
         const serviceStatus = await ytDlpService.isServiceReady();
 
         if (!serviceStatus.ready) {
-          const title = '⚠️ YouTube Service Unavailable';
-          const description = `yt-dlp service is not ready: ${serviceStatus.reason}. Please ensure yt-dlp is properly installed.`;
+          let title = '⚠️ YouTube Service Unavailable';
+          let description = `${serviceStatus.reason}`;
+          let actionText = 'Learn More';
+          let actionUrl = '#';
+
+          // Customize message based on the specific issue
+          if (serviceStatus.isDevelopment && serviceStatus.isProduction) {
+            title = '🔧 Backend Configuration Required';
+            description = 'The application is running in production but trying to connect to localhost. Please deploy the backend API server.';
+            actionText = 'View Deployment Guide';
+            actionUrl = '/docs/backend-setup';
+          } else if (serviceStatus.isDevelopment) {
+            title = '🔌 Backend Server Not Running';
+            description = `${serviceStatus.suggestion || 'Please start the backend server with: npm run server'}`;
+            actionText = 'View Setup Guide';
+            actionUrl = '/docs/backend-setup';
+          } else {
+            title = '⚠️ Backend API Unavailable';
+            description = `${serviceStatus.suggestion || serviceStatus.reason}`;
+          }
+
           const thumbnail = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIwIiBoZWlnaHQ9IjE4MCIgdmlld0JveD0iMCAwIDMyMCAxODAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIzMjAiIGhlaWdodD0iMTgwIiBmaWxsPSIjNmI3MjgwIi8+Cjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBkb21pbmFudC1iYXNlbGluZT0iY2VudHJhbCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE2IiBmaWxsPSIjZmZmZmZmIj5TZXJ2aWNlIFVuYXZhaWxhYmxlPC90ZXh0Pgo8L3N2Zz4K';
 
           // Show service status message
@@ -125,22 +144,40 @@ export default function SearchSongs() {
             thumbnail: thumbnail,
             viewCount: 0,
             description: description,
-            isSystemMessage: true
+            isSystemMessage: true,
+            actionText: actionText,
+            actionUrl: actionUrl,
+            apiUrl: serviceStatus.apiUrl
           }]);
           setTotalResults(1);
 
-          // Show notification
+          // Show notification with appropriate severity
+          const notificationType = serviceStatus.isDevelopment ? "info" : "warning";
           addNotification({
-            type: "warning",
-            title: "YouTube Service Unavailable",
-            message: "yt-dlp service is not available. Video search may not work properly.",
-            duration: 8000
+            type: notificationType,
+            title: "YouTube Service Status",
+            message: serviceStatus.suggestion || "Backend API is not available.",
+            duration: serviceStatus.isDevelopment ? 10000 : 8000
           });
         } else {
           console.log('yt-dlp service is ready:', serviceStatus.version);
         }
       } catch (error) {
         console.error('Error checking service:', error);
+
+        // Show generic error message
+        setSearchResults([{
+          id: 'service-error',
+          videoId: 'service-error',
+          title: '❌ Service Check Failed',
+          channelTitle: 'System Error',
+          duration: 0,
+          thumbnail: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIwIiBoZWlnaHQ9IjE4MCIgdmlld0JveD0iMCAwIDMyMCAxODAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIzMjAiIGhlaWdodD0iMTgwIiBmaWxsPSIjZWY0NDQ0Ii8+Cjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBkb21pbmFudC1iYXNlbGluZT0iY2VudHJhbCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE2IiBmaWxsPSIjZmZmZmZmIj5TZXJ2aWNlIEVycm9yPC90ZXh0Pgo8L3N2Zz4K',
+          viewCount: 0,
+          description: `Failed to check service status: ${error.message}`,
+          isSystemMessage: true
+        }]);
+        setTotalResults(1);
       }
     };
 
