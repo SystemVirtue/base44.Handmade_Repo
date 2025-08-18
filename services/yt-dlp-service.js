@@ -108,32 +108,14 @@ class YtDlpService {
     }
 
     try {
-      // Handle both video IDs and full URLs
-      const videoUrl = videoId.startsWith('http') 
-        ? videoId 
-        : `https://www.youtube.com/watch?v=${videoId}`;
+      console.log(`Getting video details via API: ${videoId}`);
 
-      console.log(`Getting video details with yt-dlp: ${videoId}`);
+      const response = await this.makeApiRequest(`/api/video/${encodeURIComponent(videoId)}`);
+      const video = this.createVideoFromApiData(response);
 
-      const videoData = await youtubeDl(videoUrl, {
-        dumpSingleJson: true,
-        skipDownload: true,
-        format: 'best[height<=720]',
-        getTitle: true,
-        getDescription: true,
-        getThumbnail: true,
-        getDuration: true,
-        getUploader: true,
-        getViewCount: true,
-        getUploadDate: true,
-        getUrl: true, // Get direct URL for streaming
-      });
-
-      const video = this.createVideoFromYtDlpData(videoData);
-      
       // Cache the result
       this.setCachedData(cacheKey, video);
-      
+
       return video;
     } catch (error) {
       console.error(`Failed to get video details for ${videoId}:`, error);
