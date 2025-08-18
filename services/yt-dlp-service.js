@@ -345,16 +345,19 @@ class YtDlpService {
   async isServiceReady() {
     try {
       // Test yt-dlp availability with a simple command
-      await youtubeDl('--version');
+      const version = await youtubeDl('--version');
+      console.log(`yt-dlp version: ${version}`);
       return {
         ready: true,
-        version: 'yt-dlp available'
+        version: version.trim()
       };
     } catch (error) {
+      console.warn('yt-dlp not available:', error.message);
       return {
         ready: false,
-        reason: 'yt-dlp not available or not properly installed',
-        error: error.message
+        reason: 'yt-dlp not available or not properly installed. Please install yt-dlp to enable YouTube video features.',
+        error: error.message,
+        installUrl: 'https://github.com/yt-dlp/yt-dlp#installation'
       };
     }
   }
