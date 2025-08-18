@@ -397,7 +397,7 @@ export default function Controls() {
             <h2 className="text-xl font-semibold mb-4">Playback Controls</h2>
 
             {/* Current Track Display */}
-            <div className="bg-gray-700 rounded-lg p-4 mb-4">
+            <div className="themed-surface rounded-lg p-4 mb-4">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 bg-gray-600 rounded overflow-hidden">
                   {activeTrack?.thumbnail ? (
