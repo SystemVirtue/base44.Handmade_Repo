@@ -461,7 +461,7 @@ export default function Layout({ children, currentPageName }) {
                 </button>
 
                 {showVolumeSlider && (
-                  <div className="absolute top-full right-0 mt-2 bg-gray-800 rounded-lg p-3 shadow-lg z-50">
+                  <div className="absolute top-full right-0 mt-2 themed-surface rounded-lg p-3 shadow-lg z-50">
                     <div className="flex items-center gap-2 w-24">
                       <input
                         type="range"
