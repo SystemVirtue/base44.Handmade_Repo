@@ -377,7 +377,7 @@ export default function Dashboard() {
               <span>
                 {formatTime(isDragging ? localCurrentTime : currentTime)}
               </span>
-              <span>{formatTime(currentTrack.duration)}</span>
+              <span>{formatTime(currentVideo.duration || 0)}</span>
             </div>
 
             <div
