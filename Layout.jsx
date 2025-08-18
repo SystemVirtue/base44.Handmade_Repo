@@ -351,21 +351,24 @@ export default function Layout({ children, currentPageName }) {
                 <Menu className="w-5 h-5" />
               </button>
 
-              {/* Current track info */}
+              {/* Current video info */}
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 bg-gray-800 rounded-lg overflow-hidden">
                   <img
-                    src={currentTrack.thumbnail}
-                    alt={currentTrack.title}
+                    src={currentVideo?.thumbnail || 'https://via.placeholder.com/48x48/374151/9ca3af?text=No+Video'}
+                    alt={currentVideo?.title || 'No video'}
                     className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.target.src = 'https://via.placeholder.com/48x48/374151/9ca3af?text=No+Video';
+                    }}
                   />
                 </div>
                 <div className="min-w-0">
                   <h2 className="text-lg font-semibold text-white truncate">
-                    {currentTrack.title}
+                    {currentVideo?.title || 'No video selected'}
                   </h2>
                   <p className="text-sm text-gray-200 truncate">
-                    {currentTrack.artist}
+                    {currentVideo?.channelTitle || 'Unknown channel'}
                   </p>
                 </div>
               </div>
