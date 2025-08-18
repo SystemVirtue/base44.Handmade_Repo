@@ -194,9 +194,9 @@ export default function QueueSchedule() {
     });
 
     // Filter based on active tab
-    let filtered = combined;
+    let filtered = deduplicated;
     if (activeTab === "active") {
-      filtered = combined.filter((p) => starredPlaylists.has(p.id));
+      filtered = deduplicated.filter((p) => starredPlaylists.has(p.id));
     }
 
     // Apply search filter
