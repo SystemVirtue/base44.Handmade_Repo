@@ -145,6 +145,7 @@ export default function Settings() {
     { id: "general", label: "General", icon: SettingsIcon },
     { id: "audio", label: "Audio", icon: Volume2 },
     { id: "network", label: "Network", icon: Wifi },
+    { id: "apikeys", label: "API Keys", icon: Key },
     { id: "security", label: "Security", icon: Shield },
     { id: "notifications", label: "Notifications", icon: Bell },
     { id: "backup", label: "Backup", icon: Database },
