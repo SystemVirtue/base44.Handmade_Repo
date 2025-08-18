@@ -117,7 +117,7 @@ export default function Layout({ children, currentPageName }) {
 
   // Store state
   const {
-    currentTrack,
+    currentVideo,
     isPlaying,
     currentTime,
     volume,
