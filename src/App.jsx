@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import {
   BrowserRouter as Router,
   Routes,
@@ -7,6 +7,7 @@ import {
 } from "react-router-dom";
 import { AuthProvider, useAuth } from "./contexts/AuthContext.jsx";
 import { ErrorProvider, ErrorBoundary } from "./contexts/ErrorContext.jsx";
+import { getAppInitialization } from "../services/app-initialization.js";
 import Login from "./Login.jsx";
 import Layout from "../Layout.jsx";
 import Dashboard from "../Dashboard.jsx";
