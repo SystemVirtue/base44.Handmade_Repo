@@ -275,7 +275,6 @@ app.get('/api/stream/:videoId', async (req, res) => {
     const result = await youtubeDl(videoUrl, {
       getUrl: true,
       format: 'best[height<=720]/best',
-      skipDownload: true,
     });
 
     res.json({
