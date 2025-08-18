@@ -377,12 +377,48 @@ class YtDlpService {
    * Check if the service is ready (backend API availability)
    */
   async isServiceReady() {
+    // If backend is explicitly disabled, return disabled status
+    if (this.backendDisabled) {
+      return {
+        ready: false,
+        reason: 'Backend API is disabled via configuration.',
+        suggestion: 'YouTube video features are disabled. Remove VITE_DISABLE_BACKEND=true to enable.',
+        disabled: true
+      };
+    }
+
+    // If circuit breaker is open, return cached status
+    if (!this.shouldAttemptConnection()) {
+      const isDevelopment = this.apiBaseUrl.includes('localhost');
+      const isProduction = window.location.hostname !== 'localhost';
+
+      return {
+        ready: false,
+        reason: 'Backend API is temporarily unavailable (circuit breaker active).',
+        suggestion: isDevelopment
+          ? 'Please start the backend server with: npm run server'
+          : 'Backend API server needs to be deployed and running.',
+        apiUrl: this.apiBaseUrl,
+        isDevelopment,
+        isProduction,
+        circuitBreakerOpen: true,
+        retryAfter: Math.ceil((this.serviceStatus.backoffTime - (Date.now() - this.serviceStatus.lastCheck)) / 1000)
+      };
+    }
+
     try {
-      console.log('Checking backend API health...');
+      // Only log on first attempt or after successful reconnection
+      if (this.serviceStatus.available !== true) {
+        console.log('Checking backend API health...');
+      }
+
       const response = await this.makeApiRequest('/health');
 
       if (response.status === 'ok') {
-        console.log(`Backend API ready: ${response.version}`);
+        // Only log on first success or after being down
+        if (this.serviceStatus.available !== true) {
+          console.log(`Backend API ready: ${response.version}`);
+        }
         return {
           ready: true,
           version: response.version,
@@ -396,7 +432,10 @@ class YtDlpService {
         };
       }
     } catch (error) {
-      console.warn('Backend API not available:', error.message);
+      // Don't log if we already know the service is down
+      if (this.serviceStatus.failureCount === 1) {
+        console.warn('Backend API not available:', error.message);
+      }
 
       // Check if this is a development vs production environment
       const isDevelopment = this.apiBaseUrl.includes('localhost');
@@ -405,7 +444,10 @@ class YtDlpService {
       let reason = 'Backend yt-dlp API not available.';
       let suggestion = '';
 
-      if (isDevelopment && isProduction) {
+      if (error.isCircuitBreakerOpen) {
+        reason = 'Backend API is temporarily unavailable (too many failures).';
+        suggestion = 'Service will retry automatically. Check that the backend server is running.';
+      } else if (isDevelopment && isProduction) {
         reason = 'Development API URL configured in production environment.';
         suggestion = 'Backend API server needs to be deployed and configured for production.';
       } else if (isDevelopment) {
@@ -423,7 +465,9 @@ class YtDlpService {
         error: error.message,
         apiUrl: this.apiBaseUrl,
         isDevelopment,
-        isProduction
+        isProduction,
+        failureCount: this.serviceStatus.failureCount,
+        circuitBreakerOpen: error.isCircuitBreakerOpen || false
       };
     }
   }
