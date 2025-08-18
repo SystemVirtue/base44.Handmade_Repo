@@ -534,7 +534,7 @@ export default function VideoOutput() {
             </div>
 
             <div className="relative aspect-video bg-gray-900 rounded-lg overflow-hidden">
-              {currentVideo?.videoId && previewMode === "live" ? (
+              {currentVideo?.videoId && previewMode === "live" && (!videoWindow || videoWindow.closed) ? (
                 <YouTubePlayer
                   key={currentVideo.videoId} // Force remount on video change
                   videoId={currentVideo.videoId}
@@ -553,6 +553,24 @@ export default function VideoOutput() {
                   }}
                   className="rounded-lg"
                 />
+              ) : currentVideo?.videoId && previewMode === "live" && videoWindow && !videoWindow.closed ? (
+                <div className="w-full h-full flex items-center justify-center bg-gray-800">
+                  <div className="text-center">
+                    <ExternalLink className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-300 text-lg font-medium">Video playing in external window</p>
+                    <p className="text-gray-500 text-sm mt-2">{currentVideo.title}</p>
+                    <button
+                      onClick={() => {
+                        if (videoWindow && !videoWindow.closed) {
+                          videoWindow.focus();
+                        }
+                      }}
+                      className="mt-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                    >
+                      Focus Video Window
+                    </button>
+                  </div>
+                </div>
               ) : (
                 <>
                   <canvas
