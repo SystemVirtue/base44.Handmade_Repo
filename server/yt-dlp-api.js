@@ -158,14 +158,6 @@ app.get('/api/video/:videoId', async (req, res) => {
       dumpSingleJson: true,
       skipDownload: true,
       format: 'best[height<=720]',
-      getTitle: true,
-      getDescription: true,
-      getThumbnail: true,
-      getDuration: true,
-      getUploader: true,
-      getViewCount: true,
-      getUploadDate: true,
-      getUrl: true,
     });
 
     const video = processVideoData(videoData);
@@ -379,7 +371,7 @@ app.use((req, res) => {
 // Start server
 app.listen(PORT, () => {
   console.log(`🎥 yt-dlp API server running on port ${PORT}`);
-  console.log(`���� Health check: http://localhost:${PORT}/health`);
+  console.log(`📡 Health check: http://localhost:${PORT}/health`);
 });
 
 export default app;
