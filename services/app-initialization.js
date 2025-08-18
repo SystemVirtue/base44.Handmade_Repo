@@ -154,14 +154,30 @@ class AppInitializationService {
       // Initialize YouTube API service
       const youtubeAPI = getYouTubeAPI();
 
-      this.services.youtube = {
-        status: "ready",
-        apiKeyManager,
-        youtubeAPI,
-        hasKeys: apiKeyManager.isReady(),
-      };
+      // Check service health
+      const healthCheck = youtubeAPI.isServiceReady();
 
-      console.log("✅ YouTube services initialized");
+      if (healthCheck.ready) {
+        this.services.youtube = {
+          status: "ready",
+          apiKeyManager,
+          youtubeAPI,
+          hasKeys: true,
+          health: healthCheck
+        };
+        console.log("✅ YouTube services initialized successfully");
+        console.log(`📊 API Status: ${healthCheck.stats.activeKeys}/${healthCheck.stats.totalKeys} keys active, ${healthCheck.stats.availableQuota} quota available`);
+      } else {
+        console.warn(`⚠️ YouTube services initialized but not ready: ${healthCheck.reason}`);
+        this.services.youtube = {
+          status: "degraded",
+          apiKeyManager,
+          youtubeAPI,
+          hasKeys: false,
+          health: healthCheck,
+          warning: healthCheck.reason
+        };
+      }
     } catch (error) {
       console.error("❌ YouTube services initialization failed:", error);
       // Don't throw - app can run without YouTube initially
