@@ -501,7 +501,7 @@ export default function Layout({ children, currentPageName }) {
                   </span>
                 </div>
 
-                <div className="text-gray-200">
+                <div className="themed-text-secondary">
                   {currentZone.name.split(" - ")[0]} •{" "}
                   <Volume2 className="w-4 h-4 inline ml-1" />
                 </div>
