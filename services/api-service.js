@@ -315,7 +315,7 @@ class APIService {
         },
       },
       tracks: this.generateMockTracks(500),
-      playlists: this.generateMockPlaylists(),
+      playlists: this.generateEmptyPlaylists(),
       youtubePlaylist: this.generateDefaultYouTubePlaylist(),
       schedules: [],
       systemStatus: {
