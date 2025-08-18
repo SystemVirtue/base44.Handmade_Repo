@@ -432,6 +432,9 @@ class AppInitializationService {
       videoCount: 0
     };
 
+    // Show user-friendly notification about API key issues
+    this._showAPIKeyNotification(reason);
+
     // Initialize empty queue state
     import("../store.js").then(({ useAudioStore }) => {
       const store = useAudioStore.getState();
@@ -442,6 +445,56 @@ class AppInitializationService {
     }).catch(error => {
       console.error("Failed to access audio store:", error);
     });
+  }
+
+  /**
+   * Show user-friendly notification about YouTube API issues
+   */
+  _showAPIKeyNotification(reason) {
+    // Determine the type of issue and create appropriate message
+    let title = "YouTube Service Notice";
+    let message = reason;
+    let type = "warning";
+    let actionText = null;
+    let actionUrl = null;
+
+    if (reason.includes('API key') || reason.includes('403') || reason.includes('forbidden')) {
+      title = "YouTube API Configuration Needed";
+      message = "YouTube features are currently unavailable. Please configure valid API keys in Settings.";
+      type = "warning";
+      actionText = "Configure API Keys";
+      actionUrl = "/settings";
+    } else if (reason.includes('quota')) {
+      title = "YouTube API Quota Exceeded";
+      message = "Daily YouTube API quota has been exceeded. Please try again tomorrow or add more API keys.";
+      type = "warning";
+    } else if (reason.includes('degraded')) {
+      title = "YouTube Service Degraded";
+      message = "YouTube services are running with limited functionality. Some features may not work properly.";
+      type = "info";
+    }
+
+    // Dispatch notification event
+    const notificationEvent = new CustomEvent('djamms-notification', {
+      detail: {
+        type: type,
+        title: title,
+        message: message,
+        duration: 10000, // Show for 10 seconds
+        persistent: true, // Don't auto-dismiss
+        action: actionText ? {
+          text: actionText,
+          url: actionUrl
+        } : null
+      }
+    });
+
+    // Delay notification to ensure UI is ready
+    setTimeout(() => {
+      window.dispatchEvent(notificationEvent);
+    }, 2000);
+
+    console.log(`📢 User notification: ${title} - ${message}`);
   }
 
   /**
