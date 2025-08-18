@@ -462,7 +462,7 @@ export default function Dashboard() {
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setShowQueue(!showQueue)}
-                  className="px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded text-sm transition-colors"
+                  className="px-3 py-1 themed-surface hover:bg-opacity-80 rounded text-sm transition-colors"
                 >
                   {showQueue ? "Hide Queue" : "Show Queue"}
                 </button>
