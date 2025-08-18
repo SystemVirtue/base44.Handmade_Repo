@@ -15,6 +15,7 @@ class AppInitializationService {
     this.initializationPromise = null;
     this.services = {};
     this.healthCheckInterval = null;
+    this.defaultPlaylistId = "PLJ7vMjpVbhBWLWJpweVDki43Wlcqzsqdu";
   }
 
   /**
