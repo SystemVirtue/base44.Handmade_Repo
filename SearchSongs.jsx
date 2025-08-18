@@ -879,13 +879,50 @@ export default function SearchSongs() {
                       <p className="text-gray-300 text-sm mb-4">
                         {track.description}
                       </p>
-                      <button
-                        onClick={() => window.location.href = '/settings'}
-                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded transition-colors text-sm"
-                      >
-                        <Settings className="w-4 h-4 inline mr-2" />
-                        Go to Settings
-                      </button>
+                      {track.apiUrl && (
+                        <p className="text-xs text-gray-500 mb-3">
+                          API URL: {track.apiUrl}
+                        </p>
+                      )}
+                      {track.actionUrl && track.actionUrl !== '#' ? (
+                        <a
+                          href={track.actionUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded transition-colors text-sm"
+                        >
+                          <Settings className="w-4 h-4 mr-2" />
+                          {track.actionText || 'Learn More'}
+                        </a>
+                      ) : (
+                        <button
+                          onClick={() => {
+                            // Try to open a new window with documentation
+                            const newWindow = window.open('about:blank', '_blank');
+                            if (newWindow) {
+                              newWindow.document.write(`
+                                <html>
+                                  <head><title>Backend Setup Guide</title></head>
+                                  <body style="font-family: sans-serif; padding: 20px; max-width: 800px; margin: 0 auto;">
+                                    <h1>YouTube Backend API Setup</h1>
+                                    <h2>Quick Start</h2>
+                                    <p>To enable YouTube video search, you need to run the backend API server:</p>
+                                    <pre style="background: #f0f0f0; padding: 10px; border-radius: 4px;">npm run server</pre>
+                                    <p>The backend server should run on port 3001.</p>
+                                    <h2>For Production</h2>
+                                    <p>Deploy the backend API server separately and configure the API URL.</p>
+                                    <p>See the project's BACKEND_SETUP.md file for detailed instructions.</p>
+                                  </body>
+                                </html>
+                              `);
+                            }
+                          }}
+                          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded transition-colors text-sm"
+                        >
+                          <Settings className="w-4 h-4 inline mr-2" />
+                          {track.actionText || 'Setup Guide'}
+                        </button>
+                      )}
                     </div>
                   ) : viewMode === "grid" ? (
                     <div className="text-center">
