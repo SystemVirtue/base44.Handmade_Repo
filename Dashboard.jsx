@@ -323,26 +323,26 @@ export default function Dashboard() {
                 {currentVideo.viewCount ? `${(currentVideo.viewCount / 1000000).toFixed(1)}M views` : ''} • {formatTime(currentVideo.duration || 0)}
               </p>
 
-              {/* Track actions */}
+              {/* Video actions */}
               <div className="flex items-center gap-3 mt-3">
                 <button
-                  onClick={() => handleToggleFavorite(currentTrack.id)}
+                  onClick={() => handleToggleFavorite(currentVideo.id)}
                   className={`flex items-center gap-1 transition-colors ${
-                    isFavorite(currentTrack.id)
+                    isFavorite(currentVideo.id)
                       ? "text-red-400 hover:text-red-300"
                       : "text-gray-400 hover:text-red-400"
                   }`}
                 >
                   <Heart
-                    className={`w-4 h-4 ${isFavorite(currentTrack.id) ? "fill-current" : ""}`}
+                    className={`w-4 h-4 ${isFavorite(currentVideo.id) ? "fill-current" : ""}`}
                   />
                   <span className="text-sm">
-                    {isFavorite(currentTrack.id) ? "Liked" : "Like"}
+                    {isFavorite(currentVideo.id) ? "Liked" : "Like"}
                   </span>
                 </button>
                 <button
-                  onClick={() => handleVote(currentTrack.id)}
-                  disabled={hasVoted(currentTrack.id)}
+                  onClick={() => handleVote(currentVideo.id)}
+                  disabled={hasVoted(currentVideo.id)}
                   className={`flex items-center gap-1 transition-colors ${
                     hasVoted(currentTrack.id)
                       ? "text-green-400 cursor-not-allowed"
