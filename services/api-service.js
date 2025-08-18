@@ -32,10 +32,10 @@ class APIService {
         delete: "/playlists/:id",
         tracks: "/playlists/:id/tracks",
       },
-      spotify: {
-        auth: "/integrations/spotify/auth",
-        playlists: "/integrations/spotify/playlists",
-        tracks: "/integrations/spotify/tracks",
+      youtube: {
+        search: "/integrations/youtube/search",
+        playlists: "/integrations/youtube/playlists",
+        videos: "/integrations/youtube/videos",
       },
       system: {
         status: "/system/status",
