@@ -111,7 +111,10 @@ export default function Controls() {
   useEffect(() => {
     const { audioInstance } = useAudioStore.getState();
 
-    if (audioInstance && !isAudioProcessingInitialized) {
+    // Only initialize if we have an audio instance and haven't initialized yet
+    if (audioInstance && !isAudioProcessingInitialized && !audioProcessing.isInitialized) {
+      console.log("Initializing audio processing...");
+
       initializeAudioProcessing(audioInstance)
         .then((success) => {
           if (success) {
@@ -119,18 +122,24 @@ export default function Controls() {
             console.log("Audio processing initialized successfully");
 
             // Apply initial EQ settings
-            audioProcessing.setEQSettings(eqSettings);
+            try {
+              audioProcessing.setEQSettings(eqSettings);
+            } catch (error) {
+              console.warn("Failed to apply initial EQ settings:", error);
+            }
           } else {
             console.error("Failed to initialize audio processing");
+            // Don't retry automatically to avoid infinite loops
           }
         })
         .catch((error) => {
           console.error("Audio processing initialization error:", error);
+          // Don't retry automatically to avoid infinite loops
         });
     }
   }, [
+    audioProcessing.isInitialized,  // Watch the processor's initialization state
     isAudioProcessingInitialized,
-    audioProcessing,
     eqSettings,
   ]);
 
