@@ -294,7 +294,7 @@ export default function QueueSchedule() {
     if (selectedPlaylists.size === playlists.length) {
       setSelectedPlaylists(new Set());
     } else {
-      setSelectedPlaylists(new Set(playlists.map((p) => p.id)));
+      setSelectedPlaylists(new Set(playlists.map((p) => p.uniqueId)));
     }
   }, [getCombinedPlaylists, selectedPlaylists.size]);
 
