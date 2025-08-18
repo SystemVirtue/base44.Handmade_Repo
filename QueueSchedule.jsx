@@ -183,7 +183,7 @@ export default function QueueSchedule() {
     }));
 
     // Remove any potential duplicates by uniqueId
-    const combined = [...localPlaylists, ...spotifyPlaylistsWithIds];
+    const combined = [...localPlaylists, ...youtubePlaylistsWithIds];
     const seenIds = new Set();
     const deduplicated = combined.filter((playlist) => {
       if (seenIds.has(playlist.uniqueId)) {
