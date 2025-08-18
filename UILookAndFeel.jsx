@@ -249,7 +249,7 @@ export default function UILookAndFeel() {
     colorPalettes[0];
 
   return (
-    <div className="p-8 text-white bg-gray-900 h-full overflow-hidden flex flex-col">
+    <div className="p-8 themed-text-primary h-full overflow-hidden flex flex-col" style={{backgroundColor: 'var(--color-background)'}}>
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <Palette className="w-8 h-8 text-blue-400" />
