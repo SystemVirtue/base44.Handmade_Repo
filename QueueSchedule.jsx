@@ -169,10 +169,29 @@ export default function QueueSchedule() {
 
   // Get combined playlists for display
   const getCombinedPlaylists = useCallback(() => {
-    const combined = [
-      ...allPlaylists.map((p) => ({ ...p, source: "local", uniqueId: `local_${p.id}` })),
-      ...spotifyPlaylists.map((p) => ({ ...p, source: "spotify", uniqueId: `spotify_${p.id}` })),
-    ];
+    // Create unique IDs with more context and deduplicate
+    const localPlaylists = allPlaylists.map((p, index) => ({
+      ...p,
+      source: "local",
+      uniqueId: `local_${p.id}_${index}`
+    }));
+
+    const spotifyPlaylistsWithIds = spotifyPlaylists.map((p, index) => ({
+      ...p,
+      source: "spotify",
+      uniqueId: `spotify_${p.id}_${index}`
+    }));
+
+    // Remove any potential duplicates by uniqueId
+    const combined = [...localPlaylists, ...spotifyPlaylistsWithIds];
+    const seenIds = new Set();
+    const deduplicated = combined.filter((playlist) => {
+      if (seenIds.has(playlist.uniqueId)) {
+        return false;
+      }
+      seenIds.add(playlist.uniqueId);
+      return true;
+    });
 
     // Filter based on active tab
     let filtered = combined;
