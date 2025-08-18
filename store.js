@@ -44,7 +44,7 @@ export const useAudioStore = create(
 
       // Actions
       setCurrentVideo: (video) => {
-        set({ currentVideo: video });
+        set({ currentVideo: video, currentTrack: video });
         // Add to playback history
         persistenceService.addToPlaybackHistory(video);
       },
