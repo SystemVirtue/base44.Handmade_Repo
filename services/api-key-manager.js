@@ -204,27 +204,41 @@ class APIKeyManager {
    */
   getCurrentKey() {
     if (this.apiKeys.length === 0) {
-      throw new Error('No API keys available');
+      console.error('YouTube API Error: No API keys configured');
+      throw new Error('No YouTube API keys available. Please add valid API keys in Settings.');
     }
 
     this.checkDailyReset();
-    
+
     // Find a key with available quota
     let attempts = 0;
+    const activeKeys = this.apiKeys.filter(key => key.isActive);
+
+    if (activeKeys.length === 0) {
+      console.error('YouTube API Error: No active API keys');
+      throw new Error('All YouTube API keys are disabled. Please enable at least one key in Settings.');
+    }
+
     while (attempts < this.apiKeys.length) {
       const currentKey = this.apiKeys[this.currentKeyIndex];
       const usage = this.quotaUsage.get(currentKey.key) || 0;
-      
+
       if (currentKey.isActive && usage < this.DAILY_QUOTA_LIMIT) {
+        console.log(`Using YouTube API key: ...${currentKey.key.slice(-8)} (${currentKey.description})`);
         return currentKey.key;
       }
-      
+
+      if (currentKey.isActive && usage >= this.DAILY_QUOTA_LIMIT) {
+        console.warn(`API key ${currentKey.description} has exceeded daily quota (${usage}/${this.DAILY_QUOTA_LIMIT})`);
+      }
+
       // Move to next key
       this.rotateKey();
       attempts++;
     }
-    
-    throw new Error('All API keys have exceeded their daily quota');
+
+    console.error('YouTube API Error: All keys exceeded quota');
+    throw new Error('All YouTube API keys have exceeded their daily quota. Please wait for quota reset or add more keys.');
   }
 
   /**
