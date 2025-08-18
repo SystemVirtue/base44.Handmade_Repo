@@ -211,9 +211,11 @@ function App() {
     <ErrorBoundary>
       <ErrorProvider>
         <AuthProvider>
-          <Router>
-            <AppRoutes />
-          </Router>
+          <ThemeProvider>
+            <Router>
+              <AppRoutes />
+            </Router>
+          </ThemeProvider>
         </AuthProvider>
       </ErrorProvider>
     </ErrorBoundary>
