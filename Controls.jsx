@@ -46,6 +46,7 @@ export default function Controls() {
 
   // Audio store integration
   const {
+    currentVideo,
     currentTrack,
     isPlaying,
     volume,
@@ -57,6 +58,9 @@ export default function Controls() {
     setVolume,
     toggleMute,
   } = useAudioStore();
+
+  // Use currentVideo as fallback for currentTrack
+  const activeTrack = currentTrack || currentVideo;
 
   const { currentZone, updateZone } = useZoneStore();
   const uiStore = useUIStore;
