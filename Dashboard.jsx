@@ -382,7 +382,8 @@ export default function Dashboard() {
 
             <div
               ref={progressRef}
-              className="relative h-2 bg-gray-700 rounded-full cursor-pointer group"
+              className="relative h-2 rounded-full cursor-pointer group"
+              style={{backgroundColor: 'var(--color-surface)'}}
               onMouseDown={handleProgressMouseDown}
             >
               <div
