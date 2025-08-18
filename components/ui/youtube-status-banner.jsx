@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { AlertTriangle, CheckCircle, XCircle, Settings, RefreshCw, ExternalLink } from 'lucide-react';
-import { getYouTubeAPI } from '../../services/youtube-api.js';
+import { getYtDlpService } from '../../services/yt-dlp-service.js';
 
 export default function YouTubeStatusBanner({ onDismiss }) {
   const [serviceStatus, setServiceStatus] = useState(null);
@@ -9,8 +9,8 @@ export default function YouTubeStatusBanner({ onDismiss }) {
 
   const checkServiceStatus = async () => {
     try {
-      const youtubeAPI = getYouTubeAPI();
-      const status = youtubeAPI.isServiceReady();
+      const ytDlpService = getYtDlpService();
+      const status = await ytDlpService.isServiceReady();
       setServiceStatus(status);
     } catch (error) {
       setServiceStatus({
