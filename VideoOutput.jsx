@@ -12,8 +12,11 @@ import {
   Save,
   Upload,
   Download,
+  ExternalLink,
+  X,
 } from "lucide-react";
 import { useAudioStore, useUIStore, formatTime } from "./store.js";
+import YouTubePlayer from "./components/YouTubePlayer.jsx";
 
 export default function VideoOutput() {
   const canvasRef = useRef(null);
