@@ -473,7 +473,7 @@ export default function Layout({ children, currentPageName }) {
                         }
                         className="flex-1"
                       />
-                      <span className="text-xs text-gray-400 w-8">
+                      <span className="text-xs themed-text-muted w-8">
                         {volume}%
                       </span>
                     </div>
