@@ -429,7 +429,7 @@ export default function QueueSchedule() {
               All Playlists
               {activeTab === "all" && (
                 <span className="bg-gray-500 text-xs px-2 py-1 rounded-full">
-                  {allPlaylists.length + spotifyPlaylists.length}
+                  {allPlaylists.length + youtubePlaylists.length}
                 </span>
               )}
             </div>
