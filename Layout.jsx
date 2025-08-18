@@ -335,7 +335,7 @@ export default function Layout({ children, currentPageName }) {
               <div className="space-y-2">
                 <button
                   onClick={handleLogout}
-                  className="w-full p-2 text-gray-400 hover:text-white transition-colors"
+                  className="w-full p-2 themed-text-muted hover:themed-text-primary transition-colors"
                   title="Logout"
                 >
                   <LogOut className="w-4 h-4" />
@@ -344,7 +344,7 @@ export default function Layout({ children, currentPageName }) {
             )}
 
             {/* Version */}
-            <div className="text-xs text-gray-500 text-center">v3.28.12</div>
+            <div className="text-xs themed-text-muted text-center">v3.28.12</div>
           </div>
         </div>
 
