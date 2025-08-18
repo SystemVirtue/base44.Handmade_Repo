@@ -7,6 +7,7 @@ class AudioProcessor {
   constructor() {
     this.audioContext = null;
     this.sourceNode = null;
+    this.currentAudioElement = null;
     this.eqFilters = {};
     this.gainNode = null;
     this.analyserNode = null;
