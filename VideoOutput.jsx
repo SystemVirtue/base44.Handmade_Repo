@@ -335,10 +335,32 @@ export default function VideoOutput() {
 
   const closeVideoWindow = () => {
     if (videoWindow && !videoWindow.closed) {
+      // Clean up the popup player
+      if (videoWindow.popupPlayer && typeof videoWindow.popupPlayer.destroy === 'function') {
+        try {
+          videoWindow.popupPlayer.destroy();
+        } catch (error) {
+          console.error('Error destroying popup player:', error);
+        }
+      }
       videoWindow.close();
     }
     setVideoWindow(null);
   };
+
+  // Check if window is still open periodically
+  useEffect(() => {
+    if (videoWindow) {
+      const checkWindowInterval = setInterval(() => {
+        if (videoWindow.closed) {
+          setVideoWindow(null);
+          clearInterval(checkWindowInterval);
+        }
+      }, 1000);
+
+      return () => clearInterval(checkWindowInterval);
+    }
+  }, [videoWindow]);
 
   const updateVideoWindowSettings = (newSettings) => {
     setVideoWindowSettings(prev => ({ ...prev, ...newSettings }));
