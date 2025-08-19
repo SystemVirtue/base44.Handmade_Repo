@@ -284,13 +284,10 @@ class AppInitializationService {
     console.log("📚 Loading initial application data...");
 
     try {
-      // Load initial music library sample
+      // Since our backend only supports YouTube endpoints, use mock data for other services
+      // All these calls will be handled by mock handlers in api-service.js
       const musicLibrary = await apiService.getMusicLibrary(1, 20);
-
-      // Load user playlists
       const playlists = await apiService.getPlaylists();
-
-      // Load system status
       const systemStatus = await apiService.getSystemStatus();
 
       this.services.initialData = {
@@ -298,9 +295,10 @@ class AppInitializationService {
         musicLibrary: musicLibrary.success ? musicLibrary.data : null,
         playlists: playlists.success ? playlists.data : [],
         systemStatus: systemStatus.success ? systemStatus.data : null,
+        note: "Using mock data since backend only supports YouTube endpoints",
       };
 
-      console.log("✅ Initial data loaded successfully");
+      console.log("✅ Initial data loaded successfully (mock data)");
     } catch (error) {
       console.error("❌ Failed to load initial data:", error);
 

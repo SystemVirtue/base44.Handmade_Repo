@@ -7,9 +7,14 @@
 class APIService {
   constructor() {
     this.baseURL =
-      import.meta.env?.VITE_API_BASE_URL || "http://localhost:3001/api";
+      import.meta.env?.VITE_API_BASE_URL || "https://djamms-backend.onrender.com/api";
+    // Use mock mode for most endpoints since backend only supports YouTube functionality
     this.mockMode = import.meta.env?.VITE_MOCK_MODE !== "false";
     this.token = localStorage.getItem("djamms_auth_token");
+
+    // Track which endpoints should use real backend vs mock
+    this.realBackendEndpoints = ['/integrations/youtube/search', '/integrations/youtube/videos', '/integrations/youtube/playlists'];
+    this.backendAvailable = false;
 
     // API endpoints configuration
     this.endpoints = {
@@ -66,9 +71,11 @@ class APIService {
    * Generic HTTP request method
    */
   async request(endpoint, options = {}) {
-    const url = this.mockMode ? "mock" : `${this.baseURL}${endpoint}`;
+    // Force mock mode for all endpoints except YouTube-related ones
+    const shouldUseMock = this.mockMode || !this.realBackendEndpoints.includes(endpoint);
+    const url = shouldUseMock ? "mock" : `${this.baseURL}${endpoint}`;
 
-    if (this.mockMode) {
+    if (shouldUseMock) {
       return this.handleMockRequest(endpoint, options);
     }
 

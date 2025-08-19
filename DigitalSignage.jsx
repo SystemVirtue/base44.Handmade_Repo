@@ -294,7 +294,7 @@ export default function DigitalSignage() {
   };
 
   return (
-    <div className="p-8 text-white bg-gray-900 h-full overflow-hidden flex flex-col">
+    <div className="p-4 md:p-8 text-white bg-gray-900 h-full overflow-hidden flex flex-col max-w-full">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <Monitor className="w-8 h-8 text-blue-400" />
@@ -445,7 +445,7 @@ export default function DigitalSignage() {
       </div>
 
       {/* Media Grid/List */}
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1 overflow-auto max-w-full">
         {filteredItems.length === 0 ? (
           <div className="bg-gray-800 rounded-lg p-12 text-center">
             <Monitor className="w-16 h-16 text-gray-600 mx-auto mb-4" />
@@ -469,7 +469,7 @@ export default function DigitalSignage() {
             )}
           </div>
         ) : viewMode === "grid" ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 max-w-full">
             {filteredItems.map((item) => (
               <div
                 key={item.id}
@@ -481,11 +481,12 @@ export default function DigitalSignage() {
                 onClick={() => handleSelectItem(item.id)}
               >
                 {/* Thumbnail */}
-                <div className="relative aspect-video bg-gray-700">
+                <div className="relative aspect-video bg-gray-700 overflow-hidden">
                   <img
                     src={item.thumbnail}
                     alt={item.name}
                     className="w-full h-full object-cover"
+                    style={{ maxWidth: '100%', height: 'auto' }}
                   />
 
                   {/* Overlay Icons */}
@@ -736,7 +737,8 @@ export default function DigitalSignage() {
                 <img
                   src={showPreview.url}
                   alt={showPreview.name}
-                  className="max-w-full max-h-96 object-contain rounded"
+                  className="max-w-full max-h-96 object-contain rounded mx-auto block"
+                  style={{ maxWidth: '100%', height: 'auto' }}
                 />
               ) : showPreview.type === "video" ? (
                 <video controls className="max-w-full max-h-96 rounded">

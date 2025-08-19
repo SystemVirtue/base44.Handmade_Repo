@@ -195,7 +195,7 @@ export default function Layout({ children, currentPageName }) {
             isMobileMenuOpen
               ? "translate-x-0"
               : "-translate-x-full lg:translate-x-0"
-          } fixed lg:relative inset-y-0 left-0 z-50 flex flex-col transition-all duration-300 ease-in-out`}
+          } fixed lg:relative inset-y-0 left-0 z-50 flex flex-col transition-all duration-300 ease-in-out flex-shrink-0 lg:block`}
           style={{backgroundColor: 'var(--color-primary)'}}
         >
           {/* Header */}
@@ -343,9 +343,9 @@ export default function Layout({ children, currentPageName }) {
         </div>
 
         {/* Main Content */}
-        <div className="flex-1 flex flex-col min-w-0">
+        <div className="flex-1 flex flex-col min-w-0 w-full">
           {/* Top Bar */}
-          <div className="h-16 flex items-center justify-between px-6 shadow-lg relative" style={{background: `linear-gradient(to right, var(--color-accent), var(--color-accent))`}}>
+          <div className="h-16 flex items-center justify-between px-6 shadow-lg relative flex-shrink-0" style={{background: `linear-gradient(to right, var(--color-accent), var(--color-accent))`}}>
             {/* Left side - Mobile menu + Track info */}
             <div className="flex items-center gap-4">
               {/* Mobile menu button */}
@@ -510,7 +510,7 @@ export default function Layout({ children, currentPageName }) {
           </div>
 
           {/* Page Content */}
-          <div className="flex-1 overflow-auto" style={{backgroundColor: 'var(--color-background)'}}>{children}</div>
+          <div className="flex-1 overflow-auto w-full" style={{backgroundColor: 'var(--color-background)'}}>{children}</div>
         </div>
       </div>
 
