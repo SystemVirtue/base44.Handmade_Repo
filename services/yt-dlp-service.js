@@ -523,14 +523,30 @@ class YtDlpService {
   }
 }
 
-// Singleton instance
+// Singleton instance with proper isolation
 let ytDlpService = null;
 
 export function getYtDlpService() {
   if (!ytDlpService) {
     ytDlpService = new YtDlpService();
+
+    // Debug logging for development
+    if (import.meta.env.DEV) {
+      console.log('🎯 YtDlpService singleton created');
+
+      // Add global reference for debugging
+      window.__ytDlpService = ytDlpService;
+    }
   }
   return ytDlpService;
+}
+
+// Export function to reset service (for testing/debugging)
+export function resetYtDlpService() {
+  if (ytDlpService) {
+    console.log('🔄 Resetting YtDlpService singleton');
+    ytDlpService = null;
+  }
 }
 
 export default YtDlpService;
