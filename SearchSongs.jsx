@@ -105,7 +105,11 @@ export default function SearchSongs() {
     setRecentSearches(recent);
 
     // Check if yt-dlp service is ready (only once on mount)
+    let hasChecked = false; // Prevent multiple rapid checks
     const checkService = async () => {
+      // Prevent rapid repeated calls
+      if (hasChecked) return;
+      hasChecked = true;
       try {
         const ytDlpService = getYtDlpService();
         const serviceStatus = await ytDlpService.isServiceReady();
