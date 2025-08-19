@@ -188,14 +188,14 @@ export default function Layout({ children, currentPageName }) {
         />
       )}
 
-      <div className="flex h-screen relative">
+      <div className="flex h-screen">
         {/* Sidebar */}
         <div
           className={`${sidebarCollapsed ? "w-16" : "w-64"} ${
             isMobileMenuOpen
               ? "translate-x-0"
               : "-translate-x-full lg:translate-x-0"
-          } fixed lg:static inset-y-0 left-0 z-50 flex flex-col transition-all duration-300 ease-in-out flex-shrink-0`}
+          } fixed lg:relative inset-y-0 left-0 z-50 flex flex-col transition-all duration-300 ease-in-out flex-shrink-0 lg:block`}
           style={{backgroundColor: 'var(--color-primary)'}}
         >
           {/* Header */}
