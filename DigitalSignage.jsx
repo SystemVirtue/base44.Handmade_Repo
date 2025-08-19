@@ -737,7 +737,8 @@ export default function DigitalSignage() {
                 <img
                   src={showPreview.url}
                   alt={showPreview.name}
-                  className="max-w-full max-h-96 object-contain rounded"
+                  className="max-w-full max-h-96 object-contain rounded mx-auto block"
+                  style={{ maxWidth: '100%', height: 'auto' }}
                 />
               ) : showPreview.type === "video" ? (
                 <video controls className="max-w-full max-h-96 rounded">
