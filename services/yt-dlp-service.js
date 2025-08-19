@@ -31,6 +31,11 @@ class YtDlpService {
     this.backendDisabled = import.meta.env.VITE_DISABLE_BACKEND === 'true';
     this.circuitBreakerOpen = false;
     this.suppressErrors = false; // Flag to suppress error logging
+
+    // Debouncing for service checks
+    this.lastServiceCheck = 0;
+    this.serviceCheckDebounce = 5000; // 5 seconds between checks
+    this.isCheckingService = false;
   }
 
   /**
