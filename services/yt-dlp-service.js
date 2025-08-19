@@ -88,6 +88,13 @@ class YtDlpService {
     this.serviceStatus.available = true;
     this.serviceStatus.failureCount = 0;
     this.serviceStatus.lastCheck = Date.now();
+
+    // Reset circuit breaker flags
+    if (this.circuitBreakerOpen) {
+      console.log('🟢 Circuit breaker closed: Backend API connection restored');
+      this.circuitBreakerOpen = false;
+      this.suppressErrors = false;
+    }
   }
 
   /**
