@@ -8,8 +8,13 @@ class APIService {
   constructor() {
     this.baseURL =
       import.meta.env?.VITE_API_BASE_URL || "https://djamms-backend.onrender.com/api";
+    // Use mock mode for most endpoints since backend only supports YouTube functionality
     this.mockMode = import.meta.env?.VITE_MOCK_MODE !== "false";
     this.token = localStorage.getItem("djamms_auth_token");
+
+    // Track which endpoints should use real backend vs mock
+    this.realBackendEndpoints = ['/integrations/youtube/search', '/integrations/youtube/videos', '/integrations/youtube/playlists'];
+    this.backendAvailable = false;
 
     // API endpoints configuration
     this.endpoints = {
