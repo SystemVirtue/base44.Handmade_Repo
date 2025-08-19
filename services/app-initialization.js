@@ -386,6 +386,16 @@ class AppInitializationService {
           store.setCurrentVideo(playlist.videos[0]);
         }
 
+        // Check if auto-play is enabled and start playback
+        const userPrefs = persistenceService.getUserPreferences();
+        if (userPrefs.autoPlay && playlist.videos.length > 0) {
+          // Small delay to ensure video is loaded
+          setTimeout(() => {
+            store.play();
+            console.log("🎵 Auto-play started");
+          }, 1000);
+        }
+
         console.log(`✅ Loaded ${playlist.videos.length} videos from default playlist`);
 
         this.services.defaultPlaylist = {
