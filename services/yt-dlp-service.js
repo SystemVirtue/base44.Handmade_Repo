@@ -32,9 +32,7 @@ class YtDlpService {
     this.circuitBreakerOpen = false;
     this.suppressErrors = false; // Flag to suppress error logging
 
-    // Debouncing for service checks
-    this.lastServiceCheck = 0;
-    this.serviceCheckDebounce = 5000; // 5 seconds between checks
+    // Simple flag to prevent concurrent service checks
     this.isCheckingService = false;
   }
 
