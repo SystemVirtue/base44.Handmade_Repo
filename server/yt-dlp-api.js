@@ -11,7 +11,17 @@ const app = express();
 const PORT = process.env.PORT || process.env.YT_DLP_API_PORT || 3001;
 
 // Middleware
-app.use(cors());
+const corsOrigins = process.env.CORS_ORIGINS
+  ? process.env.CORS_ORIGINS.split(',')
+  : ['http://localhost:3000', 'http://localhost:5173']; // Default for development
+
+app.use(cors({
+  origin: corsOrigins,
+  credentials: true,
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
 app.use(express.json());
 
 // Cache for storing results
