@@ -122,10 +122,11 @@ class YtDlpService {
    * Make API request to backend
    */
   async makeApiRequest(endpoint, options = {}) {
-    // Check if we should attempt connection
+    // CRITICAL: Check circuit breaker first - this prevents ALL network calls
     if (!this.shouldAttemptConnection()) {
       const error = new Error('Backend API is temporarily unavailable (circuit breaker open)');
       error.isCircuitBreakerOpen = true;
+      // Don't log this error - it's expected behavior
       throw error;
     }
 
@@ -153,19 +154,21 @@ class YtDlpService {
     } catch (error) {
       this.recordFailure();
 
-      // Handle specific network errors with less verbose logging
+      // Handle specific network errors with controlled logging
       if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
-        // Only log once when service becomes unavailable
-        if (this.serviceStatus.failureCount === 1) {
-          console.warn(`Backend API not available at ${this.apiBaseUrl}: Connection failed`);
+        // Only log the FIRST failure to avoid console spam
+        if (!this.suppressErrors && this.serviceStatus.failureCount === 1) {
+          console.warn(`🔗 Backend API connection failed: ${this.apiBaseUrl}`);
+          console.info('💡 Circuit breaker will activate after', this.serviceStatus.maxFailures, 'failures');
         }
+
         const serviceError = new Error('Backend API server is not available');
         serviceError.isNetworkError = true;
         throw serviceError;
       }
 
-      // Only log API errors if they're not repeated failures
-      if (this.serviceStatus.failureCount <= 2) {
+      // Only log non-network errors if we're not suppressing errors
+      if (!this.suppressErrors && this.serviceStatus.failureCount <= this.serviceStatus.maxFailures) {
         console.error(`API request failed: ${endpoint}`, error.message);
       }
       throw error;
