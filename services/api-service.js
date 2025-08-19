@@ -71,9 +71,11 @@ class APIService {
    * Generic HTTP request method
    */
   async request(endpoint, options = {}) {
-    const url = this.mockMode ? "mock" : `${this.baseURL}${endpoint}`;
+    // Force mock mode for all endpoints except YouTube-related ones
+    const shouldUseMock = this.mockMode || !this.realBackendEndpoints.includes(endpoint);
+    const url = shouldUseMock ? "mock" : `${this.baseURL}${endpoint}`;
 
-    if (this.mockMode) {
+    if (shouldUseMock) {
       return this.handleMockRequest(endpoint, options);
     }
 
