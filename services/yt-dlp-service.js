@@ -97,6 +97,18 @@ class YtDlpService {
     this.serviceStatus.available = false;
     this.serviceStatus.failureCount++;
     this.serviceStatus.lastCheck = Date.now();
+
+    // Open circuit breaker after max failures
+    if (this.serviceStatus.failureCount >= this.serviceStatus.maxFailures) {
+      this.circuitBreakerOpen = true;
+      this.suppressErrors = true;
+
+      // Log circuit breaker activation only once
+      if (this.serviceStatus.failureCount === this.serviceStatus.maxFailures) {
+        console.warn('🔴 Circuit breaker opened: Backend API marked as unavailable for',
+          Math.round(this.serviceStatus.backoffTime / 1000 / 60), 'minutes');
+      }
+    }
   }
 
   /**
