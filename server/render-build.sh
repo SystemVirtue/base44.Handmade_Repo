@@ -1,26 +1,17 @@
 #!/bin/bash
 set -e
 
-echo "🔧 Starting DJAMMS Backend Build Process..."
+echo "Installing system dependencies..."
+apt-get update
+apt-get install -y python3 python3-pip ffmpeg
 
-# Update package lists
-echo "📦 Updating package lists..."
-apt-get update -qq
+echo "Installing yt-dlp..."
+pip3 install yt-dlp
 
-# Install system dependencies
-echo "🛠️ Installing system dependencies..."
-apt-get install -y -qq python3 python3-pip ffmpeg curl
-
-# Install yt-dlp
-echo "🎥 Installing yt-dlp..."
-pip3 install yt-dlp --quiet
-
-# Verify yt-dlp installation
-echo "✅ Verifying yt-dlp installation..."
+echo "Verifying yt-dlp installation..."
 yt-dlp --version
 
-# Install Node.js dependencies
-echo "📦 Installing Node.js dependencies..."
-npm ci --only=production --silent
+echo "Installing Node.js dependencies..."
+npm ci --only=production
 
-echo "🎉 Build complete! Backend is ready for deployment."
+echo "Build complete!"
