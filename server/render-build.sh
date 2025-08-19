@@ -1,17 +1,15 @@
 #!/bin/bash
 set -e
 
-echo "Installing system dependencies..."
-apt-get update
-apt-get install -y python3 python3-pip ffmpeg
+echo "🔧 Starting DJAMMS Backend Build Process..."
 
-echo "Installing yt-dlp..."
-pip3 install yt-dlp
+echo "📦 Installing yt-dlp..."
+pip3 install --user yt-dlp
 
-echo "Verifying yt-dlp installation..."
+echo "🔍 Verifying yt-dlp installation..."
 yt-dlp --version
 
-echo "Installing Node.js dependencies..."
+echo "📦 Installing Node.js dependencies..."
 npm ci --only=production
 
-echo "Build complete!"
+echo "✅ Build complete!"
