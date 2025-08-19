@@ -1,0 +1,45 @@
+services:
+  # Backend API Service
+  - type: web
+    name: djamms-backend
+    env: node
+    region: oregon
+    plan: starter
+    buildCommand: cd server && chmod +x render-build.sh && ./render-build.sh
+    startCommand: cd server && npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: YT_DLP_API_PORT
+        value: 10000
+      - key: CORS_ORIGINS
+        fromService:
+          type: web
+          name: djamms-frontend
+          property: host
+        
+  # Frontend Static Site  
+  - type: web
+    name: djamms-frontend
+    env: static
+    region: oregon
+    buildCommand: npm install && npm run build
+    staticPublishPath: ./dist
+    pullRequestPreviewsEnabled: false
+    envVars:
+      - key: VITE_YT_DLP_API_URL
+        fromService:
+          type: web
+          name: djamms-backend
+          property: host
+      - key: VITE_APP_NAME
+        value: DJAMMS
+      - key: NODE_VERSION
+        value: 18
+
+# Optional: Database (if needed in future)
+# databases:
+#   - name: djamms-db
+#     databaseName: djamms
+#     user: djamms_user
