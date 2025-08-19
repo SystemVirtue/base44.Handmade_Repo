@@ -7,7 +7,7 @@
 class APIService {
   constructor() {
     this.baseURL =
-      import.meta.env?.VITE_API_BASE_URL || "http://localhost:3001/api";
+      import.meta.env?.VITE_API_BASE_URL || "https://djamms-backend.onrender.com/api";
     this.mockMode = import.meta.env?.VITE_MOCK_MODE !== "false";
     this.token = localStorage.getItem("djamms_auth_token");
 
