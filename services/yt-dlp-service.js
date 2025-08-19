@@ -418,6 +418,15 @@ class YtDlpService {
    * Check if the service is ready (backend API availability)
    */
   async isServiceReady() {
+    // Prevent concurrent checks
+    if (this.isCheckingService) {
+      return {
+        ready: false,
+        reason: 'Service check already in progress',
+        checking: true
+      };
+    }
+
     // If backend is explicitly disabled, return disabled status
     if (this.backendDisabled) {
       return {
