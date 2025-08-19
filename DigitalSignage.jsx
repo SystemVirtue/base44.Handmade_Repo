@@ -481,7 +481,7 @@ export default function DigitalSignage() {
                 onClick={() => handleSelectItem(item.id)}
               >
                 {/* Thumbnail */}
-                <div className="relative aspect-video bg-gray-700">
+                <div className="relative aspect-video bg-gray-700 overflow-hidden">
                   <img
                     src={item.thumbnail}
                     alt={item.name}
