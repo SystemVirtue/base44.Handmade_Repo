@@ -15,7 +15,7 @@ class YtDlpService {
     this.searchCacheTimeout = 10 * 60 * 1000; // 10 minutes
 
     // Backend API configuration
-    this.apiBaseUrl = import.meta.env.VITE_YT_DLP_API_URL || 'http://localhost:3001';
+    this.apiBaseUrl = import.meta.env.VITE_YT_DLP_API_URL || 'https://djamms-backend.onrender.com';
 
     // Circuit breaker pattern for service availability
     this.serviceStatus = {
