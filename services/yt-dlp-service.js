@@ -591,6 +591,30 @@ export function getYtDlpService() {
 
       // Add global reference for debugging
       window.__ytDlpService = ytDlpService;
+
+      // Add circuit breaker controls to window for testing
+      window.__circuitBreaker = {
+        open: () => ytDlpService.openCircuitBreaker(),
+        close: () => ytDlpService.closeCircuitBreaker(),
+        status: () => ytDlpService.getCircuitBreakerStatus(),
+        test: async () => {
+          console.log('Testing service connection...');
+          try {
+            const result = await ytDlpService.isServiceReady();
+            console.log('Service check result:', result);
+            return result;
+          } catch (error) {
+            console.log('Service check error:', error.message);
+            return { error: error.message };
+          }
+        }
+      };
+
+      console.log('🔧 Circuit breaker debug controls available:');
+      console.log('  window.__circuitBreaker.open() - Manually open circuit breaker');
+      console.log('  window.__circuitBreaker.close() - Manually close circuit breaker');
+      console.log('  window.__circuitBreaker.status() - Get circuit breaker status');
+      console.log('  window.__circuitBreaker.test() - Test service connection');
     }
   }
   return ytDlpService;
