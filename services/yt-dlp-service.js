@@ -518,7 +518,44 @@ class YtDlpService {
       cacheSize: this.cache.size,
       searchCacheSize: this.searchCache.size,
       service: 'yt-dlp',
-      apiKeyRequired: false
+      apiKeyRequired: false,
+      circuitBreakerOpen: this.circuitBreakerOpen,
+      failureCount: this.serviceStatus.failureCount
+    };
+  }
+
+  /**
+   * Manual circuit breaker controls (for testing/debugging)
+   */
+  openCircuitBreaker() {
+    this.circuitBreakerOpen = true;
+    this.suppressErrors = true;
+    this.serviceStatus.available = false;
+    this.serviceStatus.failureCount = this.serviceStatus.maxFailures;
+    this.serviceStatus.lastCheck = Date.now();
+    console.warn('🔴 Circuit breaker manually opened');
+  }
+
+  closeCircuitBreaker() {
+    this.circuitBreakerOpen = false;
+    this.suppressErrors = false;
+    this.serviceStatus.available = null; // Reset to unknown
+    this.serviceStatus.failureCount = 0;
+    this.serviceStatus.lastCheck = 0;
+    console.log('🟢 Circuit breaker manually closed');
+  }
+
+  getCircuitBreakerStatus() {
+    return {
+      open: this.circuitBreakerOpen,
+      failureCount: this.serviceStatus.failureCount,
+      maxFailures: this.serviceStatus.maxFailures,
+      suppressErrors: this.suppressErrors,
+      lastCheck: this.serviceStatus.lastCheck,
+      backoffTime: this.serviceStatus.backoffTime,
+      timeUntilRetry: this.circuitBreakerOpen
+        ? Math.max(0, this.serviceStatus.backoffTime - (Date.now() - this.serviceStatus.lastCheck))
+        : 0
     };
   }
 }
