@@ -188,7 +188,7 @@ export default function Layout({ children, currentPageName }) {
         />
       )}
 
-      <div className="flex h-screen">
+      <div className="flex h-screen relative">
         {/* Sidebar */}
         <div
           className={`${sidebarCollapsed ? "w-16" : "w-64"} ${
