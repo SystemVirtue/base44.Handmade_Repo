@@ -303,12 +303,6 @@ export default function Layout({ children, currentPageName }) {
           <div className="p-4" style={{borderTopWidth: '1px', borderTopColor: 'var(--color-border)'}}>
             {!sidebarCollapsed ? (
               <>
-                {/* Spotify Integration */}
-                <button className="w-full bg-green-600 hover:bg-green-700 text-white font-medium rounded-full py-2 px-4 transition-colors mb-3 text-sm">
-                  <span className="mr-2">���</span>
-                  SPOTIFY LOG IN
-                </button>
-
                 {/* User Info */}
                 <div className="flex items-center gap-3 mb-3">
                   <div className="w-8 h-8 themed-surface rounded-full flex items-center justify-center">
