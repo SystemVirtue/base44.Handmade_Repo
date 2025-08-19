@@ -294,7 +294,7 @@ export default function DigitalSignage() {
   };
 
   return (
-    <div className="p-8 text-white bg-gray-900 h-full overflow-hidden flex flex-col">
+    <div className="p-4 md:p-8 text-white bg-gray-900 h-full overflow-hidden flex flex-col max-w-full">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <Monitor className="w-8 h-8 text-blue-400" />
