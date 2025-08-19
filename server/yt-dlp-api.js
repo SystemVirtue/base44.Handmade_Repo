@@ -8,7 +8,7 @@ import cors from 'cors';
 import youtubeDl from 'youtube-dl-exec';
 
 const app = express();
-const PORT = process.env.YT_DLP_API_PORT || 3001;
+const PORT = process.env.PORT || process.env.YT_DLP_API_PORT || 3001;
 
 // Middleware
 app.use(cors());
