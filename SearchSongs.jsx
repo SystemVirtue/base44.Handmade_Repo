@@ -48,7 +48,7 @@ import ArtworkImage from "./components/ui/artwork-image.jsx";
 import TrackOptionsMenu from "./components/ui/track-options-menu.jsx";
 import apiService from "./services/api-service.js";
 import persistenceService from "./services/persistence-service.js";
-import { getYouTubeAPI } from "./services/youtube-api.js";
+import { getYtDlpService } from "./services/yt-dlp-service.js";
 import YouTubeVideo from "./entities/YouTubeVideo.js";
 
 // Debounce utility
@@ -104,34 +104,59 @@ export default function SearchSongs() {
     const recent = persistenceService.getRecentSearches();
     setRecentSearches(recent);
 
-    // Check if YouTube API keys are configured
-    const checkApiKeys = async () => {
+    // Check if yt-dlp service is ready (only once on mount)
+    let hasChecked = false; // Prevent multiple rapid checks
+    const checkService = async () => {
+      // Prevent rapid repeated calls
+      if (hasChecked) return;
+      hasChecked = true;
       try {
-        const youtubeAPI = getYouTubeAPI();
-        const serviceStatus = youtubeAPI.isServiceReady();
+        const ytDlpService = getYtDlpService();
+        const serviceStatus = await ytDlpService.isServiceReady();
 
         if (!serviceStatus.ready) {
-          let title, description, thumbnail;
+          let title = '⚠️ YouTube Service Unavailable';
+          let description = `${serviceStatus.reason}`;
+          let actionText = 'Learn More';
+          let actionUrl = '#';
+          let notificationType = 'warning';
+          let notificationDuration = 8000;
 
-          if (serviceStatus.reason.includes('No API keys')) {
-            title = '🚀 Welcome to YouTube Video Search!';
-            description = 'To search and play YouTube videos, please add YouTube Data API v3 keys in Settings → API Keys.';
-            thumbnail = 'https://via.placeholder.com/320x180/10b981/ffffff?text=Setup+Required';
-          } else if (serviceStatus.reason.includes('quota')) {
-            title = '⏱️ YouTube API Quota Exceeded';
-            description = 'Daily API quota limit reached. Try again tomorrow or add more API keys in Settings.';
-            thumbnail = 'https://via.placeholder.com/320x180/f59e0b/ffffff?text=Quota+Exceeded';
-          } else if (serviceStatus.reason.includes('valid')) {
-            title = '🔑 Invalid YouTube API Keys';
-            description = 'Current API keys are invalid. Please update your YouTube Data API v3 keys in Settings → API Configuration.';
-            thumbnail = 'https://via.placeholder.com/320x180/ef4444/ffffff?text=Invalid+Keys';
+          // Customize message based on the specific issue
+          if (serviceStatus.disabled) {
+            title = '🔌 Backend API Disabled';
+            description = 'YouTube video features are disabled by configuration.';
+            actionText = 'Enable Backend';
+            notificationType = 'info';
+          } else if (serviceStatus.circuitBreakerOpen) {
+            title = '⏸️ Service Temporarily Unavailable';
+            description = `Backend API is temporarily unavailable due to repeated failures. Will retry automatically.`;
+            if (serviceStatus.retryAfter > 0) {
+              description += ` Next retry in ${Math.ceil(serviceStatus.retryAfter / 60)} minutes.`;
+            }
+            actionText = 'Retry Manual';
+            notificationType = 'info';
+            notificationDuration = 5000;
+          } else if (serviceStatus.isDevelopment && serviceStatus.isProduction) {
+            title = '🔧 Backend Configuration Required';
+            description = 'The application is running in production but trying to connect to localhost. Please deploy the backend API server.';
+            actionText = 'View Deployment Guide';
+            actionUrl = '/docs/backend-setup';
+          } else if (serviceStatus.isDevelopment) {
+            title = '🔌 Backend Server Not Running';
+            description = `${serviceStatus.suggestion || 'Please start the backend server with: npm run server'}`;
+            actionText = 'View Setup Guide';
+            actionUrl = '/docs/backend-setup';
+            notificationType = 'info';
+            notificationDuration = 10000;
           } else {
-            title = '⚠️ YouTube Service Unavailable';
-            description = `YouTube API service is not ready: ${serviceStatus.reason}`;
-            thumbnail = 'https://via.placeholder.com/320x180/6b7280/ffffff?text=Service+Unavailable';
+            title = '⚠️ Backend API Unavailable';
+            description = `${serviceStatus.suggestion || serviceStatus.reason}`;
           }
 
-          // Show helpful initial message based on specific issue
+          const thumbnail = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIwIiBoZWlnaHQ9IjE4MCIgdmlld0JveD0iMCAwIDMyMCAxODAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIzMjAiIGhlaWdodD0iMTgwIiBmaWxsPSIjNmI3MjgwIi8+Cjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBkb21pbmFudC1iYXNlbGluZT0iY2VudHJhbCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE2IiBmaWxsPSIjZmZmZmZmIj5TZXJ2aWNlIFVuYXZhaWxhYmxlPC90ZXh0Pgo8L3N2Zz4K';
+
+          // Show service status message
           setSearchResults([{
             id: 'service-status',
             videoId: 'service-status',
@@ -141,30 +166,52 @@ export default function SearchSongs() {
             thumbnail: thumbnail,
             viewCount: 0,
             description: description,
-            isSystemMessage: true
+            isSystemMessage: true,
+            actionText: actionText,
+            actionUrl: actionUrl,
+            apiUrl: serviceStatus.apiUrl,
+            circuitBreakerOpen: serviceStatus.circuitBreakerOpen,
+            failureCount: serviceStatus.failureCount
           }]);
           setTotalResults(1);
 
-          // Also show a notification for invalid keys specifically
-          if (serviceStatus.reason.includes('valid')) {
+          // Show notification only for important issues (not for circuit breaker)
+          if (!serviceStatus.circuitBreakerOpen || serviceStatus.failureCount === 1) {
             addNotification({
-              type: "warning",
-              title: "YouTube API Keys Invalid",
-              message: "Your YouTube API keys appear to be invalid. Please check your configuration in Settings.",
-              duration: 8000,
-              action: {
-                text: "Update API Keys",
-                url: "/settings"
-              }
+              type: notificationType,
+              title: "YouTube Service Status",
+              message: serviceStatus.suggestion || serviceStatus.reason,
+              duration: notificationDuration
             });
           }
+        } else {
+          console.log('yt-dlp service is ready:', serviceStatus.version);
         }
       } catch (error) {
-        console.error('Error checking API keys:', error);
+        // Only log unexpected errors, not known connection failures
+        if (!error.isNetworkError && !error.isCircuitBreakerOpen) {
+          console.error('Error checking service:', error);
+        }
+
+        // Show generic error message only for non-network errors
+        if (!error.isNetworkError) {
+          setSearchResults([{
+            id: 'service-error',
+            videoId: 'service-error',
+            title: '❌ Service Check Failed',
+            channelTitle: 'System Error',
+            duration: 0,
+            thumbnail: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIwIiBoZWlnaHQ9IjE4MCIgdmlld0JveD0iMCAwIDMyMCAxODAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIzMjAiIGhlaWdodD0iMTgwIiBmaWxsPSIjZWY0NDQ0Ii8+Cjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBkb21pbmFudC1iYXNlbGluZT0iY2VudHJhbCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE2IiBmaWxsPSIjZmZmZmZmIj5TZXJ2aWNlIEVycm9yPC90ZXh0Pgo8L3N2Zz4K',
+            viewCount: 0,
+            description: `Failed to check service status: ${error.message}`,
+            isSystemMessage: true
+          }]);
+          setTotalResults(1);
+        }
       }
     };
 
-    checkApiKeys();
+    checkService();
   }, []);
 
   // Enhanced search function
@@ -178,12 +225,12 @@ export default function SearchSongs() {
 
       setIsSearching(true);
       try {
-        const youtubeAPI = getYouTubeAPI();
+        const ytDlpService = getYtDlpService();
 
-        // Check if API service is ready before making requests
-        const serviceStatus = youtubeAPI.isServiceReady();
+        // Check if service is ready before making requests
+        const serviceStatus = await ytDlpService.isServiceReady();
         if (!serviceStatus.ready) {
-          throw new Error(`YouTube API not ready: ${serviceStatus.reason}`);
+          throw new Error(`yt-dlp service not ready: ${serviceStatus.reason}`);
         }
 
         // Build search options
@@ -192,19 +239,12 @@ export default function SearchSongs() {
           order: sortBy === 'relevance' ? 'relevance' :
                  sortBy === 'viewCount' ? 'viewCount' :
                  sortBy === 'date' ? 'date' : 'relevance',
-          videoCategoryId: '10', // Music category
-          type: 'video',
-          videoDefinition: filters.quality === 'hd' ? 'high' : 'any',
-          videoDuration: filters.duration === 'short' ? 'short' :
-                        filters.duration === 'medium' ? 'medium' :
-                        filters.duration === 'long' ? 'long' : 'any'
         };
 
-        if (nextPageToken && page > 1) {
-          searchOptions.pageToken = nextPageToken;
-        }
+        // Note: yt-dlp doesn't support pagination like YouTube API
+        // So we ignore nextPageToken and page parameters
 
-        const response = await youtubeAPI.searchVideos(searchQuery, searchOptions);
+        const response = await ytDlpService.searchVideos(searchQuery, searchOptions);
 
         if (response && response.videos) {
           const videos = response.videos.map(video => ({
@@ -242,63 +282,44 @@ export default function SearchSongs() {
           setNextPageToken(response.nextPageToken);
         }
       } catch (error) {
-        console.error("YouTube search failed:", error);
+        console.error("YouTube search failed:", error.message || error);
 
-        // Check for specific API key related errors
-        if (error.message.includes('API keys') ||
-            error.message.includes('HTTP 403') ||
-            error.message.includes('quota') ||
-            error.message.includes('forbidden')) {
+        // Handle yt-dlp service errors
+        const errorMessage = error.message || String(error);
 
-          let title, description, message;
+        let title, description, message;
 
-          if (error.message.includes('HTTP 403')) {
-            title = '🚫 YouTube API Access Denied';
-            description = 'Invalid API keys detected. Please update your YouTube Data API v3 keys in Settings → API Configuration.';
-            message = "YouTube API keys are invalid or have no permissions. Please check your API key configuration in Settings.";
-          } else if (error.message.includes('quota')) {
-            title = '⏱️ YouTube API Quota Exceeded';
-            description = 'Daily API quota limit reached. Try again tomorrow or add more API keys in Settings.';
-            message = "YouTube API daily quota exceeded. Please try again tomorrow or add more API keys.";
-          } else {
-            title = '🔑 YouTube API Key Required';
-            description = 'Add YouTube Data API v3 keys in Settings → API Keys to enable video search and playback.';
-            message = "YouTube API not configured. Please add API keys in Settings to enable video search.";
-          }
-
-          // Show user-friendly notification
-          addNotification({
-            type: "warning",
-            title: "YouTube Search Unavailable",
-            message: message,
-            duration: 10000,
-            persistent: true,
-            action: {
-              text: "Configure API Keys",
-              url: "/settings"
-            }
-          });
-
-          // Set a helpful message in search results
-          setSearchResults([{
-            id: 'api-issue',
-            videoId: 'api-issue',
-            title: title,
-            channelTitle: 'System Message',
-            duration: 0,
-            thumbnail: 'https://via.placeholder.com/320x180/f59e0b/ffffff?text=API+Configuration+Required',
-            viewCount: 0,
-            description: description,
-            isSystemMessage: true
-          }]);
-          setTotalResults(1);
+        if (errorMessage.includes('not ready') || errorMessage.includes('not available')) {
+          title = '⚠️ YouTube Service Unavailable';
+          description = 'yt-dlp service is not available. Please ensure it is properly installed and configured.';
+          message = "YouTube search service is unavailable. Please check the system configuration.";
         } else {
-          addNotification({
-            type: "error",
-            message: "Search failed. Please try again.",
-            duration: 3000,
-          });
+          title = '❌ Search Failed';
+          description = `Search encountered an error: ${errorMessage}`;
+          message = "Search failed. Please try again or check your search terms.";
         }
+
+        // Show user-friendly notification
+        addNotification({
+          type: "error",
+          title: "Search Error",
+          message: message,
+          duration: 5000,
+        });
+
+        // Set a helpful message in search results
+        setSearchResults([{
+          id: 'search-error',
+          videoId: 'search-error',
+          title: title,
+          channelTitle: 'System Message',
+          duration: 0,
+          thumbnail: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIwIiBoZWlnaHQ9IjE4MCIgdmlld0JveD0iMCAwIDMyMCAxODAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIzMjAiIGhlaWdodD0iMTgwIiBmaWxsPSIjZWY0NDQ0Ii8+Cjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBkb21pbmFudC1iYXNlbGluZT0iY2VudHJhbCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE2IiBmaWxsPSIjZmZmZmZmIj5TZWFyY2ggRXJyb3I8L3RleHQ+Cjwvc3ZnPgo=',
+          viewCount: 0,
+          description: description,
+          isSystemMessage: true
+        }]);
+        setTotalResults(1);
       } finally {
         setIsSearching(false);
       }
@@ -888,13 +909,50 @@ export default function SearchSongs() {
                       <p className="text-gray-300 text-sm mb-4">
                         {track.description}
                       </p>
-                      <button
-                        onClick={() => window.location.href = '/settings'}
-                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded transition-colors text-sm"
-                      >
-                        <Settings className="w-4 h-4 inline mr-2" />
-                        Go to Settings
-                      </button>
+                      {track.apiUrl && (
+                        <p className="text-xs text-gray-500 mb-3">
+                          API URL: {track.apiUrl}
+                        </p>
+                      )}
+                      {track.actionUrl && track.actionUrl !== '#' ? (
+                        <a
+                          href={track.actionUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded transition-colors text-sm"
+                        >
+                          <Settings className="w-4 h-4 mr-2" />
+                          {track.actionText || 'Learn More'}
+                        </a>
+                      ) : (
+                        <button
+                          onClick={() => {
+                            // Try to open a new window with documentation
+                            const newWindow = window.open('about:blank', '_blank');
+                            if (newWindow) {
+                              newWindow.document.write(`
+                                <html>
+                                  <head><title>Backend Setup Guide</title></head>
+                                  <body style="font-family: sans-serif; padding: 20px; max-width: 800px; margin: 0 auto;">
+                                    <h1>YouTube Backend API Setup</h1>
+                                    <h2>Quick Start</h2>
+                                    <p>To enable YouTube video search, you need to run the backend API server:</p>
+                                    <pre style="background: #f0f0f0; padding: 10px; border-radius: 4px;">npm run server</pre>
+                                    <p>The backend server should run on port 3001.</p>
+                                    <h2>For Production</h2>
+                                    <p>Deploy the backend API server separately and configure the API URL.</p>
+                                    <p>See the project's BACKEND_SETUP.md file for detailed instructions.</p>
+                                  </body>
+                                </html>
+                              `);
+                            }
+                          }}
+                          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded transition-colors text-sm"
+                        >
+                          <Settings className="w-4 h-4 inline mr-2" />
+                          {track.actionText || 'Setup Guide'}
+                        </button>
+                      )}
                     </div>
                   ) : viewMode === "grid" ? (
                     <div className="text-center">

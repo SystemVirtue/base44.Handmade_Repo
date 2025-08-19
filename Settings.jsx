@@ -29,43 +29,21 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { useUIStore, useAudioStore, useZoneStore } from "./store.js";
-import { getAPIKeyManager } from "./services/api-key-manager.js";
+// Removed API key manager - now using yt-dlp
 
 export default function Settings() {
   const [activeTab, setActiveTab] = useState("general");
   const [unsavedChanges, setUnsavedChanges] = useState(false);
   const [showResetModal, setShowResetModal] = useState(false);
 
-  // API Keys state
-  const [apiKeys, setApiKeys] = useState([]);
-  const [showAddKey, setShowAddKey] = useState(false);
-  const [newApiKey, setNewApiKey] = useState({ key: '', description: '' });
-  const [showApiKeys, setShowApiKeys] = useState({});
-  const [isValidatingKey, setIsValidatingKey] = useState(false);
-  const [keyStats, setKeyStats] = useState(null);
+  // API Keys removed - now using yt-dlp service
 
   // Store integration
   const { theme, setTheme } = useUIStore();
   const { volume, setVolume } = useAudioStore();
   const { currentZone } = useZoneStore();
 
-  // Load API keys on component mount
-  useEffect(() => {
-    loadApiKeys();
-  }, []);
-
-  const loadApiKeys = async () => {
-    try {
-      const apiKeyManager = getAPIKeyManager();
-      const quotaStatus = apiKeyManager.getQuotaStatus();
-      const statistics = apiKeyManager.getStatistics();
-
-      setApiKeys(quotaStatus);
-      setKeyStats(statistics);
-    } catch (error) {
-      console.error('Failed to load API keys:', error);
-    }
-  };
+  // API key loading removed - now using yt-dlp service
 
   // Settings state
   const [settings, setSettings] = useState({
@@ -145,7 +123,6 @@ export default function Settings() {
     { id: "general", label: "General", icon: SettingsIcon },
     { id: "audio", label: "Audio", icon: Volume2 },
     { id: "network", label: "Network", icon: Wifi },
-    { id: "apikeys", label: "API Keys", icon: Key },
     { id: "security", label: "Security", icon: Shield },
     { id: "notifications", label: "Notifications", icon: Bell },
     { id: "backup", label: "Backup", icon: Database },
@@ -214,236 +191,8 @@ export default function Settings() {
     }
   };
 
-  // API Key Management Functions
-  const handleAddApiKey = async () => {
-    if (!newApiKey.key.trim()) return;
+  // API Key Management Functions removed - now using yt-dlp
 
-    setIsValidatingKey(true);
-    try {
-      const apiKeyManager = getAPIKeyManager();
-      await apiKeyManager.addKey(newApiKey.key.trim(), newApiKey.description.trim());
-
-      setNewApiKey({ key: '', description: '' });
-      setShowAddKey(false);
-      await loadApiKeys();
-      alert('API key added successfully!');
-    } catch (error) {
-      alert(`Failed to add API key: ${error.message}`);
-    } finally {
-      setIsValidatingKey(false);
-    }
-  };
-
-  const handleRemoveApiKey = async (index) => {
-    if (confirm('Are you sure you want to remove this API key?')) {
-      try {
-        const apiKeyManager = getAPIKeyManager();
-        await apiKeyManager.removeKey(index);
-        await loadApiKeys();
-        alert('API key removed successfully!');
-      } catch (error) {
-        alert(`Failed to remove API key: ${error.message}`);
-      }
-    }
-  };
-
-  const handleToggleKeyStatus = async (index) => {
-    try {
-      const apiKeyManager = getAPIKeyManager();
-      await apiKeyManager.toggleKeyStatus(index);
-      await loadApiKeys();
-    } catch (error) {
-      alert(`Failed to toggle key status: ${error.message}`);
-    }
-  };
-
-  const toggleKeyVisibility = (index) => {
-    setShowApiKeys(prev => ({
-      ...prev,
-      [index]: !prev[index]
-    }));
-  };
-
-  const renderApiKeysSettings = () => (
-    <div className="space-y-6">
-      {/* API Keys Overview */}
-      <div className="bg-gray-800 rounded-lg p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold">YouTube API Keys</h3>
-          <button
-            onClick={() => setShowAddKey(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded transition-colors"
-          >
-            <Plus className="w-4 h-4" />
-            Add API Key
-          </button>
-        </div>
-
-        {/* Stats Overview */}
-        {keyStats && (
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-            <div className="bg-gray-700 rounded-lg p-4">
-              <div className="text-2xl font-bold text-blue-400">{keyStats.totalKeys}</div>
-              <div className="text-sm text-gray-400">Total Keys</div>
-            </div>
-            <div className="bg-gray-700 rounded-lg p-4">
-              <div className="text-2xl font-bold text-green-400">{keyStats.activeKeys}</div>
-              <div className="text-sm text-gray-400">Active Keys</div>
-            </div>
-            <div className="bg-gray-700 rounded-lg p-4">
-              <div className="text-2xl font-bold text-yellow-400">{keyStats.totalUsage}</div>
-              <div className="text-sm text-gray-400">Quota Used</div>
-            </div>
-            <div className="bg-gray-700 rounded-lg p-4">
-              <div className="text-2xl font-bold text-purple-400">{keyStats.totalRemaining}</div>
-              <div className="text-sm text-gray-400">Quota Remaining</div>
-            </div>
-          </div>
-        )}
-
-        {/* Add New Key Form */}
-        {showAddKey && (
-          <div className="mb-6 p-4 bg-gray-700 rounded-lg">
-            <h4 className="font-semibold mb-4">Add New YouTube API Key</h4>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  API Key *
-                </label>
-                <input
-                  type="password"
-                  value={newApiKey.key}
-                  onChange={(e) => setNewApiKey(prev => ({ ...prev, key: e.target.value }))}
-                  placeholder="AIzaSyD..."
-                  className="w-full bg-gray-600 border border-gray-500 rounded px-3 py-2"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Description (Optional)
-                </label>
-                <input
-                  type="text"
-                  value={newApiKey.description}
-                  onChange={(e) => setNewApiKey(prev => ({ ...prev, description: e.target.value }))}
-                  placeholder="e.g., Production Key, Backup Key"
-                  className="w-full bg-gray-600 border border-gray-500 rounded px-3 py-2"
-                />
-              </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={handleAddApiKey}
-                  disabled={!newApiKey.key.trim() || isValidatingKey}
-                  className="px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed rounded transition-colors"
-                >
-                  {isValidatingKey ? (
-                    <>
-                      <RefreshCw className="w-4 h-4 animate-spin inline mr-2" />
-                      Validating...
-                    </>
-                  ) : (
-                    'Add Key'
-                  )}
-                </button>
-                <button
-                  onClick={() => {
-                    setShowAddKey(false);
-                    setNewApiKey({ key: '', description: '' });
-                  }}
-                  className="px-4 py-2 bg-gray-600 hover:bg-gray-500 rounded transition-colors"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* API Keys List */}
-        <div className="space-y-3">
-          {apiKeys.length === 0 ? (
-            <div className="text-center py-8 text-gray-400">
-              <Key className="w-12 h-12 mx-auto mb-4 opacity-50" />
-              <p>No API keys configured</p>
-              <p className="text-sm mt-2">Add a YouTube Data API v3 key to enable video search and playback</p>
-            </div>
-          ) : (
-            apiKeys.map((keyData, index) => (
-              <div key={index} className="bg-gray-700 rounded-lg p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <span className="font-medium">
-                        {keyData.description || `API Key ${index + 1}`}
-                      </span>
-                      {keyData.isCurrent && (
-                        <span className="px-2 py-1 bg-blue-600 text-xs rounded">Current</span>
-                      )}
-                      {keyData.isActive ? (
-                        <CheckCircle className="w-4 h-4 text-green-400" />
-                      ) : (
-                        <XCircle className="w-4 h-4 text-red-400" />
-                      )}
-                    </div>
-
-                    <div className="text-sm text-gray-400 space-y-1">
-                      <div>
-                        Usage: {keyData.usage} / 10,000 ({keyData.percentUsed}%)
-                      </div>
-                      <div className="w-full bg-gray-600 rounded-full h-2">
-                        <div
-                          className={`h-2 rounded-full transition-all ${
-                            keyData.percentUsed > 80 ? 'bg-red-500' :
-                            keyData.percentUsed > 60 ? 'bg-yellow-500' : 'bg-green-500'
-                          }`}
-                          style={{ width: `${keyData.percentUsed}%` }}
-                        />
-                      </div>
-                      {keyData.lastUsed && (
-                        <div>Last used: {new Date(keyData.lastUsed).toLocaleString()}</div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2 ml-4">
-                    <button
-                      onClick={() => handleToggleKeyStatus(index)}
-                      className={`px-3 py-1 text-xs rounded transition-colors ${
-                        keyData.isActive
-                          ? 'bg-red-600 hover:bg-red-700'
-                          : 'bg-green-600 hover:bg-green-700'
-                      }`}
-                    >
-                      {keyData.isActive ? 'Disable' : 'Enable'}
-                    </button>
-                    <button
-                      onClick={() => handleRemoveApiKey(index)}
-                      className="p-2 text-red-400 hover:text-red-300 transition-colors"
-                      title="Remove API Key"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-
-        {/* Help Text */}
-        <div className="mt-6 p-4 bg-blue-900/20 border border-blue-600/30 rounded-lg">
-          <h4 className="font-semibold text-blue-400 mb-2">How to get YouTube API Keys:</h4>
-          <ol className="text-sm text-gray-300 space-y-1 list-decimal list-inside">
-            <li>Go to the <a href="https://console.developers.google.com/" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">Google Developers Console</a></li>
-            <li>Create a new project or select an existing one</li>
-            <li>Enable the "YouTube Data API v3"</li>
-            <li>Create credentials → API Key</li>
-            <li>Copy the API key and add it here</li>
-          </ol>
-        </div>
-      </div>
-    </div>
-  );
 
   const renderGeneralSettings = () => (
     <div className="space-y-6">
@@ -1399,8 +1148,6 @@ export default function Settings() {
         return renderAudioSettings();
       case "network":
         return renderNetworkSettings();
-      case "apikeys":
-        return renderApiKeysSettings();
       case "security":
         return renderSecuritySettings();
       case "notifications":

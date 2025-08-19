@@ -1,0 +1,19 @@
+{
+  "name": "djamms-yt-dlp-api",
+  "version": "1.0.0",
+  "description": "Backend API server for yt-dlp operations",
+  "type": "module",
+  "main": "yt-dlp-api.js",
+  "scripts": {
+    "start": "node yt-dlp-api.js",
+    "dev": "node --watch yt-dlp-api.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "youtube-dl-exec": "^3.0.24"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

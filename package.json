@@ -1,39 +1,78 @@
 {
 
   "name": "djamms-music-management",
+
   "version": "3.28.12",
+
   "description": "DJAMMS - Digital Jukebox Audio Management & Music System",
+
   "type": "module",
+
   "scripts": {
+
     "dev": "vite",
+
     "start": "vite",
+
     "build": "vite build",
+
     "preview": "vite preview",
-    "lint": "eslint ."
+
+    "lint": "eslint .",
+
+    "server": "cd server && npm run dev",
+
+    "server:start": "cd server && npm start"
+
   },
+
   "dependencies": {
+
+    "lucide-react": "^0.263.1",
+
     "react": "^18.2.0",
+
     "react-dom": "^18.2.0",
+
     "react-router-dom": "^6.8.0",
-    "zustand": "^4.4.1",
-    "lucide-react": "^0.263.1"
+
+    "zustand": "^4.4.1"
+
   },
+
   "devDependencies": {
 
     "@types/react": "^18.2.43",
+
     "@types/react-dom": "^18.2.17",
+
     "@vitejs/plugin-react": "^4.2.1",
-    "vite": "^4.4.5",
-    "tailwindcss": "^3.3.3",
-    "postcss": "^8.4.32",
+
     "autoprefixer": "^10.4.16",
+
     "eslint": "^8.55.0",
+
     "eslint-plugin-react": "^7.33.2",
+
     "eslint-plugin-react-hooks": "^4.6.0",
-    "eslint-plugin-react-refresh": "^0.4.5"
+
+    "eslint-plugin-react-refresh": "^0.4.5",
+
+    "postcss": "^8.4.32",
+
+    "tailwindcss": "^3.3.3",
+
+    "vite": "^4.4.5"
+
   },
+
   "engines": {
+
     "node": ">=18.0.0",
+
     "npm": ">=9.0.0"
+
   }
+
 }
+

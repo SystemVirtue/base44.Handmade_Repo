@@ -58,13 +58,8 @@ class YouTubeAPIService {
             const errorReason = errorData.error?.errors?.[0]?.reason;
             const errorMessage = errorData.error?.message || 'Forbidden';
 
-            console.error(`YouTube API 403 Error:`, {
-              reason: errorReason,
-              message: errorMessage,
-              details: errorData.error?.errors,
-              endpoint,
-              currentKey: `...${this.apiKeyManager.getCurrentKey().slice(-8)}`
-            });
+            console.error(`YouTube API 403 Error: ${errorMessage} (Reason: ${errorReason || 'unknown'}, Endpoint: ${endpoint}, Key: ...${this.apiKeyManager.getCurrentKey().slice(-8)})`);
+            console.debug('Full error details:', errorData.error?.errors);
 
             if (errorReason === 'quotaExceeded') {
               console.warn('Daily quota exceeded, rotating to next API key...');

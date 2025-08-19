@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { AlertTriangle, CheckCircle, XCircle, Settings, RefreshCw, ExternalLink } from 'lucide-react';
-import { getYouTubeAPI } from '../../services/youtube-api.js';
+import { getYtDlpService } from '../../services/yt-dlp-service.js';
 
 export default function YouTubeStatusBanner({ onDismiss }) {
   const [serviceStatus, setServiceStatus] = useState(null);
@@ -9,8 +9,8 @@ export default function YouTubeStatusBanner({ onDismiss }) {
 
   const checkServiceStatus = async () => {
     try {
-      const youtubeAPI = getYouTubeAPI();
-      const status = youtubeAPI.isServiceReady();
+      const ytDlpService = getYtDlpService();
+      const status = await ytDlpService.isServiceReady();
       setServiceStatus(status);
     } catch (error) {
       setServiceStatus({
@@ -37,41 +37,21 @@ export default function YouTubeStatusBanner({ onDismiss }) {
   }
 
   const getStatusInfo = () => {
-    if (serviceStatus.reason.includes('API keys')) {
+    if (serviceStatus.reason.includes('not available') || serviceStatus.reason.includes('not properly installed')) {
       return {
         icon: <AlertTriangle className="w-5 h-5 text-yellow-500" />,
-        title: "YouTube API Setup Required",
-        message: "Configure YouTube Data API v3 keys to enable video search and playback.",
+        title: "yt-dlp Service Unavailable",
+        message: "yt-dlp is not properly installed or configured. YouTube video features may not work.",
         bgColor: "bg-yellow-50 border-yellow-200",
         textColor: "text-yellow-800",
-        actionText: "Configure API Keys",
-        actionUrl: "/settings"
-      };
-    } else if (serviceStatus.reason.includes('quota')) {
-      return {
-        icon: <XCircle className="w-5 h-5 text-red-500" />,
-        title: "YouTube API Quota Exceeded",
-        message: "Daily API quota limit reached. Try again tomorrow or add more API keys.",
-        bgColor: "bg-red-50 border-red-200",
-        textColor: "text-red-800",
-        actionText: "Add More Keys",
-        actionUrl: "/settings"
-      };
-    } else if (serviceStatus.reason.includes('valid')) {
-      return {
-        icon: <XCircle className="w-5 h-5 text-red-500" />,
-        title: "Invalid YouTube API Keys",
-        message: "Current API keys are invalid or don't have proper permissions.",
-        bgColor: "bg-red-50 border-red-200",
-        textColor: "text-red-800",
-        actionText: "Update API Keys",
-        actionUrl: "/settings"
+        actionText: "Check Installation",
+        actionUrl: "https://github.com/yt-dlp/yt-dlp#installation"
       };
     } else {
       return {
         icon: <AlertTriangle className="w-5 h-5 text-yellow-500" />,
-        title: "YouTube Service Unavailable",
-        message: serviceStatus.reason || "YouTube API service is currently unavailable.",
+        title: "YouTube Service Issue",
+        message: serviceStatus.reason || "YouTube service is currently unavailable.",
         bgColor: "bg-yellow-50 border-yellow-200",
         textColor: "text-yellow-800",
         actionText: "Check Settings",

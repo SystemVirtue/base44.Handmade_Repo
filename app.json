@@ -1,0 +1,47 @@
+{
+  "name": "DJAMMS - Digital Jukebox Audio Management & Music System",
+  "description": "A comprehensive digital jukebox and audio management system with YouTube integration",
+  "repository": "https://github.com/your-username/djamms-music-management",
+  "logo": "https://img.shields.io/badge/DJAMMS-v3.28.12-blue.svg",
+  "keywords": [
+    "music",
+    "jukebox",
+    "audio",
+    "streaming",
+    "youtube",
+    "playlist",
+    "react",
+    "node.js"
+  ],
+  "success_url": "/",
+  "env": {
+    "NODE_ENV": {
+      "description": "Node.js environment",
+      "value": "production"
+    },
+    "VITE_APP_NAME": {
+      "description": "Application name displayed in the UI",
+      "value": "DJAMMS"
+    },
+    "YT_DLP_API_PORT": {
+      "description": "Backend API port (will be overridden by Render)",
+      "value": "10000"
+    }
+  },
+  "formation": {
+    "web": {
+      "quantity": 1,
+      "size": "starter"
+    }
+  },
+  "image": "heroku/nodejs",
+  "stack": "heroku-20",
+  "buildpacks": [
+    {
+      "url": "heroku/nodejs"
+    },
+    {
+      "url": "https://github.com/jonathanong/heroku-buildpack-ffmpeg-latest.git"
+    }
+  ]
+}

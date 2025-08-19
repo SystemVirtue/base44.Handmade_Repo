@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { CheckCircle, AlertTriangle, XCircle, Settings, RefreshCw } from 'lucide-react';
-import { getYouTubeAPI } from '../../services/youtube-api.js';
+import { getYtDlpService } from '../../services/yt-dlp-service.js';
 
 export default function YouTubeServiceStatus({ compact = false }) {
   const [serviceStatus, setServiceStatus] = useState(null);
@@ -8,10 +8,10 @@ export default function YouTubeServiceStatus({ compact = false }) {
 
   const checkServiceStatus = async () => {
     try {
-      const youtubeAPI = getYouTubeAPI();
-      const status = youtubeAPI.isServiceReady();
-      const usage = youtubeAPI.getUsageStatistics();
-      
+      const ytDlpService = getYtDlpService();
+      const status = await ytDlpService.isServiceReady();
+      const usage = ytDlpService.getUsageStatistics();
+
       setServiceStatus({
         ...status,
         usage: usage
@@ -59,8 +59,7 @@ export default function YouTubeServiceStatus({ compact = false }) {
 
   const getStatusText = () => {
     if (serviceStatus.ready) {
-      const { activeKeys, totalKeys } = serviceStatus.stats;
-      return `YouTube Ready (${activeKeys}/${totalKeys} keys)`;
+      return `YouTube Ready (yt-dlp)`;
     } else {
       return `YouTube: ${serviceStatus.reason}`;
     }
@@ -93,9 +92,9 @@ export default function YouTubeServiceStatus({ compact = false }) {
               {getStatusText()}
             </h4>
             
-            {serviceStatus.ready && serviceStatus.stats && (
+            {serviceStatus.ready && (
               <div className="text-sm text-gray-400 mt-1">
-                Available quota: {serviceStatus.stats.availableQuota.toLocaleString()} units
+                yt-dlp service available - no API quotas required
               </div>
             )}
             
@@ -128,10 +127,10 @@ export default function YouTubeServiceStatus({ compact = false }) {
         )}
       </div>
 
-      {serviceStatus.usage && serviceStatus.ready && (
+      {serviceStatus.ready && (
         <div className="mt-3 pt-3 border-t border-gray-700">
           <div className="text-xs text-gray-400">
-            API Keys: {serviceStatus.usage.activeKeys} active, {serviceStatus.usage.totalKeys} total
+            Service: yt-dlp (no API keys required)
           </div>
         </div>
       )}
