@@ -42,14 +42,28 @@ class YtDlpService {
       return false;
     }
 
+    // If circuit breaker is explicitly open, don't attempt
+    if (this.circuitBreakerOpen) {
+      return false;
+    }
+
     const now = Date.now();
     const timeSinceLastCheck = now - this.serviceStatus.lastCheck;
 
     // If we know the service is unavailable and we're in backoff period
     if (this.serviceStatus.available === false &&
-        this.serviceStatus.failureCount >= this.serviceStatus.maxFailures &&
-        timeSinceLastCheck < this.serviceStatus.backoffTime) {
-      return false;
+        this.serviceStatus.failureCount >= this.serviceStatus.maxFailures) {
+
+      // Check if backoff period has expired
+      if (timeSinceLastCheck < this.serviceStatus.backoffTime) {
+        this.circuitBreakerOpen = true;
+        return false;
+      } else {
+        // Reset for retry attempt
+        this.circuitBreakerOpen = false;
+        this.serviceStatus.failureCount = 0;
+        return true;
+      }
     }
 
     // If we recently checked and service was available
