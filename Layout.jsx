@@ -411,21 +411,15 @@ export default function Layout({ children, currentPageName }) {
                 </button>
 
                 <button
-                  onClick={togglePlayPause}
+                  onClick={() => {
+                    if (!isPlaying) {
+                      togglePlayPause();
+                    }
+                  }}
                   className="p-2 text-white hover:bg-white/10 rounded-full transition-colors"
-                  title={isPlaying ? "Pause" : "Play"}
+                  title="Start Playback"
                 >
-                  {isPlaying ? (
-                    <svg
-                      className="w-5 h-5"
-                      fill="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
-                    </svg>
-                  ) : (
-                    <Play className="w-5 h-5" />
-                  )}
+                  <Play className="w-5 h-5" />
                 </button>
 
                 <button
