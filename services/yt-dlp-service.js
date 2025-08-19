@@ -457,6 +457,9 @@ class YtDlpService {
     }
 
     try {
+      // Set checking flag
+      this.isCheckingService = true;
+
       // Only log on first attempt or after successful reconnection
       if (this.serviceStatus.available !== true) {
         console.log('Checking backend API health...');
