@@ -522,6 +522,9 @@ class YtDlpService {
         failureCount: this.serviceStatus.failureCount,
         circuitBreakerOpen: error.isCircuitBreakerOpen || false
       };
+    } finally {
+      // Always reset checking flag
+      this.isCheckingService = false;
     }
   }
 
