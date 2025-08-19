@@ -486,6 +486,7 @@ export default function DigitalSignage() {
                     src={item.thumbnail}
                     alt={item.name}
                     className="w-full h-full object-cover"
+                    style={{ maxWidth: '100%', height: 'auto' }}
                   />
 
                   {/* Overlay Icons */}
