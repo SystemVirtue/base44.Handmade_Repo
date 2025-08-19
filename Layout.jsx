@@ -343,7 +343,7 @@ export default function Layout({ children, currentPageName }) {
         </div>
 
         {/* Main Content */}
-        <div className="flex-1 flex flex-col min-w-0">
+        <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
           {/* Top Bar */}
           <div className="h-16 flex items-center justify-between px-6 shadow-lg relative" style={{background: `linear-gradient(to right, var(--color-accent), var(--color-accent))`}}>
             {/* Left side - Mobile menu + Track info */}
