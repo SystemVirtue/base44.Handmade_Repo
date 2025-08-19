@@ -445,7 +445,7 @@ export default function DigitalSignage() {
       </div>
 
       {/* Media Grid/List */}
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1 overflow-auto max-w-full">
         {filteredItems.length === 0 ? (
           <div className="bg-gray-800 rounded-lg p-12 text-center">
             <Monitor className="w-16 h-16 text-gray-600 mx-auto mb-4" />
