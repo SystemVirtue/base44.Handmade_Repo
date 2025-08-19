@@ -23,12 +23,14 @@ class YtDlpService {
       lastCheck: 0,
       failureCount: 0,
       checkInterval: 30000, // 30 seconds
-      maxFailures: 3,
-      backoffTime: 5 * 60 * 1000, // 5 minutes after max failures
+      maxFailures: 2, // Reduced from 3 to 2 for faster circuit breaking
+      backoffTime: 2 * 60 * 1000, // Reduced to 2 minutes
     };
 
-    // Check if backend is completely disabled
+    // Global flags
     this.backendDisabled = import.meta.env.VITE_DISABLE_BACKEND === 'true';
+    this.circuitBreakerOpen = false;
+    this.suppressErrors = false; // Flag to suppress error logging
   }
 
   /**
