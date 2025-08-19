@@ -195,7 +195,7 @@ export default function Layout({ children, currentPageName }) {
             isMobileMenuOpen
               ? "translate-x-0"
               : "-translate-x-full lg:translate-x-0"
-          } fixed lg:relative inset-y-0 left-0 z-50 flex flex-col transition-all duration-300 ease-in-out`}
+          } fixed lg:static inset-y-0 left-0 z-50 flex flex-col transition-all duration-300 ease-in-out flex-shrink-0`}
           style={{backgroundColor: 'var(--color-primary)'}}
         >
           {/* Header */}
